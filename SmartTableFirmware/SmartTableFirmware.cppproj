@@ -179,6 +179,9 @@
     <Compile Include="comm.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="cpu.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="crc16.cpp">
       <SubType>compile</SubType>
     </Compile>

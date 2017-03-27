@@ -13,8 +13,9 @@
 #include <avr/interrupt.h>
 
 
-#define HEADER_MAGIC	((uint8_t)36)
-#define RX_BUFFER_SIZE	32
+#define HEADER_MAGIC		((uint8_t)36)
+#define RX_PAYLOAD_CAPACITY	32
+#define TX_PAYLOAD_CAPACITY	128
 
 #define ADDRESS_BROADCAST	(uint8_t)0xFF
 
@@ -24,18 +25,17 @@ enum class MessageType : uint8_t
 	Invalid = 0,
 	None = 1,
 
-	Ping = 2,	// send by the processing CPU (PC) to selected board
-	Pong = 3,	// response to Ping message
+	Ping = 2,					// send by the processing CPU (PC) to selected board
+	Pong = 3,					// response to Ping message
+	GetVersion = 4,				// get version of the firmware
+	StartFullMeasurement = 5,	// initiate full resolution range measurement
 };
 
 struct PROTO_HEADER {
 	uint8_t magic;			// sync header
-	uint8_t address;		// receiverd data (if given) or ADDRESS_BROADCAST
+	uint8_t address;		// receiver address (if given) or ADDRESS_BROADCAST
 	MessageType type;		// type of the received message
 	uint8_t payload_length;	// 
-
-	uint8_t payload[0];		// data, can be empty (payload_length == 0)
-
 };
 
 
@@ -47,6 +47,12 @@ struct TX
 	volatile const uint8_t* buffer_end;
 
 	volatile uint8_t done;
+
+	struct  
+	{
+		PROTO_HEADER header;
+		uint8_t payload[TX_PAYLOAD_CAPACITY];
+	} __attribute__((packed)) buffer;
 };
 
 
@@ -54,13 +60,15 @@ struct RX
 {
 	volatile uint8_t* buffer_position;
 	volatile bool got_data;
-	union {
-		volatile uint8_t buffer[RX_BUFFER_SIZE]; // czy tyle wystarczy?
+
+	// buffer - mind the order!
+	struct {
 		volatile PROTO_HEADER header;
-	};
+		volatile uint8_t payload[RX_PAYLOAD_CAPACITY];
+	} __attribute__((packed)) buffer;
 };
 
-#define RX_COUNT (rx.buffer_position - rx.buffer)
+#define RX_COUNT (rx.buffer_position - (volatile uint8_t*)&rx.buffer)
 
 extern volatile TX tx;
 extern volatile RX rx;

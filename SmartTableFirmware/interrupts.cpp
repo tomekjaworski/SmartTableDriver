@@ -41,7 +41,7 @@
 	 if (status & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) // errors: frame error, data overrun, parity error
 	 return;
 
-	 if (RX_COUNT == RX_BUFFER_SIZE) // buffer overflow
+	 if (RX_COUNT == RX_PAYLOAD_CAPACITY + sizeof(PROTO_HEADER)) // buffer overflow
 		return;
 
 	 *rx.buffer_position++ = data;

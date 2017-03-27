@@ -16,19 +16,23 @@
 #include "eeprom_config.h"
 #include "comm.h"
 
+const char* build_date = __DATE__;
+const char* build_time = __TIMESTAMP__;
+const char* build_version = "1.0";
 
 // testy na czas kompilacji
 STATIC_ASSERT(sizeof(enum MessageType) == 1, message_type_ma_zly_rozmiar);
 STATIC_ASSERT(sizeof(PROTO_HEADER) == 4, proto_header_ma_zly_rozmiar);
 
-
 void cpu_init(void);
 void begin_transmission(const void* data, uint8_t count);
+void send(MessageType type, uint8_t payload_length);
 bool check_rx(void);
 
-
-
-const char* test = "Ala ma kota!";
+inline static void memmove(volatile void* dst, volatile void* src, size_t size)
+{
+	memmove((void*)dst, (void*)src, size);
+}
 
 int main(void)
 {
@@ -39,22 +43,36 @@ int main(void)
 	{
 		if (!rx.got_data)
 			continue; // not yet
-
 		
 		if (!check_rx())
 			continue; // not yet again
 
 		// ok, we have data
-		
+		if (rx.buffer.header.type == MessageType::Ping)
+		{
+			memmove(tx.buffer.payload, rx.buffer.payload, rx.buffer.header.payload_length);
+			send(MessageType::Pong, rx.buffer.header.payload_length);
+			continue;
+		}
+
+		if (rx.buffer.header.type == MessageType::GetVersion)
+		{
+			strcpy((char*)tx.buffer.payload, "version="); strcat((char*)tx.buffer.payload, build_version);
+			strcpy((char*)tx.buffer.payload, ";date="); strcat((char*)tx.buffer.payload, build_date);
+			strcpy((char*)tx.buffer.payload, ";version="); strcat((char*)tx.buffer.payload, build_time);
+			continue;
+		}
+
+		if (rx.buffer.header.type == MessageType::StartFullMeasurement)
+		{
+			// 
+		}
 	}
 
-    while (1) 
-    {
-		begin_transmission(test, 12);
-		_delay_ms(100);
-    }
+
+	while(1);
 }
-#define RX_RESET do { rx.buffer_position = rx.buffer; } while (0);
+#define RX_RESET do { rx.buffer_position = (volatile uint8_t*)&rx.buffer; } while (0);
 
 
 bool check_rx(void)
@@ -68,28 +86,31 @@ bool check_rx(void)
 		if (RX_COUNT == 0)
 			return false; // nie ma czego synchronizowaæ
 
-		if (rx.header.magic != HEADER_MAGIC)
+		if (rx.buffer.header.magic != HEADER_MAGIC)
 		{
 			RX_RESET;
 			return false;
 		}
 
-		memmove((void*)(rx.buffer + 1), (void*)rx.buffer, RX_COUNT - 1);
+		// remove one byte at the start of the rx buffer
+		memmove((uint8_t*)&rx.buffer + 1, (uint8_t*)&rx.buffer, RX_COUNT - 1);
+		rx.buffer_position--;
+
 		return false;
 	}
 
-	// Ok! Ca³y nag³ówek jest ju¿ odebrany!
+	// Ok! We've just received complete header
 	
-	// Sprawdzamy adres!
-	if (rx.header.address != 0xFF && rx.header.address != configuration.address)
+	// Sprawdzamy adres
+	if (rx.buffer.header.address != ADDRESS_BROADCAST && rx.buffer.header.address != configuration.address)
 	{
-		// to nie do nas
+		// it's not for us and it's not broadcast
 		RX_RESET;
 		return false;
 	}
 
 	// czy adres jest spójny z typem wiadomoœci?
-	if ((rx.header.address == ADDRESS_BROADCAST) ^ (((uint8_t)rx.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
+	if ((rx.buffer.header.address == ADDRESS_BROADCAST) ^ (((uint8_t)rx.buffer.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
 	{
 		// brak spójnoœci
 		RX_RESET;
@@ -97,12 +118,12 @@ bool check_rx(void)
 	}
 
 	// check if whole message is here
-	if (RX_COUNT < sizeof(PROTO_HEADER) + rx.header.payload_length + sizeof(uint16_t))
+	if (RX_COUNT < sizeof(PROTO_HEADER) + rx.buffer.header.payload_length + sizeof(uint16_t))
 		return false; // we have received only a part of the message; let us wait for the rest
 
 	// ok, we have received at least whole message; check CRC
-	uint16_t calculated_crc = calc_crc16((void*)rx.header.payload, rx.header.payload_length);
-	uint16_t received_crc = *(uint16_t*)(rx.header.payload + rx.header.payload_length);
+	uint16_t calculated_crc = calc_crc16((void*)&rx.buffer, sizeof(PROTO_HEADER) + rx.buffer.header.payload_length);
+	uint16_t received_crc = *(uint16_t*)(rx.buffer.payload + rx.buffer.header.payload_length);
 	if (calculated_crc != received_crc)
 	{
 		// checksums does not match
@@ -114,69 +135,20 @@ bool check_rx(void)
 	return true;
 }
 
+void send(MessageType type, uint8_t payload_length)
+{	
+	// prepare header
+	tx.buffer.header.address = configuration.address;
+	tx.buffer.header.magic = HEADER_MAGIC;
+	tx.buffer.header.type = type;
+	tx.buffer.header.payload_length = payload_length;
 
-#define BAUD 19200	// 8E1 (!!!)
-#define BAUD_UX2
+	// calculate crc16 and attach it at the end of the payload
+	uint16_t crc = calc_crc16((void*)&tx.buffer, payload_length + sizeof(PROTO_HEADER));
+	*(uint16_t*)(tx.buffer.payload + payload_length) = crc;
 
-//////////////////////////////////////////////////////////////////////////
-
-#if defined(BAUD_UX2)
-// UX2 = 1
-#define UBR0_VALUE (F_CPU/(8UL*BAUD))-1
-#else
-// UX2 = 0
-#define UBR0_VALUE (F_CPU/(16UL*BAUD))-1
-#endif
-
-#define TIMER0_1MS_RELOAD 10
-
-void cpu_init(void)
-{
-	DDRB |= _BV(PORTB2);
-	DDRB |= _BV(PORTB1);
-	DDRB |= _BV(PORTB5);
-	DDRD = 0b00000110; // 0:RX, 1:TX, 3:DIR			1-wyjscie (1 i 3) ddr - data direction
-
-	// port szergowy
-	uint16_t br = UBR0_VALUE;
-	UBRR0H = (uint8_t)(br >> 8);
-	UBRR0L = (uint8_t)br;
-	
-	#if defined(BAUD_UX2)
-	UCSR0A = _BV(U2X0);
-	#else
-	UCSR0A = 0x00;
-	#endif
-	
-	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00) | _BV(UPM01);	// 8E1
-	UCSR0B = _BV(RXEN0) | _BV(TXEN0);	// wlacz rx i txs
-	UCSR0B |= (1 << RXCIE0);
-
-	// struktury portu szeregowego
-	tx.done = 1;
-
-
-	// ustaw timer 0
-	TCCR0A |= (1 << WGM01); // tryb CTC
-	OCR0A = 0xF9;
-	TIMSK0 |= (1 << OCIE0A);
-	TCCR0B |= (1 << CS02) | (1<<CS00);
-
-	// czy ja zyjê????
-	for(int i = 0; i < 100; i++)
-	{
-		LED0_TOGGLE;
-		LED1_TOGGLE;
-		LED_TOGGLE;
-		_delay_ms(20);
-	}
-
-	LED0_OFF; LED1_OFF; LED_OFF;
-	_delay_ms(1000);
-
-	// start przerwan
-	sei();
-
+	// let's go!
+	begin_transmission((void*)&tx.buffer, sizeof(PROTO_HEADER) + payload_length + sizeof(uint16_t));
 }
 
 
