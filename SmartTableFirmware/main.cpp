@@ -11,29 +11,11 @@
 #include <avr/pgmspace.h>
 #include <string.h>
 
+#include "crc16.h"
 #include "hardware.h"
 #include "eeprom_config.h"
+#include "comm.h"
 
-enum class MessageType : uint8_t
-{
-	__BroadcastFlag = 0x80,
-	Invalid = 0,
-	None = 1,
-
-	Ping = 2,	// ping wysy³a komputer do konkretnego modu³u
-	Pong = 3,	// konkretny modu³ odpowiada na Ping wiadomoœci¹ Pong
-};
-
-typedef struct
-{
-	uint8_t magic;			// nag³ówek
-	uint8_t address;		// adres nadawcy (jeœli nadaje modu³) lub odbiorcy (jeœli nadaje komputer)
-	enum MessageType type;	// typ wiadomoœci
-	uint8_t size;
-
-	uint8_t data[0];		// tutaj id¹ dane
-
-} PROTO_HEADER;
 
 // testy na czas kompilacji
 STATIC_ASSERT(sizeof(enum MessageType) == 1, message_type_ma_zly_rozmiar);
@@ -42,33 +24,9 @@ STATIC_ASSERT(sizeof(PROTO_HEADER) == 4, proto_header_ma_zly_rozmiar);
 
 void cpu_init(void);
 void begin_transmission(const void* data, uint8_t count);
-void check_rx(void);
+bool check_rx(void);
 
 
-struct TX
-{
-	// wskaŸniki na dane do transmisji
-	const uint8_t* buffer_start;
-	const uint8_t* buffer_position;
-	const uint8_t* buffer_end;
-
-	uint8_t done;
-} volatile tx = {};
-
-#define HEADER_MAGIC	((uint8_t)36)
-#define RX_BUFFER_SIZE	32
-
-struct RX
-{
-	volatile uint8_t* buffer_position;
-	volatile uint8_t got_data;
-	union {
-		volatile uint8_t buffer[RX_BUFFER_SIZE]; // czy tyle wystarczy?
-		volatile PROTO_HEADER header;
-	};
-} rx = {};
-
-#define RX_COUNT (rx.buffer_position - rx.buffer)
 
 const char* test = "Ala ma kota!";
 
@@ -80,10 +38,14 @@ int main(void)
 	while(1)
 	{
 		if (!rx.got_data)
-			continue; // nuuuudy
+			continue; // not yet
 
-		rx.got_data = 0;
-		check_rx();
+		
+		if (!check_rx())
+			continue; // not yet again
+
+		// ok, we have data
+		
 	}
 
     while (1) 
@@ -95,23 +57,25 @@ int main(void)
 #define RX_RESET do { rx.buffer_position = rx.buffer; } while (0);
 
 
-void check_rx(void)
+bool check_rx(void)
 {
+	rx.got_data = 0;
+
 	// zanim cokolwiek zrobimy, w buforze musi byæ minimum sizeof(PROTO_HEADER) bajtów
 	if (RX_COUNT < sizeof(PROTO_HEADER))
 	{
 		// ale jeœli nie ma, to spróbuj trochê pomóc szczêsciu i zrobiæ wstêpn¹ sychronizacjê strumienia danych
 		if (RX_COUNT == 0)
-			return; // nie ma czego synchronizowaæ
+			return false; // nie ma czego synchronizowaæ
 
 		if (rx.header.magic != HEADER_MAGIC)
 		{
 			RX_RESET;
-			return;
+			return false;
 		}
 
 		memmove((void*)(rx.buffer + 1), (void*)rx.buffer, RX_COUNT - 1);
-		return;
+		return false;
 	}
 
 	// Ok! Ca³y nag³ówek jest ju¿ odebrany!
@@ -121,16 +85,33 @@ void check_rx(void)
 	{
 		// to nie do nas
 		RX_RESET;
-		return;
+		return false;
 	}
 
 	// czy adres jest spójny z typem wiadomoœci?
-	if ((rx.header.address == 0xFF) ^ (((uint8_t)rx.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
+	if ((rx.header.address == ADDRESS_BROADCAST) ^ (((uint8_t)rx.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
 	{
 		// brak spójnoœci
 		RX_RESET;
-		return;
+		return false;
 	}
+
+	// check if whole message is here
+	if (RX_COUNT < sizeof(PROTO_HEADER) + rx.header.payload_length + sizeof(uint16_t))
+		return false; // we have received only a part of the message; let us wait for the rest
+
+	// ok, we have received at least whole message; check CRC
+	uint16_t calculated_crc = calc_crc16((void*)rx.header.payload, rx.header.payload_length);
+	uint16_t received_crc = *(uint16_t*)(rx.header.payload + rx.header.payload_length);
+	if (calculated_crc != received_crc)
+	{
+		// checksums does not match
+		RX_RESET;
+		return false;
+	}
+
+	// ok - everything seems to good...
+	return true;
 }
 
 
@@ -198,39 +179,6 @@ void cpu_init(void)
 
 }
 
-ISR(TIMER0_COMPA_vect)
-{
-	LED0_TOGGLE;	
-}
-
-ISR(USART_TX_vect) //uruchamia sie jak wysle 1 bajt danych
-{
-	if (tx.buffer_position == tx.buffer_end) // jeœli koniec bufora, to wy³¹cz nadajnik i ustaw flagê
-	{
-		UCSR0B &= ~_BV(TXCIE0);//wy³¹czanie przerwañ nadajnika
-		RS485_DIR_RECEIVE;
-		tx.done = 1;
-		return;
-	}
-
-	// wyslij bajt i zwieksz wskaŸnik
-	UDR0 = *tx.buffer_position++;
-}
-
-ISR(USART_RX_vect)
-{
-	__attribute__((unused)) uint8_t status = UCSR0A;
-	__attribute__((unused)) uint8_t data = UDR0;
-
-	if (status & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) // bledy: frame error, data overrun, parity error
-		return;
-
-	if (RX_COUNT == RX_BUFFER_SIZE) // przepe³nienie bufora
-		return;
-
-	*rx.buffer_position++ = data;
-	rx.got_data = 1;
-}
 
 void begin_transmission(const void* data, uint8_t count)
 {
