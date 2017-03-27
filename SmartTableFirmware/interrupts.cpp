@@ -4,15 +4,15 @@
  * Created: 3/27/2017 13:49:46
  *  Author: Tomek
  */ 
- #include <avr/io.h>
- #include <avr/interrupt.h>
- #include <util/delay.h>
- #include <avr/pgmspace.h>
- #include <string.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+#include <avr/pgmspace.h>
+#include <string.h>
 
- #include "hardware.h"
- #include "eeprom_config.h"
- #include "comm.h"
+#include "hardware.h"
+#include "eeprom_config.h"
+#include "comm.h"
  
  ISR(TIMER0_COMPA_vect)
  {

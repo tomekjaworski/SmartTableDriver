@@ -173,6 +173,9 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="intensity_measurements.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="comm.cpp">
       <SubType>compile</SubType>
     </Compile>
@@ -195,6 +198,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="hardware.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="intensity_measurements.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="interrupts.cpp">

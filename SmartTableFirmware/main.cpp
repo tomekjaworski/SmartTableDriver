@@ -15,6 +15,7 @@
 #include "hardware.h"
 #include "eeprom_config.h"
 #include "comm.h"
+#include "intensity_measurements.h"
 
 const char* build_date = __DATE__;
 const char* build_time = __TIMESTAMP__;
@@ -37,6 +38,7 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 int main(void)
 {
 	cpu_init();
+	im_initialize();
 	configuration_load();
 
 	while(1)
