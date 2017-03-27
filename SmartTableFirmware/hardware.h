@@ -2,7 +2,7 @@
  * hardware.h
  *
  * Created: 25/03/2017 13:50:13
- *  Author: Iza
+ *  Author: Tomasz Jaworski
  */ 
 
 

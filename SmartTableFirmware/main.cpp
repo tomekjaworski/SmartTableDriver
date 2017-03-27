@@ -2,18 +2,19 @@
  * SmartTableFirmware.c
  *
  * Created: 24/03/2017 16:30:33
- * Author : Iza
+ * Author : Tomasz Jaworski
  */ 
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <avr/pgmspace.h>
+#include <string.h>
 
 #include "hardware.h"
 #include "eeprom_config.h"
 
-enum MessageType
+enum class MessageType : uint8_t
 {
 	__BroadcastFlag = 0x80,
 	Invalid = 0,
@@ -52,20 +53,20 @@ struct TX
 	const uint8_t* buffer_end;
 
 	uint8_t done;
-} volatile tx = { .done = 1 };
+} volatile tx = {};
 
 #define HEADER_MAGIC	((uint8_t)36)
 #define RX_BUFFER_SIZE	32
 
 struct RX
 {
-	uint8_t* buffer_position;
-	uint8_t got_data;
+	volatile uint8_t* buffer_position;
+	volatile uint8_t got_data;
 	union {
-		uint8_t buffer[RX_BUFFER_SIZE]; // czy tyle wystarczy?
-		PROTO_HEADER header;
+		volatile uint8_t buffer[RX_BUFFER_SIZE]; // czy tyle wystarczy?
+		volatile PROTO_HEADER header;
 	};
-} volatile rx = {};
+} rx = {};
 
 #define RX_COUNT (rx.buffer_position - rx.buffer)
 
@@ -73,10 +74,8 @@ const char* test = "Ala ma kota!";
 
 int main(void)
 {
-
 	cpu_init();
 	configuration_load();
-
 
 	while(1)
 	{
@@ -89,8 +88,8 @@ int main(void)
 
     while (1) 
     {
-	begin_transmission(test, 12);
-	_delay_ms(100);
+		begin_transmission(test, 12);
+		_delay_ms(100);
     }
 }
 #define RX_RESET do { rx.buffer_position = rx.buffer; } while (0);
@@ -111,7 +110,7 @@ void check_rx(void)
 			return;
 		}
 
-		memmove(rx.buffer + 1, rx.buffer, RX_COUNT - 1);
+		memmove((void*)(rx.buffer + 1), (void*)rx.buffer, RX_COUNT - 1);
 		return;
 	}
 
@@ -126,7 +125,7 @@ void check_rx(void)
 	}
 
 	// czy adres jest spójny z typem wiadomoœci?
-	if ((rx.header.address == 0xFF) ^ ((rx.header.type & MessageType::__BroadcastFlag) == MessageType::__BroadcastFlag ))
+	if ((rx.header.address == 0xFF) ^ (((uint8_t)rx.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
 	{
 		// brak spójnoœci
 		RX_RESET;
@@ -148,6 +147,8 @@ void check_rx(void)
 #define UBR0_VALUE (F_CPU/(16UL*BAUD))-1
 #endif
 
+#define TIMER0_1MS_RELOAD 10
+
 void cpu_init(void)
 {
 	DDRB |= _BV(PORTB2);
@@ -168,18 +169,17 @@ void cpu_init(void)
 	
 	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00) | _BV(UPM01);	// 8E1
 	UCSR0B = _BV(RXEN0) | _BV(TXEN0);	// wlacz rx i txs
-
-
-	
 	UCSR0B |= (1 << RXCIE0);
 
-	// timer0 = 2kHz (500us) - do modbusa
-	//TCCR0  = (0b110 << CS00); // clkT0S = clkOSC/1024
-	//TIMSK |= (1<<OCIE0) |  (1<<TOIE0);
-	//TIMSK &= ~_BV(OCIE0);
-	//TCNT0 = TIMER0_1MS_RELOAD;
+	// struktury portu szeregowego
+	tx.done = 1;
 
-	sei();
+
+	// ustaw timer 0
+	TCCR0A |= (1 << WGM01); // tryb CTC
+	OCR0A = 0xF9;
+	TIMSK0 |= (1 << OCIE0A);
+	TCCR0B |= (1 << CS02) | (1<<CS00);
 
 	// czy ja zyjê????
 	for(int i = 0; i < 100; i++)
@@ -192,8 +192,16 @@ void cpu_init(void)
 
 	LED0_OFF; LED1_OFF; LED_OFF;
 	_delay_ms(1000);
+
+	// start przerwan
+	sei();
+
 }
 
+ISR(TIMER0_COMPA_vect)
+{
+	LED0_TOGGLE;	
+}
 
 ISR(USART_TX_vect) //uruchamia sie jak wysle 1 bajt danych
 {
@@ -222,14 +230,12 @@ ISR(USART_RX_vect)
 
 	*rx.buffer_position++ = data;
 	rx.got_data = 1;
-		
-
 }
 
 void begin_transmission(const void* data, uint8_t count)
 {
 	// przygotowanie mechanizmu transmisyjnego
-	tx.buffer_start = data;
+	tx.buffer_start = (const uint8_t*)data;
 	tx.buffer_position = tx.buffer_start;
 	tx.buffer_end = tx.buffer_start + count;
 

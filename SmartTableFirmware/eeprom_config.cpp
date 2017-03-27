@@ -2,7 +2,7 @@
  * eeprom_config.c
  *
  * Created: 25/03/2017 13:52:23
- *  Author: Iza
+ *  Author: Tomasz Jaworski
  */ 
  
  #include <avr/io.h>

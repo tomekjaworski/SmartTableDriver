@@ -2,7 +2,7 @@
  * crc16.h
  *
  * Created: 25/03/2017 13:55:32
- *  Author: Iza
+ *  Author: Tomasz Jaworski
  */ 
 
 

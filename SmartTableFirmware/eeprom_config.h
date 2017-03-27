@@ -2,7 +2,7 @@
  * eeprom_config.h
  *
  * Created: 25/03/2017 13:53:03
- *  Author: Iza
+ *  Author: Tomasz Jaworski
  */ 
  
  #ifndef EEPROM_CONFIG_H_
