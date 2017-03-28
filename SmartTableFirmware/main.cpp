@@ -11,6 +11,7 @@
 #include <avr/pgmspace.h>
 #include <string.h>
 
+#include "dbg_putchar.h"
 #include "crc16.h"
 #include "hardware.h"
 #include "eeprom_config.h"
@@ -40,7 +41,7 @@ int main(void)
 	cpu_init();
 	im_initialize();
 	configuration_load();
-
+	im_execute_sync();
 	while(1)
 	{
 		if (!rx.got_data)

@@ -12,6 +12,7 @@
 
  #include "eeprom_config.h"
  #include "crc16.h"
+ #include "dbg_putchar.h"
 
  EEPROM_CONFIGURATION configuration;
 

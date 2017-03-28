@@ -173,6 +173,12 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="dbg_putchar.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="dbg_putchar.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="intensity_measurements.cpp">
       <SubType>compile</SubType>
     </Compile>

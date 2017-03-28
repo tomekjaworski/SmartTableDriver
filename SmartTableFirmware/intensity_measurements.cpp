@@ -10,6 +10,7 @@
 #include <util/delay.h>
 #include "intensity_measurements.h"
 #include "hardware.h"
+#include "dbg_putchar.h"
 
 struct ADC_BLOCK
 {
@@ -48,7 +49,7 @@ void im_initialize(void)
 	ADCSRA |= _BV(ADPS2) | _BV(ADPS1);
 
 	// enable ADC conversions and autotriggering
-	ADCSRA |= _BV(ADATE);
+	//ADCSRA |= _BV(ADATE);
 	ADCSRA |= _BV(ADEN);
 
 	// Aref = AVcc, channel ADC0
