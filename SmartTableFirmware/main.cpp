@@ -36,12 +36,26 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 	memmove((void*)dst, (void*)src, size);
 }
 
+//const char* test = "Ala ma kota!";
+const char* test = "A";
+
 int main(void)
 {
 	cpu_init();
+
+	while(1)
+	{
+		begin_transmission(test, strlen(test));
+		_delay_ms(200);
+	}
+
+
 	im_initialize();
 	configuration_load();
 	im_execute_sync();
+
+
+
 	while(1)
 	{
 		if (!rx.got_data)

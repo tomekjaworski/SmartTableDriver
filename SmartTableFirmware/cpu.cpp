@@ -66,8 +66,10 @@ void cpu_init(void)
 		LED1_TOGGLE;
 		LED_TOGGLE;
 		_delay_ms(20);
+
 	}
 
+	RS485_DIR_RECEIVE;
 	LED0_OFF; LED1_OFF; LED_OFF;
 	_delay_ms(1000);
 
