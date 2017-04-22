@@ -22,9 +22,9 @@ const char* build_date = __DATE__;
 const char* build_time = __TIMESTAMP__;
 const char* build_version = "1.0";
 
-// testy na czas kompilacji
-STATIC_ASSERT(sizeof(enum MessageType) == 1, message_type_ma_zly_rozmiar);
-STATIC_ASSERT(sizeof(PROTO_HEADER) == 4, proto_header_ma_zly_rozmiar);
+// data size asserts
+static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
+static_assert(sizeof(PROTO_HEADER) == 4, "PROTO_HEADER has invalid size");
 
 void cpu_init(void);
 void begin_transmission(const void* data, uint8_t count);

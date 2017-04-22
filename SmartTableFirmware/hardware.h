@@ -25,7 +25,4 @@
 #define RS485_DIR_SEND		do { PORTD |= _BV(PORTD2); } while(0); //1
 #define RS485_DIR_RECEIVE	do { PORTD &= ~_BV(PORTD2); } while(0);//0
 
-#define STATIC_ASSERT(COND,MSG) typedef char static_assertion_##MSG[(COND)?1:-1]
-
-
 #endif /* HARDWARE_H_ */

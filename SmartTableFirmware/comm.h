@@ -2,7 +2,7 @@
  * comm.h
  *
  * Created: 3/27/2017 13:50:39
- *  Author: Tomek
+ *  Author: Tomasz Jaworski
  */ 
 
 
