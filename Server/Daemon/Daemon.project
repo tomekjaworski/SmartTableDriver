@@ -8,6 +8,7 @@
     <File Name="SerialPort.hpp"/>
     <File Name="Environment.cpp"/>
     <File Name="Environment.hpp"/>
+    <File Name="CRC.hpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
