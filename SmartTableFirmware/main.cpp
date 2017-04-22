@@ -24,7 +24,7 @@ const char* build_version = "1.0";
 
 // data size asserts
 static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
-static_assert(sizeof(PROTO_HEADER) == 4, "PROTO_HEADER has invalid size");
+static_assert(sizeof(PROTO_HEADER) == 3, "PROTO_HEADER has invalid size");
 
 void cpu_init(void);
 void begin_transmission(const void* data, uint8_t count);
@@ -36,23 +36,28 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 	memmove((void*)dst, (void*)src, size);
 }
 
+#define RX_RESET do { rx.buffer_position = (volatile uint8_t*)&rx.buffer; } while (0);
+
 //const char* test = "Ala ma kota!";
 const char* test = "A";
 
 int main(void)
 {
 	cpu_init();
-
-	while(1)
-	{
-		begin_transmission(test, strlen(test));
-		_delay_ms(200);
-	}
-
-
+	RX_RESET;
+	
 	im_initialize();
-	configuration_load();
-	im_execute_sync();
+	_delay_ms(1000);
+
+//	while(1)
+//	{
+	//	begin_transmission(test, strlen(test));
+	//	_delay_ms(200);
+//	}
+
+
+	//configuration_load();
+	//im_execute_sync();
 
 
 
@@ -89,7 +94,6 @@ int main(void)
 
 	while(1);
 }
-#define RX_RESET do { rx.buffer_position = (volatile uint8_t*)&rx.buffer; } while (0);
 
 
 bool check_rx(void)
@@ -103,39 +107,44 @@ bool check_rx(void)
 		if (RX_COUNT == 0)
 			return false; // nie ma czego synchronizowaæ
 
-		if (rx.buffer.header.magic != HEADER_MAGIC)
+		if (rx.buffer.header.address != ADDRESS_BROADCAST && rx.buffer.header.address != DEVICE_ADDRESS /*configuration.address*/)
 		{
-			RX_RESET;
-			return false;
+			// remove one byte at the start of the rx buffer
+			memmove((uint8_t*)&rx.buffer + 1, (uint8_t*)&rx.buffer, RX_COUNT - 1);
+			rx.buffer_position--;
 		}
-
-		// remove one byte at the start of the rx buffer
-		memmove((uint8_t*)&rx.buffer + 1, (uint8_t*)&rx.buffer, RX_COUNT - 1);
-		rx.buffer_position--;
-
+		
+		// wait for more data
 		return false;
 	}
 
 	// Ok! We've just received complete header
 	
-	// Sprawdzamy adres
-	if (rx.buffer.header.address != ADDRESS_BROADCAST && rx.buffer.header.address != DEVICE_ADDRESS /*configuration.address*/)
+	// CHECK: if address is consistent with message type
+	if ((rx.buffer.header.address == ADDRESS_BROADCAST) ^ (((uint8_t)rx.buffer.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
 	{
-		// it's not for us and it's not broadcast
+		// NO: got broadcast address and non-broadast message (or the other way around)
+		RX_RESET;
+		return false;
+	}
+	
+	// CHECK: is the message type valid?
+	if (((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) < (uint8_t)MessageType::__MIN || ((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) > (uint8_t)MessageType::__MAX)
+	{
+		// NO: message type is out of range
 		RX_RESET;
 		return false;
 	}
 
-	// czy adres jest spójny z typem wiadomoœci?
-	if ((rx.buffer.header.address == ADDRESS_BROADCAST) ^ (((uint8_t)rx.buffer.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
-	{
-		// brak spójnoœci
+	// CHECK: is payload length less than buffer's capacity
+	if (rx.buffer.header.payload_length > RX_PAYLOAD_CAPACITY) {
+		//YES: message length is not acceptable
 		RX_RESET;
 		return false;
 	}
 
 	// check if whole message is here
-	if (RX_COUNT < (int)sizeof(PROTO_HEADER) + rx.buffer.header.payload_length + sizeof(uint16_t))
+	if (RX_COUNT < (int)(sizeof(PROTO_HEADER) + rx.buffer.header.payload_length + sizeof(uint16_t)))
 		return false; // we have received only a part of the message; let us wait for the rest
 
 	// ok, we have received at least whole message; check CRC
@@ -149,7 +158,6 @@ bool check_rx(void)
 	}
 
 	// ok - everything seems to good...
-		LED_TOGGLE;
 
 	return true;
 }
@@ -157,8 +165,7 @@ bool check_rx(void)
 void send(MessageType type, uint8_t payload_length)
 {	
 	// prepare header
-	tx.buffer.header.address = configuration.address;
-	tx.buffer.header.magic = HEADER_MAGIC;
+	tx.buffer.header.address = DEVICE_ADDRESS;
 	tx.buffer.header.type = type;
 	tx.buffer.header.payload_length = payload_length;
 

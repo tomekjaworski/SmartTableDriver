@@ -13,7 +13,7 @@
 #include <avr/interrupt.h>
 
 
-#define HEADER_MAGIC		((uint8_t)36)
+//#define HEADER_MAGIC		((uint8_t)36)
 #define RX_PAYLOAD_CAPACITY	32
 #define TX_PAYLOAD_CAPACITY	128
 
@@ -30,10 +30,13 @@ enum class MessageType : uint8_t
 	Pong = 3,					// response to Ping message
 	GetVersion = 4,				// get version of the firmware
 	StartFullMeasurement = 5,	// initiate full resolution range measurement
+	
+	__MIN = Ping,
+	__MAX = Pong,
 };
 
 struct PROTO_HEADER {
-	uint8_t magic;			// sync header
+	//uint8_t magic;			// sync header
 	uint8_t address;		// receiver address (if given) or ADDRESS_BROADCAST
 	MessageType type;		// type of the received message
 	uint8_t payload_length;	// 
