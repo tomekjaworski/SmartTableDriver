@@ -69,7 +69,7 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		struct termios ser;
 		tcgetattr(this->fd, &ser);
 		
-		speed_t speed = B115200;
+		speed_t speed = B19200;
 		ret = cfsetospeed(&ser, speed);
 		if (ret == -1) Environment::terminateOnError("cfsetospeed", 2);
 			
@@ -119,3 +119,34 @@ void SerialPort::done(void)
 	this->fd = -1;
 }
 
+int SerialPort::send(const void* data, size_t length)
+{
+	return ::write(this->fd, data, length);
+}
+
+
+/////////////////////////////////////////////////////////
+
+
+std::vector<std::string> SerialPort::getSerialDevices(void)
+{
+	std::vector<std::string> names;
+	
+	for (int n = 0; n < 255; n++)
+	{
+		char dev_name[64];
+		sprintf(dev_name, "/dev/ttyS%d", n);
+	
+		char target[1000];
+		__attribute__((unused)) int len = readlink(dev_name, target, sizeof(target));
+			
+		int fd = open(dev_name, O_RDWR | O_NONBLOCK);
+		if (fd != -1)
+		{
+			close(fd);
+			names.push_back(dev_name);
+		}
+	}
+	
+	return names;
+}
