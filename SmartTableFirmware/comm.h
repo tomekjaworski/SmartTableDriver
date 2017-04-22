@@ -18,6 +18,7 @@
 #define TX_PAYLOAD_CAPACITY	128
 
 #define ADDRESS_BROADCAST	(uint8_t)0xFF
+#define DEVICE_ADDRESS		(uint8_t)0x50
 
 enum class MessageType : uint8_t
 {

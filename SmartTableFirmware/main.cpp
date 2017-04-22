@@ -119,7 +119,7 @@ bool check_rx(void)
 	// Ok! We've just received complete header
 	
 	// Sprawdzamy adres
-	if (rx.buffer.header.address != ADDRESS_BROADCAST && rx.buffer.header.address != configuration.address)
+	if (rx.buffer.header.address != ADDRESS_BROADCAST && rx.buffer.header.address != DEVICE_ADDRESS /*configuration.address*/)
 	{
 		// it's not for us and it's not broadcast
 		RX_RESET;
@@ -141,7 +141,7 @@ bool check_rx(void)
 	// ok, we have received at least whole message; check CRC
 	uint16_t calculated_crc = calc_crc16((void*)&rx.buffer, sizeof(PROTO_HEADER) + rx.buffer.header.payload_length);
 	uint16_t received_crc = *(uint16_t*)(rx.buffer.payload + rx.buffer.header.payload_length);
-	if (calculated_crc != received_crc)
+	if (calculated_crc != received_crc && false)
 	{
 		// checksums does not match
 		RX_RESET;
@@ -149,6 +149,8 @@ bool check_rx(void)
 	}
 
 	// ok - everything seems to good...
+		LED_TOGGLE;
+
 	return true;
 }
 

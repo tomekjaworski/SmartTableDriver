@@ -116,7 +116,7 @@ static_assert(sizeof(ADC_BLOCK2_N4_B1) == 1, "ADC_BLOCK2_N4_B1 has invalid_size"
 static_assert(sizeof(ADC_BLOCK1_N8_B1) == 1, "ADC_BLOCK1_N8_B1 has invalid_size");
 
 
-uint16_t __adc(uint8_t channel)
+inline static uint16_t __adc(uint8_t channel)
 {
 	ADMUX = _BV(REFS0) | (0x07 & channel);
 
@@ -226,7 +226,7 @@ void im_execute_sync(void)
 	}
 
 	// reordering of measurements to match 10x10 points subimage
-	int temp[101];
+	int temp[105];
 	for(int a = 0; a < 15; a++)
 		for(int b = 0; b < 7; b++)
 			temp[readToNumbers[a][b]] = utable[a][b];
