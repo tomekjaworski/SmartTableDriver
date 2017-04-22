@@ -123,7 +123,7 @@ bool check_rx(void)
 	// CHECK: if address is consistent with message type
 	if ((rx.buffer.header.address == ADDRESS_BROADCAST) ^ (((uint8_t)rx.buffer.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
 	{
-		// NO: got broadcast address and non-broadast message (or the other way around)
+		// NO: got broadcast address and non-broadcast message (or the other way around)
 		RX_RESET;
 		return false;
 	}
