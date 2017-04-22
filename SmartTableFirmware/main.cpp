@@ -97,7 +97,7 @@ bool check_rx(void)
 	rx.got_data = 0;
 
 	// zanim cokolwiek zrobimy, w buforze musi byæ minimum sizeof(PROTO_HEADER) bajtów
-	if (RX_COUNT < sizeof(PROTO_HEADER))
+	if (RX_COUNT < (int)sizeof(PROTO_HEADER))
 	{
 		// ale jeœli nie ma, to spróbuj trochê pomóc szczêsciu i zrobiæ wstêpn¹ sychronizacjê strumienia danych
 		if (RX_COUNT == 0)
@@ -135,7 +135,7 @@ bool check_rx(void)
 	}
 
 	// check if whole message is here
-	if (RX_COUNT < sizeof(PROTO_HEADER) + rx.buffer.header.payload_length + sizeof(uint16_t))
+	if (RX_COUNT < (int)sizeof(PROTO_HEADER) + rx.buffer.header.payload_length + sizeof(uint16_t))
 		return false; // we have received only a part of the message; let us wait for the rest
 
 	// ok, we have received at least whole message; check CRC
