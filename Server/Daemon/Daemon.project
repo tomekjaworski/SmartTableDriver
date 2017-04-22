@@ -9,6 +9,7 @@
     <File Name="Environment.cpp"/>
     <File Name="Environment.hpp"/>
     <File Name="CRC.hpp"/>
+    <File Name="Message.h"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
