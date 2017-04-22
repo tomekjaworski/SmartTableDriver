@@ -21,6 +21,7 @@ public:
 
 public:
 	const std::string& getPortName(void) const { return this->port_name; }
+	void discardAllData(void);
 
 	
 public:
