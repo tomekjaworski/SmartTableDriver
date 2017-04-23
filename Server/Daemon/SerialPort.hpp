@@ -27,6 +27,11 @@ public:
 	
 public:
 	SerialPort(void);
+	SerialPort(const SerialPort& sp);
+	SerialPort(SerialPort&& sp);
+	~SerialPort(void);
+	
+	SerialPort& operator=(SerialPort&& sp);
 	
 	void init(const std::string& device_name, bool fake_serial_port);
 	void done(void);

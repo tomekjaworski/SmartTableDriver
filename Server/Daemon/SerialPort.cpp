@@ -18,6 +18,36 @@ SerialPort::SerialPort(void)
 	this->fd = -1;
 }
 
+SerialPort::~SerialPort(void)
+{
+	if (this->fd != -1)
+		this->done();
+}
+
+SerialPort::SerialPort(const SerialPort& sp)
+	: port_name(sp.port_name), fd(sp.fd)
+{
+	// ?
+}
+
+SerialPort::SerialPort(SerialPort&& sp)
+	: port_name(sp.port_name), fd(sp.fd)
+{
+	sp.fd = -1;
+	sp.port_name = "";
+}
+
+SerialPort& SerialPort::operator=(SerialPort&& sp)
+{
+	this->fd = sp.fd;
+	this->port_name = sp.port_name;
+	sp.fd = -1;
+	sp.port_name = "";
+	
+	return *this;
+}
+
+
 void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 {
 
@@ -32,20 +62,21 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		this->port_name = device_name;
 		
 		this->fd = open(device_name.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
-		if (this->fd != -1)
+		if (this->fd == -1)
 			Environment::terminateOnError(std::string("Error opening serial port device ") + device_name, 1);
-	}
-		
-	for (const std::string& pname : fixed_ports)
+	} else
 	{
-		this->fd = open(pname.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
-		if (this->fd != -1)
+		for (const std::string& pname : fixed_ports)
 		{
-			this->port_name = pname;
-			break;
+			this->fd = open(pname.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
+			if (this->fd != -1)
+			{
+				this->port_name = pname;
+				break;
+			}
 		}
 	}
-		
+	
 	if (this->fd == -1)
 	{
 		if (fake_serial_port)
@@ -101,8 +132,8 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		// discart both buffers
 		this->discardAllData();
 	}
-	printf("%s: this->fd = %d\n", this->port_name.c_str(), this->fd);
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	//printf("%s: this->fd = %d\n", this->port_name.c_str(), this->fd);
+	//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }
 
 void SerialPort::discardAllData(void)
