@@ -1,25 +1,24 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdexcept>
+
 #include <termios.h>
 #include <fcntl.h>
 #include <list>
 
-#include "CRC.hpp"
+
 #include <string>
 #include <algorithm>
 
 #include "SerialPort.hpp"
 #include "Environment.hpp"
+#include "MessageReceiver.hpp"
 
-#include "../../SmartTableFirmware/MessageType.h"
-#include "../../SmartTableFirmware/protocol.h"
 
 #include "Message.h"
 
-#define AGREEN	"\e[32m"
-#define ARED	"\e[31m"
-#define AYELLOW	"\e[33m"
+#define AGREEN	"\e[32;1m"
+#define ARED	"\e[31;1m"
+#define AYELLOW	"\e[33;1m"
 #define ARESET	"\e[0m"
 
 #include "timeout_error.hpp"
@@ -53,7 +52,7 @@ int main(int argc, char **argv)
 		{
 			printf("Opening port %s... ", pname.c_str());
 			SerialPort::Ptr sp(new SerialPort());
-			sp->init(pname+"0", false);
+			sp->init(pname, false);
 			ports.push_back(sp);
 			
 			printf(AGREEN "Done.\n" ARESET);
@@ -68,13 +67,13 @@ int main(int argc, char **argv)
 	/*
 	 * 		Device MAP:						Group MAP:
 	 * 										
-	 * 		xx  xx  xx  xx  xx  xx			xx  xx  xx  xx  xx  xx
-	 * 										
-	 *		xx  xx  xx  xx  xx  xx			xx  xx  xx  xx  xx  xx
-	 * 										
-	 *		xx  xx  xx  xx  xx  xx			xx  xx  xx  xx  xx  xx
-	 * 										
-	 *		xx  xx  xx  xx  xx  xx			xx  xx  xx  xx  xx  xx
+	 * 		xx  xx  xx  xx  xx  xx			xx--xx--xx--xx  xx  xx
+	 * 														 |	 |
+	 *		xx  xx  xx  xx  xx  xx			xx--xx--xx--xx  xx  xx
+	 * 														 |	 |
+	 *		xx  xx  xx  xx  xx  xx			xx--xx--xx--xx  xx  xx
+	 * 															
+	 *		xx  xx  xx  xx  xx  xx			xx--xx--xx  xx--xx--xx
 	 * 										
 	 */
 	std::vector<device_address_t> g1 = { 0x10, 0x11, 0x12, 0x13 };
@@ -109,10 +108,12 @@ int main(int argc, char **argv)
 	
 	printf("Scanning for SmartTable devices...\n");
 	SerialPort::Ptr device2serial[256] = {};
+	std::list<device_address_t> missing_devices;
 	
 	for(device_address_t dev_addr : addresses) {
 		printf(" Looking for " AYELLOW "0x%02x" ARESET "... ", dev_addr);
 		
+		bool found = false;
 		for(SerialPort::Ptr& sp : ports) {
 			try {
 				
@@ -125,6 +126,7 @@ int main(int argc, char **argv)
 					continue; // error
 					
 				device2serial[dev_addr] = sp;
+				found = true;
 			
 			} catch(const timeout_error& te) {
 				// ok, timeout means no reponse. Thats ok, i guess..
@@ -133,8 +135,31 @@ int main(int argc, char **argv)
 				printf(ARED "Failed: %s\n" ARESET, ex.what());
 			}
 		}
+		
+		if (found)
+			printf(AGREEN "Found\n" ARESET);
+		else
+		{
+			printf(ARED "Missing\n" ARESET);
+			missing_devices.push_back(dev_addr);
+		}
 	}
 	
+	//
+	// remove missing devices from groups
+	int usable_dev_count = 0;
+	for(auto& group : groups)
+	{
+		for(device_address_t missing_device : missing_devices) {
+			auto pos = std::find(group.begin(), group.end(), missing_device);
+			if (pos == group.end())
+				continue; // not this group
+			group.erase(pos);
+		}
+		usable_dev_count += group.size();
+	}	
+
+	printf("Number of usable devices: %d\n", usable_dev_count);
 	
 	// match groups to USB devices, since theirs order can change every time the system boots up
 	
@@ -153,165 +178,28 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-#include <time.h>
 #include <assert.h>
-
-uint64_t getMilliseconds(void)
-{
-	timespec ts;
-	int ret = clock_gettime(CLOCK_MONOTONIC, &ts);
-	assert (ret == 0);
-	uint64_t ms = ts.tv_nsec / 1000000 + ts.tv_sec * 1000;
-
-	return ms;
-}
-
-
-class FifoBuffer
-{
-	public:
-		FifoBuffer(){}
-		
-	public:
-		void appendData(const void* data, size_t count) {}
-};
-
 #include <unistd.h>
-
-class MessageReceiver
-{
-		uint8_t* data;
-		uint32_t capacity;
-		uint32_t position;
-		
-	public:
-		MessageReceiver(void);
-		~MessageReceiver();
-		
-		
-		ssize_t receive(int fd);
-		
-		bool getMessage(void);
-	
-};
-
-MessageReceiver::MessageReceiver(void)
-{
-	this->capacity = 64 * 1024;
-	this->data = new uint8_t[this->capacity];
-}
-
-MessageReceiver::~MessageReceiver()
-{
-	if (this->data != nullptr)
-	{
-		delete[] this->data;
-		this->data = nullptr;
-	}
-}
-
-
-ssize_t MessageReceiver::receive(int fd)
-{
-	uint32_t space_left = this->capacity - this->position;
-	if (space_left < 1024)
-	{
-		// make some room
-		uint32_t new_cap = this->capacity * 1.5;
-		uint8_t* new_ptr = new uint8_t[new_cap];
-		
-		memcpy(new_ptr, this->data, this->position);
-		
-		std::swap(new_ptr, this->data);
-		std::swap(new_cap, this->capacity);
-		
-		delete[] new_ptr;
-	}
-	
-	ssize_t bytes_read = ::read(fd, data + position, capacity - position);
-	assert(bytes_read > 0);
-	
-	position += bytes_read;
-	
-	return bytes_read;
-}
-
-
-bool MessageReceiver::getMessage()
-{
-	uint32_t offset = 0;
-	bool got_message = false;
-	while (true)
-	{
-		// is there enough data for the shortest message?
-		if (this->position < offset + sizeof(PROTO_HEADER) + sizeof(uint16_t))
-			break; // nope - need more data
-		
-		// Header verification: address
-		const PROTO_HEADER* phdr = (const PROTO_HEADER*)this->data;
-		
-		if (phdr->address >= 0xF0 || phdr->address == 0x00) // addresses are only 0x01 - 0xEF
-		{
-			// remove one byte and loop
-			offset += 1;
-			continue;
-		}
-		
-		// Header verification: message type
-		if (phdr->type < MessageType::__MIN || phdr->type > MessageType::__MAX)
-		{
-			// remove one byte and loop
-			offset += 1;
-			continue;
-		}
-		
-		// is there enough data in buffer?
-		if (this->position < offset + sizeof(PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t))
-			break; // nope - need more data
-		
-		// ok, there is; now verify the checksum
-		uint16_t calculated = CRC16::Calc(this->data, sizeof(PROTO_HEADER) + payload_length);
-		uint16_t received = this->data[sizeof(PROTO_HEADER) + payload_length + 0];
-		received |= (uint16_t)(this->data[sizeof(PROTO_HEADER) + payload_length + 1] << 8);
-		
-		if (calculated != received)
-		{
-			// remove one byte and loop
-			offset += 1;
-			continue;
-		}
-		
-		// The Checksum is OK!
-	
-		tralalalalalalalalala
-		
-		got_message = true;
-		break;
-	}
-
-	if (offset > 0)
-	{
-		// move the receive buffer back by offset bytes
-		memmove(this->data, this->data + offset, this->position - offset);
-		this->position -= offset;
-	}
-	
-	return got_message;
-	
-}
+#include <chrono>
 
 
 bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response)
 {
 
-	uint64_t timeout = 2000;
+	int32_t timeout = 500;
 
 	
-	uint64_t start_time = getMilliseconds();
-	uint8_t buffer[1024];
-	ssize_t position = 0;
-	//FifoBuffer fb;
+	//uint8_t buffer[1024];
+	//ssize_t position = 0;
 	
+	// prepare receiver and send query
+	serial.discardAllData();
+	MessageReceiver mr;
+	serial.send(query.getBinary(), query.getBinaryLength());
+	
+	std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
+	
+	// now wait for response
 	do {
 		fd_set rfd;
 		FD_ZERO(&rfd);
@@ -321,27 +209,29 @@ bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& r
 		int sret = ::select(serial.getHandle() + 1, &rfd, nullptr, nullptr, &tv);
 		
 		if (sret == 0)
-			continue; // timeout - let's loop
+			goto _check_timeout; // timeout - let's loop
 			
 		if (sret == -1) {
 			perror(__func__);
 			Environment::terminateOnError("select", 0);
 		}
 	
-		ssize_t bytes_read = ::read(serial.getHandle(), buffer + position, sizeof(buffer) - position);
-		assert(bytes_read > 0);
+		mr.receive(serial.getHandle());
+		//ssize_t bytes_read = ::read(serial.getHandle(), buffer + position, sizeof(buffer) - position);
+		//assert(bytes_read > 0);
+		//position += bytes_read;
 		
-		position += bytes_read;
-		
-		
-		
-		
-		
+		if (mr.getMessage(response))
+			return true;
 		
 		
 		// check for timeout
-		if (getMilliseconds() - start_time > timeout)
-			throw timeout_error("Timeout");
+_check_timeout:;
+		std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count() > timeout)
+			throw timeout_error("SendAndWaitForResponse");
 		
 	} while (true);
+	
+	return false;
 }

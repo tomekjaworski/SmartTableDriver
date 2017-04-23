@@ -11,6 +11,8 @@
     <File Name="CRC.hpp"/>
     <File Name="Message.h"/>
     <File Name="timeout_error.hpp"/>
+    <File Name="MessageReceiver.hpp"/>
+    <File Name="MessageReceiver.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

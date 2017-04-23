@@ -8,10 +8,12 @@
 #include <chrono>
 #include <sstream>
 #include <iostream>
-
+#include <string>
+#include <iostream>
 #include "SerialPort.hpp"
 #include "Environment.hpp"
 
+using namespace std::string_literals;
 
 SerialPort::SerialPort(void)
 {
@@ -63,7 +65,7 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		
 		this->fd = open(device_name.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
 		if (this->fd == -1)
-			Environment::terminateOnError(std::string("Error opening serial port device ") + device_name, 1);
+			throw std::runtime_error("Error opening serial port device "s + device_name);
 	} else
 	{
 		for (const std::string& pname : fixed_ports)
@@ -86,7 +88,7 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 			
 
 	if (this->fd == -1)
-		Environment::terminateOnError(std::string("Error opening serial port device ") + device_name, 1);
+		throw std::runtime_error("Error opening serial port device " + device_name);
 
 	if (fake_serial_port)
 	{
