@@ -1,9 +1,9 @@
 #if !defined(_COMM_HPP_)
 #define _COMM_HPP_
 
-
 #include <string>
 #include <vector>
+#include <memory>
 
 class SerialPort
 {
@@ -21,6 +21,8 @@ public:
 	
 
 public:
+	typedef std::shared_ptr<SerialPort> Ptr;
+
 	const std::string& getPortName(void) const { return this->port_name; }
 	void discardAllData(void);
 
@@ -35,8 +37,11 @@ public:
 	
 	void init(const std::string& device_name, bool fake_serial_port);
 	void done(void);
-	
+
 	int send(const void* data, size_t length);
+	
+	
+	int getHandle(void) const { return this->fd; }
 	
 	
 public:

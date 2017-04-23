@@ -10,6 +10,7 @@
     <File Name="Environment.hpp"/>
     <File Name="CRC.hpp"/>
     <File Name="Message.h"/>
+    <File Name="timeout_error.hpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

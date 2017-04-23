@@ -12,7 +12,13 @@ private:
 	
 	
 public:
-	Message(uint8_t device_address, MessageType type, void* payload = nullptr, size_t payload_length = 0)
+
+	Message()
+		: Message(0, MessageType::Invalid)
+	{		
+	}
+
+	Message(device_address_t device_address, MessageType type, void* payload = nullptr, size_t payload_length = 0)
 	{
 		if (payload_length > RX_PAYLOAD_CAPACITY)
 			throw std::length_error("payload_length too large");
@@ -40,6 +46,9 @@ public:
 public:
 	const PROTO_HEADER& getHeader(void) const { return *(const PROTO_HEADER*)this->data; }
 	uint8_t getChecksum(void) const { return *(uint16_t*)(this->data + this->message_size - sizeof(uint16_t)); }
+	
+	device_address_t getAddress(void) const { return this->getHeader().address; }
+	MessageType getType(void) const { return this->getHeader().type; }
 	
 	const void* getBinary(void) const { return this->data; }
 	size_t getBinaryLength(void) const { return this->message_size; }

@@ -16,10 +16,12 @@
 #define ADDRESS_BROADCAST	(uint8_t)0xFF
 #define DEVICE_ADDRESS		(uint8_t)0x50
 
+typedef unsigned char device_address_t;
+
 struct PROTO_HEADER {
-	uint8_t address;		// receiver address (if given) or ADDRESS_BROADCAST
-	MessageType type;		// type of the received message
-	uint8_t payload_length;	//
+	device_address_t address;		// receiver address (if given) or ADDRESS_BROADCAST
+	MessageType type;				// type of the received message
+	uint8_t payload_length;			//
 };
 
 
