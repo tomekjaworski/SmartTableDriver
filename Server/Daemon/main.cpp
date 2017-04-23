@@ -239,40 +239,64 @@ ssize_t MessageReceiver::receive(int fd)
 
 bool MessageReceiver::getMessage()
 {
-	// is there enough data for the shortest message?
-	if (this->position < sizeof(PROTO_HEADER) + sizeof(uint16_t))
-		return false; // nope - need more data
-	
-	// Header verification: address
-	const PROTO_HEADER* phdr = (const PROTO_HEADER*)this->data;
-	
-	if (phdr->address >= 0xF0 || phdr->address == 0x00) // addresses are only 0x01 - 0xEF
+	uint32_t offset = 0;
+	bool got_message = false;
+	while (true)
 	{
-		// remove one byte and loop
+		// is there enough data for the shortest message?
+		if (this->position < offset + sizeof(PROTO_HEADER) + sizeof(uint16_t))
+			break; // nope - need more data
+		
+		// Header verification: address
+		const PROTO_HEADER* phdr = (const PROTO_HEADER*)this->data;
+		
+		if (phdr->address >= 0xF0 || phdr->address == 0x00) // addresses are only 0x01 - 0xEF
+		{
+			// remove one byte and loop
+			offset += 1;
+			continue;
+		}
+		
+		// Header verification: message type
+		if (phdr->type < MessageType::__MIN || phdr->type > MessageType::__MAX)
+		{
+			// remove one byte and loop
+			offset += 1;
+			continue;
+		}
+		
+		// is there enough data in buffer?
+		if (this->position < offset + sizeof(PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t))
+			break; // nope - need more data
+		
+		// ok, there is; now verify the checksum
+		uint16_t calculated = CRC16::Calc(this->data, sizeof(PROTO_HEADER) + payload_length);
+		uint16_t received = this->data[sizeof(PROTO_HEADER) + payload_length + 0];
+		received |= (uint16_t)(this->data[sizeof(PROTO_HEADER) + payload_length + 1] << 8);
+		
+		if (calculated != received)
+		{
+			// remove one byte and loop
+			offset += 1;
+			continue;
+		}
+		
+		// The Checksum is OK!
+	
+		tralalalalalalalalala
+		
+		got_message = true;
+		break;
+	}
+
+	if (offset > 0)
+	{
+		// move the receive buffer back by offset bytes
+		memmove(this->data, this->data + offset, this->position - offset);
+		this->position -= offset;
 	}
 	
-	// Header verification: message type
-	if (phdr->type < MessageType::__MIN || phdr->type > MessageType::__MAX)
-	{
-		// remove one byte and loop
-	}
-	
-	// is there enough data in buffer?
-	if (this->position < sizeof(PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t))
-		return false; // nope - need more data
-	
-	// ok, there is; now verify the checksum
-	uint16_t calculated = CRC16::Calc(this->data, sizeof(PROTO_HEADER) + payload_length);
-	uint16_t received = this->data[sizeof(PROTO_HEADER) + payload_length + 0];
-	received |= (uint16_t)(this->data[sizeof(PROTO_HEADER) + payload_length + 1] << 8);
-	
-	if (calculated != received)
-	{
-		// remove one byte and loop
-	}
-	
-	// The Checksum is OK!
-	
+	return got_message;
 	
 }
 
