@@ -252,3 +252,6 @@ paket-files/
 *.sln.iml
 /SmartTableFirmware/SmartTableFirmware.componentinfo.xml
 doc/plytka.pdf
+
+/.codelite
+/Makefile

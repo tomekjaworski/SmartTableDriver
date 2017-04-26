@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "CRC.hpp"
-#include "../../SmartTableFirmware/protocol.h"
+#include "../SmartTableFirmware/protocol.h"
 
 class Message
 {
