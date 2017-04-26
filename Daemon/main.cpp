@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include <termios.h>
 #include <fcntl.h>
@@ -16,15 +17,26 @@
 
 #include "Message.h"
 
-#define AGREEN	"\e[32;1m"
-#define ARED	"\e[31;1m"
-#define AYELLOW	"\e[33;1m"
-#define ARESET	"\e[0m"
+#include "ansi.h"
 
 #include "timeout_error.hpp"
 
 bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response);
 
+void ShowTopology(const std::string& propmpt, const std::vector<std::vector<device_address_t> >& groups)
+{
+	printf("%s:\n", propmpt.c_str());
+	for (size_t gid = 0; gid < groups.size(); gid++)
+	{
+		printf(" Group %d: ", gid + 1);
+		for(device_address_t dev_id : groups[gid])
+			printf(AYELLOW "%02x " ARESET, dev_id);
+			
+		if (groups[gid].empty())
+			printf(ARED "None" ARESET);
+		printf("\n");
+	}
+}
 
 int main(int argc, char **argv)
 {
@@ -101,6 +113,7 @@ int main(int argc, char **argv)
 				addresses.push_back(dev_addr);
 
 	printf(AGREEN "Done. Got %d devices in %d groups\n" ARESET, addresses.size(), groups.size());
+	ShowTopology("Expected topology", groups);
 	
 	
 	//
@@ -114,6 +127,7 @@ int main(int argc, char **argv)
 		printf(" Looking for " AYELLOW "0x%02x" ARESET "... ", dev_addr);
 		
 		bool found = false;
+		std::string port_name = "unknown";
 		for(SerialPort::Ptr& sp : ports) {
 			try {
 				
@@ -127,6 +141,7 @@ int main(int argc, char **argv)
 					
 				device2serial[dev_addr] = sp;
 				found = true;
+				port_name = sp->getPortName();
 			
 			} catch(const timeout_error& te) {
 				// ok, timeout means no reponse. Thats ok, i guess..
@@ -137,7 +152,7 @@ int main(int argc, char **argv)
 		}
 		
 		if (found)
-			printf(AGREEN "Found\n" ARESET);
+			printf(AGREEN "Found" ARESET " on %s\n", port_name.c_str());
 		else
 		{
 			printf(ARED "Missing\n" ARESET);
@@ -157,13 +172,74 @@ int main(int argc, char **argv)
 			group.erase(pos);
 		}
 		usable_dev_count += group.size();
-	}	
-
+	}
 	printf("Number of usable devices: %d\n", usable_dev_count);
 	
+	//
+	// TODO: remove empty groups
+
+
+	//
+	// Show current topology
+	ShowTopology("Current tepology (after device detection)", groups);
+		
+	
 	// match groups to USB devices, since theirs order can change every time the system boots up
+	printf("Matching groups to USB devices...\n");
+	bool ok = true;
+	for(const auto& group : groups) {
+		SerialPort::Ptr expected_port = nullptr;
+		for(device_address_t dev_addr : group) {
+			
+			// set first pointer to SerialPort as expected pointer
+			if (expected_port == nullptr)
+				expected_port = device2serial[dev_addr];
+				
+			// we expect, that port's pointer will be the same
+			if (device2serial[dev_addr] == expected_port)
+				continue; // it's the same port, so group is not divided
+			
+			ok = false;
+			
+			// first device ws not found, so it has no port
+			if (expected_port == nullptr) {
+				printf(" Device 0x%02X: expected null pointer\n", dev_addr);
+				
+				continue;
+			}
+
+			// second and further device was not found
+			if (device2serial[dev_addr] == nullptr) {
+				printf(" Device 0x%02X: expected serial %s (%p) but got null pointer\n", dev_addr,
+				expected_port->getPortName().c_str(), expected_port.get());
+				continue;
+			}
+
+			// there's a mismatch between logical description (groups) and physical connections
+			printf(" Device 0x%02X: expected serial %s (%p) but got %s (%p)\n", dev_addr,
+				expected_port->getPortName().c_str(), expected_port.get(),
+				device2serial[dev_addr]->getPortName().c_str(), device2serial[dev_addr]);
+		}
+	}
 	
-	
+	if (ok)
+		printf("Ok.\n");
+
+	//
+	// get version of each device
+	for (device_address_t dev_addr = 0; dev_addr < 0xF0; dev_addr++)
+	{
+		if (device2serial[dev_addr] == nullptr)
+			continue; // no device at this point
+			
+		Message response, mver(dev_addr, MessageType::GetVersion);
+				
+		SendAndWaitForResponse(*device2serial[dev_addr], mver, response);
+		assert(response.getType() == MessageType::GetVersion || response.getAddress() == dev_addr);
+		
+		std::string sver((const char*)response.getPayload(), response.getPayloadLength());
+		printf("Device "AYELLOW"%02X"ARESET": "AYELLOW"%s"ARESET"\n", dev_addr, sver.c_str());
+	}
 	
 	
 //	SerialPort sp;
@@ -193,8 +269,9 @@ bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& r
 	//ssize_t position = 0;
 	
 	// prepare receiver and send query
-	serial.discardAllData();
 	MessageReceiver mr;
+
+	serial.discardAllData();
 	serial.send(query.getBinary(), query.getBinaryLength());
 	
 	std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();

@@ -14,6 +14,8 @@
 #define TX_PAYLOAD_CAPACITY	128
 
 #define ADDRESS_BROADCAST	(device_address_t)0xFF
+#define ADDRESS_NONE		(device_address_t)0x00
+
 
 typedef unsigned char device_address_t;
 

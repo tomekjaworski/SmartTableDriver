@@ -8,11 +8,17 @@
     <File Name="SerialPort.hpp"/>
     <File Name="Environment.cpp"/>
     <File Name="Environment.hpp"/>
-    <File Name="CRC.hpp"/>
-    <File Name="Message.h"/>
-    <File Name="timeout_error.hpp"/>
     <File Name="MessageReceiver.hpp"/>
     <File Name="MessageReceiver.cpp"/>
+    <VirtualDirectory Name="Firmware">
+      <File Name="../SmartTableFirmware/protocol.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="Only headers">
+      <File Name="ansi.h"/>
+      <File Name="CRC.hpp"/>
+      <File Name="Message.h"/>
+      <File Name="timeout_error.hpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

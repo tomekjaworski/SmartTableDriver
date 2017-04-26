@@ -7,6 +7,7 @@
 MessageReceiver::MessageReceiver(void)
 {
 	this->capacity = 64 * 1024;
+	this->position = 0;
 	this->data = new uint8_t[this->capacity];
 }
 

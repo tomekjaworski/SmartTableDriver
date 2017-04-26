@@ -17,9 +17,32 @@ private:
 public:
 
 	Message()
-		: Message(0, MessageType::Invalid)
+		: Message(ADDRESS_NONE, MessageType::Invalid)
 	{		
 	}
+	
+	Message(const Message& msg)
+	{
+		if (msg.data == nullptr)
+			return;
+			
+		size_t len = msg.getBinaryLength();
+		this->data = new uint8_t[len];
+		memcpy(this->data, msg.data, len);
+	}
+	
+	Message(Message&& m)
+	{
+		this->data = nullptr;
+		this->data = std::move(m.data);
+	}
+
+	Message& operator = (Message&& m)
+	{
+		std::swap(this->data, m.data);
+		return *this;
+	}
+
 
 	Message(device_address_t device_address, MessageType type, const void* payload = nullptr, size_t payload_length = 0)
 	{
@@ -72,6 +95,9 @@ public:
 	
 	const void* getBinary(void) const { return this->data; }
 	size_t getBinaryLength(void) const { return sizeof(PROTO_HEADER) + getHeader().payload_length + sizeof(uint16_t); }
+	
+	const void* getPayload(void) const { return this->data + sizeof(PROTO_HEADER); }
+	size_t getPayloadLength(void) const { return getHeader().payload_length; }
 	
 };
 

@@ -20,7 +20,7 @@
 #include "intensity_measurements.h"
 
 const char* build_date = __DATE__;
-const char* build_time = __TIMESTAMP__;
+const char* build_time = __TIME__;
 const char* build_version = "1.0";
 
 // data size asserts
@@ -29,7 +29,7 @@ static_assert(sizeof(PROTO_HEADER) == 3, "PROTO_HEADER has invalid size");
 
 void cpu_init(void);
 void begin_transmission(const void* data, uint8_t count);
-void send(MessageType type, uint8_t payload_length);
+void send(device_address_t addr, MessageType type, uint8_t payload_length);
 bool check_rx(void);
 
 inline static void memmove(volatile void* dst, volatile void* src, size_t size)
@@ -74,22 +74,23 @@ int main(void)
 		if (rx.buffer.header.type == MessageType::Ping)
 		{
 			memmove(tx.buffer.payload, rx.buffer.payload, rx.buffer.header.payload_length);
-			send(MessageType::Pong, rx.buffer.header.payload_length);
-			continue;
+			send(rx.buffer.header.address, MessageType::Pong, rx.buffer.header.payload_length);
 		}
 
 		if (rx.buffer.header.type == MessageType::GetVersion)
 		{
 			strcpy((char*)tx.buffer.payload, "version="); strcat((char*)tx.buffer.payload, build_version);
-			strcpy((char*)tx.buffer.payload, ";date="); strcat((char*)tx.buffer.payload, build_date);
-			strcpy((char*)tx.buffer.payload, ";version="); strcat((char*)tx.buffer.payload, build_time);
-			continue;
+			strcat((char*)tx.buffer.payload, ";date="); strcat((char*)tx.buffer.payload, build_date);
+			strcat((char*)tx.buffer.payload, ";time="); strcat((char*)tx.buffer.payload, build_time);
+			send(rx.buffer.header.address, MessageType::GetVersion, strlen((const char*)tx.buffer.payload));
 		}
 
 		if (rx.buffer.header.type == MessageType::StartFullMeasurement)
 		{
 			// 
 		}
+
+		RX_RESET;
 	}
 
 
@@ -108,7 +109,13 @@ bool check_rx(void)
 		if (RX_COUNT == 0)
 			return false; // nie ma czego synchronizowaæ
 
-		if (rx.buffer.header.address != ADDRESS_BROADCAST && rx.buffer.header.address != DEVICE_ADDRESS /*configuration.address*/)
+		if (rx.buffer.header.address != ADDRESS_BROADCAST
+			&& rx.buffer.header.address != 0x10
+			&& rx.buffer.header.address != 0x20
+			&& rx.buffer.header.address != 0x30
+			&& rx.buffer.header.address != 0x40
+			&& rx.buffer.header.address != 0x50
+			&& rx.buffer.header.address != DEVICE_ADDRESS)
 		{
 			// remove one byte at the start of the rx buffer
 			memmove((uint8_t*)&rx.buffer + 1, (uint8_t*)&rx.buffer, RX_COUNT - 1);
@@ -163,10 +170,10 @@ bool check_rx(void)
 	return true;
 }
 
-void send(MessageType type, uint8_t payload_length)
+void send(device_address_t addr, MessageType type, uint8_t payload_length)
 {	
 	// prepare header
-	tx.buffer.header.address = DEVICE_ADDRESS;
+	tx.buffer.header.address = addr;
 	tx.buffer.header.type = type;
 	tx.buffer.header.payload_length = payload_length;
 
