@@ -6,11 +6,11 @@
 #include <string.h>
 
 #include "CRC.hpp"
-#include "../../SmartTableFirmware/MessageType.h"
 #include "../../SmartTableFirmware/protocol.h"
 
 class Message
 {
+	
 private:
 	uint8_t* data;
 	

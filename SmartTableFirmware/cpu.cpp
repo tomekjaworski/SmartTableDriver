@@ -11,18 +11,18 @@
 
 #include "hardware.h"
 #include "comm.h"
+#include "config.h"
 
-#define BAUD 19200	// 8E1 (!!!)
 #define BAUD_UX2
 
 //////////////////////////////////////////////////////////////////////////
 
 #if defined(BAUD_UX2)
 // UX2 = 1
-#define UBR0_VALUE (F_CPU/(8UL*BAUD))-1
+#define UBR0_VALUE (F_CPU/(8UL*SERIAL_BAUD))-1
 #else
 // UX2 = 0
-#define UBR0_VALUE (F_CPU/(16UL*BAUD))-1
+#define UBR0_VALUE (F_CPU/(16UL*SERIAL_BAUD))-1
 #endif
 
 #define TIMER0_1MS_RELOAD 10

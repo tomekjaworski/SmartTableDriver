@@ -11,12 +11,11 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "MessageType.h"
 #include "protocol.h"
 
 struct TX
 {
-	// wskaüniki na dane do transmisji
+	// pointers for data transmission routines
 	volatile const uint8_t* buffer_start;
 	volatile const uint8_t* buffer_position;
 	volatile const uint8_t* buffer_end;

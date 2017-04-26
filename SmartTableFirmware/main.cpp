@@ -16,6 +16,7 @@
 #include "hardware.h"
 #include "eeprom_config.h"
 #include "comm.h"
+#include "config.h"
 #include "intensity_measurements.h"
 
 const char* build_date = __DATE__;

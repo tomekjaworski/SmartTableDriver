@@ -191,6 +191,9 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="config.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="dbg_putchar.cpp">
       <SubType>compile</SubType>
     </Compile>
@@ -234,9 +237,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="MessageType.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="protocol.h">

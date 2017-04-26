@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 	 *		xx  xx  xx  xx  xx  xx			xx--xx--xx  xx--xx--xx
 	 * 										
 	 */
-	std::vector<device_address_t> g1 = { 0x10, 0x11, 0x12, 0x13 };
+	std::vector<device_address_t> g1 = { 0x1d, 0x11, 0x12, 0x13 };
 	std::vector<device_address_t> g2 = { 0x20, 0x21, 0x22 };
 	std::vector<device_address_t> g3 = { 0x30, 0x31, 0x32, 0x33 };
 	std::vector<device_address_t> g4 = { 0x40, 0x41, 0x42 };
