@@ -53,11 +53,11 @@ void cpu_init(void)
 	tx.done = 1;
 
 
-	// ustaw timer 0
-	TCCR0A |= (1 << WGM01); // tryb CTC
-	OCR0A = 0xF9;
+	// Set timer to 1ms
+	TCCR0A |= (1 << WGM01); // CTC mode
+	OCR0A = (8000000UL / 64UL) / 1000UL - 1;
 	TIMSK0 |= (1 << OCIE0A);
-	TCCR0B |= (1 << CS02) | (1<<CS00);
+	TCCR0B |= (1 << CS00) | (1 << CS01); // clk / 64
 
 	// czy ja zyjê????
 	for(int i = 0; i < 100; i++)
