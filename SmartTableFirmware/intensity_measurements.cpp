@@ -87,6 +87,44 @@ const int readToNumbers[15][7] = {
 int utable[15][7];
 int otable[10][10];
 
+uint16_t raw[7*15];
+
+void im_full_resolution_synchronized(void)
+{
+	_delay_ms(500);
+	// 8 -martwy  0-7 9-16
+	IM_DATA_PIN(false);		//  digitalWrite(dataPin,LOW);
+	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+	_delay_ms(2);
+	IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
+	_delay_ms(2);
+	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+	_delay_ms(2);
+	IM_DATA_PIN(true);		//	digitalWrite(dataPin,HIGH);
+
+	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+	_delay_ms(2);
+	IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
+	_delay_ms(2);
+	
+	uint16_t* ptr = raw;
+	for(int i = 0; i < 15; i++)
+	{
+		IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+		_delay_ms(2);
+		IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
+		_delay_ms(2);
+
+		*ptr++ = IM_ADC_READ(0);
+		*ptr++ = IM_ADC_READ(1);
+		*ptr++ = IM_ADC_READ(2);
+		*ptr++ = IM_ADC_READ(3);
+		*ptr++ = IM_ADC_READ(4);
+		*ptr++ = IM_ADC_READ(5);
+		*ptr++ = IM_ADC_READ(6);
+	}
+}
+
 void im_execute_sync(void)
 {
 

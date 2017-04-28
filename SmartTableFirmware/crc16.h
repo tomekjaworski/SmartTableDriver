@@ -11,6 +11,7 @@
 
 
 uint16_t calc_crc16(const void *buf, uint8_t size);
+uint16_t calc_crc16(const void *buf1, uint8_t size1, const void* buf2, uint8_t size2);
 
 
 

@@ -28,8 +28,7 @@ static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
 static_assert(sizeof(PROTO_HEADER) == 3, "PROTO_HEADER has invalid size");
 
 void cpu_init(void);
-void begin_transmission(const void* data, uint8_t count);
-void send(device_address_t addr, MessageType type, uint8_t payload_length);
+void send(device_address_t addr, MessageType type, const uint8_t* payload, uint8_t payload_length);
 bool check_rx(void);
 
 inline static void memmove(volatile void* dst, volatile void* src, size_t size)
@@ -73,21 +72,21 @@ int main(void)
 		// ok, we have data
 		if (rx.buffer.header.type == MessageType::Ping)
 		{
-			memmove(tx.buffer.payload, rx.buffer.payload, rx.buffer.header.payload_length);
-			send(rx.buffer.header.address, MessageType::Pong, rx.buffer.header.payload_length);
+			memmove(tx.payload, rx.buffer.payload, rx.buffer.header.payload_length);
+			send(rx.buffer.header.address, MessageType::Pong, tx.payload, rx.buffer.header.payload_length);
 		}
 
 		if (rx.buffer.header.type == MessageType::GetVersion)
 		{
-			strcpy((char*)tx.buffer.payload, "version="); strcat((char*)tx.buffer.payload, build_version);
-			strcat((char*)tx.buffer.payload, ";date="); strcat((char*)tx.buffer.payload, build_date);
-			strcat((char*)tx.buffer.payload, ";time="); strcat((char*)tx.buffer.payload, build_time);
-			send(rx.buffer.header.address, MessageType::GetVersion, strlen((const char*)tx.buffer.payload));
+			strcpy((char*)tx.payload, "version="); strcat((char*)tx.payload, build_version);
+			strcat((char*)tx.payload, ";date="); strcat((char*)tx.payload, build_date);
+			strcat((char*)tx.payload, ";time="); strcat((char*)tx.payload, build_time);
+			send(rx.buffer.header.address, MessageType::GetVersion, strlen((const char*)tx.payload));
 		}
 
-		if (rx.buffer.header.type == MessageType::StartFullMeasurement)
+		if (rx.buffer.header.type == MessageType::GetFullResolutionSyncMeasurement)
 		{
-			// 
+			im_full_resolution_synchronized();
 		}
 
 		RX_RESET;
@@ -167,32 +166,28 @@ bool check_rx(void)
 	return true;
 }
 
-void send(device_address_t addr, MessageType type, uint8_t payload_length)
+void send(device_address_t addr, MessageType type, const uint8_t* payload, uint8_t payload_length)
 {	
 	// prepare header
-	tx.buffer.header.address = addr;
-	tx.buffer.header.type = type;
-	tx.buffer.header.payload_length = payload_length;
+	tx.header.address = addr;
+	tx.header.type = type;
+	tx.header.payload_length = payload_length;
+	tx.ppayload = payload;
 
-	// calculate crc16 and attach it at the end of the payload
-	uint16_t crc = calc_crc16((void*)&tx.buffer, payload_length + sizeof(PROTO_HEADER));
-	*(uint16_t*)(tx.buffer.payload + payload_length) = crc;
+	// setup the transmitter
+	tx.state = TransmitterState::SendingHeader;
+	tx.window_position = (const uint8_t*)&tx.header;
+	tx.window_end = tx.window_position + sizeof(PROTO_HEADER);
+
+	// calculate crc16 of the header and user's payload
+	tx.crc = calc_crc16((void*)&tx.header, sizeof(PROTO_HEADER), payload, payload_length);
 
 	// let's go!
-	begin_transmission((void*)&tx.buffer, sizeof(PROTO_HEADER) + payload_length + sizeof(uint16_t));
-}
-
-
-void begin_transmission(const void* data, uint8_t count)
-{
-	// przygotowanie mechanizmu transmisyjnego
-	tx.buffer_start = (const uint8_t*)data;
-	tx.buffer_position = tx.buffer_start;
-	tx.buffer_end = tx.buffer_start + count;
+	//begin_transmission((void*)&tx.buffer, sizeof(PROTO_HEADER) + payload_length + sizeof(uint16_t));
 
 	// nadanie pierwszego bajta uruchamia potok przerwañ
 	RS485_DIR_SEND;
-	UDR0 = *tx.buffer_position++;
+	UDR0 = *tx.window_position++;
 	UCSR0B |= _BV(TXCIE0); // uruchom przerwania informuj¹ce o zakoñczeniu nadawania bajta
-	tx.done = 0;
+
 }

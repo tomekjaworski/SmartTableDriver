@@ -151,13 +151,13 @@ enum class MessageType : uint8_t
 	Invalid = 0,
 	None = 1,
 
-	Ping = 2,					// send by the processing CPU (PC) to selected board
-	Pong = 3,					// response to Ping message
-	GetVersion = 4,				// get version of the firmware
-	StartFullMeasurement = 5,	// initiate full resolution range measurement
+	Ping = 2,								// send by the processing CPU (PC) to selected board
+	Pong = 3,								// response to Ping message
+	GetVersion = 4,							// get version of the firmware
+	GetFullResolutionSyncMeasurement = 5,	// Do full resolution measurement, wait for it, and then send results
 	
 	__MIN = Ping,
-	__MAX = StartFullMeasurement,
+	__MAX = GetFullResolutionSyncMeasurement,
 };
 
 

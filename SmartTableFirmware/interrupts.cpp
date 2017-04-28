@@ -23,16 +23,38 @@
 
  ISR(USART_TX_vect) // goes off after transmitter have sent one byte (its only byte)
  {
-	 if (tx.buffer_position == tx.buffer_end) // if at the end of the outgoing buffer then turn of transmitter
+	 if (tx.window_position != tx.window_end) 
 	 {
-		 UCSR0B &= ~_BV(TXCIE0); // off
-		 RS485_DIR_RECEIVE;
-		 tx.done = 1;
+		// send a byte and move forward in outgoing buffer
+	 	 UDR0 = *tx.window_position++;
 		 return;
 	 }
 
-	 // send a byte and move forward in outgoing buffer
-	 UDR0 = *tx.buffer_position++;
+	 if (tx.state == TransmitterState::SendingHeader)
+	 {
+	 	tx.state = TransmitterState::SendingPayload;
+	 	tx.window_position = tx.ppayload;
+	 	tx.window_end = tx.window_position + tx.header.payload_length;
+		UDR0 = *tx.window_position++;
+		return;
+	 }
+
+	 if (tx.state == TransmitterState::SendingPayload)
+	 {
+		 tx.state = TransmitterState::SendingCRC;
+		 tx.window_position = (uint8_t*)&tx.crc;
+		 tx.window_end = tx.window_position + sizeof(tx.crc);
+		 UDR0 = *tx.window_position++;
+		 return;
+	 }
+
+	 if (tx.state == TransmitterState::SendingCRC)
+	 {
+		 UCSR0B &= ~_BV(TXCIE0); // off
+		 RS485_DIR_RECEIVE;
+		 tx.state = TransmitterState::IDLE;
+		 return;
+	 }
  }
 
  ISR(USART_RX_vect)

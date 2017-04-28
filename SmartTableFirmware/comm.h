@@ -13,20 +13,26 @@
 #include <avr/interrupt.h>
 #include "protocol.h"
 
+enum class TransmitterState : uint8_t {
+	IDLE,
+	SendingHeader,
+	SendingPayload,
+	SendingCRC,
+};
+
 struct TX
 {
-	// pointers for data transmission routines
-	volatile const uint8_t* buffer_start;
-	volatile const uint8_t* buffer_position;
-	volatile const uint8_t* buffer_end;
+	TransmitterState state;
 
-	volatile uint8_t done;
+	PROTO_HEADER header;
+	uint16_t crc;
 
-	struct  
-	{
-		PROTO_HEADER header;
-		uint8_t payload[TX_PAYLOAD_CAPACITY];
-	} __attribute__((packed)) buffer;
+	volatile const uint8_t* window_position;
+	volatile const uint8_t* window_end;
+
+	volatile const uint8_t* ppayload;
+
+	uint8_t payload[TX_PAYLOAD_CAPACITY];
 };
 
 

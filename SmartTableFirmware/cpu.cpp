@@ -50,7 +50,7 @@ void cpu_init(void)
 	UCSR0B |= (1 << RXCIE0);
 
 	// struktury portu szeregowego
-	tx.done = 1;
+	tx.state = TransmitterState::IDLE;
 
 
 	// Set timer to 1ms

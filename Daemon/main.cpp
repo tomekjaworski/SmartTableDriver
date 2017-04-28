@@ -241,15 +241,15 @@ int main(int argc, char **argv)
 		std::string sver((const char*)response.getPayload(), response.getPayloadLength());
 		printf("Device "AYELLOW"%02X"ARESET": "AYELLOW"%s"ARESET"\n", dev_addr, sver.c_str());
 	}
+
+
+	// tests
+	{
+		device_address_t addr = 0x14;
+		Message msg_response, msg_meas(addr, MessageType::GetFullResolutionSyncMeasurement);
+
+	}
 	
-	
-//	SerialPort sp;
-	
-	//sp.init("", false);
-	
-	
-	//Message mping(0x50, MessageType::Ping);
-	//sp.send(mping.getBinary(), mping.getBinaryLength());
 	
 	
 	return 0;
