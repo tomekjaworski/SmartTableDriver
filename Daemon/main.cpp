@@ -75,26 +75,27 @@ int main(int argc, char **argv)
 	}
 	
 	//
-	// declare device groups
-	/*
-	 * 		Device MAP:						Group MAP:
-	 * 										
-	 * 		xx  xx  xx  xx  xx  xx			xx--xx--xx--xx  xx  xx
-	 * 														 |	 |
-	 *		xx  xx  xx  xx  xx  xx			xx--xx--xx--xx  xx  xx
-	 * 														 |	 |
-	 *		xx  xx  xx  xx  xx  xx			xx--xx--xx--xx  xx  xx
-	 * 															
-	 *		xx  xx  xx  xx  xx  xx			xx--xx--xx  xx--xx--xx
-	 * 										
-	 */
-	std::vector<device_address_t> g1 = { 0x1d, 0x11, 0x12, 0x13 };
-	std::vector<device_address_t> g2 = { 0x20, 0x21, 0x22 };
-	std::vector<device_address_t> g3 = { 0x30, 0x31, 0x32, 0x33 };
-	std::vector<device_address_t> g4 = { 0x40, 0x41, 0x42 };
-	std::vector<device_address_t> g5 = { 0x50, 0x51, 0x52 };
-	std::vector<device_address_t> g6 = { 0x60, 0x61, 0x62 };
-	std::vector<device_address_t> g7 = { 0x70, 0x71, 0x72, 0x73 };
+    // declare device groups
+    /*
+     *    Group MAP:
+	 *                     6   7 
+     *                                         
+     *  1  01--02--03--04  05  06
+     *                     |   |
+     *  2  07--08--09--0A  0B  0C
+     *                     |   |
+     *  3  0D--0E--0F--10  11  12
+     *                                                             
+     *  4  13--14--15  16--17--18  5
+     *                                         
+     */
+	std::vector<device_address_t> g1 = { 0x01, 0x02, 0x03, 0x04 };
+	std::vector<device_address_t> g2 = { 0x07, 0x08, 0x09, 0x0A };
+	std::vector<device_address_t> g3 = { 0x0D, 0x0E, 0x0F, 0x10 };
+	std::vector<device_address_t> g4 = { 0x13, 0x14, 0x15 };
+	std::vector<device_address_t> g5 = { 0x16, 0x17, 0x18 };
+	std::vector<device_address_t> g6 = { 0x05, 0x0B, 0x11 };
+	std::vector<device_address_t> g7 = { 0x06, 0x0C, 0x12 };
 	
 	std::vector<std::vector<device_address_t> > groups = { g1, g2, g3, g4, g5, g6, g7 };
 	

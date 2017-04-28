@@ -110,11 +110,8 @@ bool check_rx(void)
 			return false; // nie ma czego synchronizowaæ
 
 		if (rx.buffer.header.address != ADDRESS_BROADCAST
-			&& rx.buffer.header.address != 0x10
-			&& rx.buffer.header.address != 0x20
-			&& rx.buffer.header.address != 0x30
-			&& rx.buffer.header.address != 0x40
-			&& rx.buffer.header.address != 0x50
+			&& rx.buffer.header.address != 0x13
+			&& rx.buffer.header.address != 0x15
 			&& rx.buffer.header.address != DEVICE_ADDRESS)
 		{
 			// remove one byte at the start of the rx buffer

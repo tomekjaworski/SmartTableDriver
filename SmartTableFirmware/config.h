@@ -11,7 +11,7 @@
 
 #define SERIAL_BAUD 19200	// 8E1 (!!!)
 
-#define DEVICE_ADDRESS		(device_address_t)0x1D
+#define DEVICE_ADDRESS		(device_address_t)0x14
 
 
 #endif /* CONFIG_H_ */
