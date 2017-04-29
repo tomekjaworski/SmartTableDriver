@@ -14,21 +14,26 @@
 #include "dbg_putchar.h"
 
 
+#define NOP asm volatile("nop");
+
+
 inline static uint16_t __adc(uint8_t channel)
 {
-	ADMUX = _BV(REFS0) | (0x07 & channel);
-
+	// REF: Capacitor at AREF to GND
+	ADMUX = _BV(REFS0) | (0x0F & channel);
 	// start the conversion
 	ADCSRA |= _BV(ADSC);
 
 	// ADSC is cleared when the conversion finishes
 	while (ADCSRA & _BV(ADSC));
 
-	uint16_t low  = ADCL;
-	uint16_t high = ADCH;
+	//ADCW;
+	//uint16_t low  = ADCL;
+	//uint16_t high = ADCH;
 
 	// combine the two bytes
-	return (high << 8) | low;
+	//return (high << 8) | low;
+	return ADCW;
 }
 
 
@@ -37,7 +42,7 @@ void im_initialize(void)
 	ADCSRA = 0;
 
 	// set ADC prescaler to 125kHz
-	ADCSRA |= _BV(ADPS2) | _BV(ADPS1);
+	ADCSRA |= _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
 
 	// enable ADC conversions and autotriggering
 	//ADCSRA |= _BV(ADATE);
@@ -45,10 +50,22 @@ void im_initialize(void)
 
 	// Aref = AVcc, channel ADC0
 	ADMUX = _BV(REFS0);
+
+	// turn of digital input circuity
+	DIDR0 = 0xFF;
+
+
+	// dummy read
+	__attribute__((unused)) uint16_t dummy;
+	for (uint8_t i = 0; i < 8; i++)
+		dummy = __adc(i);
+
+
 }
 
-#define IM_DATA_PIN(__state)	do {} while(0);	//	
-#define IM_CLOCK_PIN(__state)	do {} while(0);		//
+
+#define IM_DATA_PIN(__state)	do { if (__state) PORTB |= _BV(PORTB0); else PORTB &= ~_BV(PORTB0); } while(0);	//	
+#define IM_CLOCK_PIN(__state)	do { if (__state) PORTD |= _BV(PORTD7); else PORTD &= ~_BV(PORTD7); } while(0);		//
 #define IM_ADC_READ(__id)		__adc(__id)			//
 
 //zamiana 10 i 14
@@ -89,39 +106,66 @@ int otable[10][10];
 
 uint16_t raw[7*15];
 
+
 void im_full_resolution_synchronized(void)
 {
 	_delay_ms(500);
 	// 8 -martwy  0-7 9-16
+	NOP;
 	IM_DATA_PIN(false);		//  digitalWrite(dataPin,LOW);
+	NOP;
 	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+	NOP;
 	_delay_ms(2);
+	NOP;
 	IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
+	NOP;
 	_delay_ms(2);
+	NOP;
 	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+	NOP;
 	_delay_ms(2);
+	NOP;
 	IM_DATA_PIN(true);		//	digitalWrite(dataPin,HIGH);
 
+	NOP;
 	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+	NOP;
 	_delay_ms(2);
+	NOP;
 	IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
+	NOP;
 	_delay_ms(2);
-	
+	NOP;
 	uint16_t* ptr = raw;
 	for(int i = 0; i < 15; i++)
 	{
+		NOP;
 		IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+		NOP;
 		_delay_ms(2);
+		NOP;
 		IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
+		NOP;
 		_delay_ms(2);
+		NOP;
 
 		*ptr++ = IM_ADC_READ(0);
+		NOP;
+
 		*ptr++ = IM_ADC_READ(1);
+		NOP;
 		*ptr++ = IM_ADC_READ(2);
+		NOP;
 		*ptr++ = IM_ADC_READ(3);
+		NOP;
 		*ptr++ = IM_ADC_READ(4);
+		NOP;
 		*ptr++ = IM_ADC_READ(5);
+		NOP;
 		*ptr++ = IM_ADC_READ(6);
+		NOP;
+		NOP;
 	}
 }
 
@@ -129,7 +173,7 @@ void im_execute_sync(void)
 {
 
 
-	_delay_ms(500);
+	//_delay_ms(500);
 	// 8 -martwy  0-7 9-16
 	IM_DATA_PIN(false);		//  digitalWrite(dataPin,LOW);
 	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
