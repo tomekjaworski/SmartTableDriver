@@ -36,10 +36,8 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 	memmove((void*)dst, (void*)src, size);
 }
 
-#define RX_RESET do { rx.buffer_position = (volatile uint8_t*)&rx.buffer; } while (0);
+#define RX_RESET do { rx.buffer_position = (uint8_t*)&rx.buffer; } while (0);
 
-//const char* test = "Ala ma kota!";
-const char* test = "A";
 
 int main(void)
 {
@@ -73,7 +71,7 @@ int main(void)
 		if (rx.buffer.header.type == MessageType::Ping)
 		{
 			memmove(tx.payload, rx.buffer.payload, rx.buffer.header.payload_length);
-			send(rx.buffer.header.address, MessageType::Pong, tx.payload, rx.buffer.header.payload_length);
+			send(rx.buffer.header.address, MessageType::Pong, (const uint8_t*)tx.payload, rx.buffer.header.payload_length);
 		}
 
 		if (rx.buffer.header.type == MessageType::GetVersion)
@@ -81,7 +79,7 @@ int main(void)
 			strcpy((char*)tx.payload, "version="); strcat((char*)tx.payload, build_version);
 			strcat((char*)tx.payload, ";date="); strcat((char*)tx.payload, build_date);
 			strcat((char*)tx.payload, ";time="); strcat((char*)tx.payload, build_time);
-			send(rx.buffer.header.address, MessageType::GetVersion, strlen((const char*)tx.payload));
+			send(rx.buffer.header.address, MessageType::GetVersion, (const uint8_t*)tx.payload, strlen((const char*)tx.payload));
 		}
 
 		if (rx.buffer.header.type == MessageType::GetFullResolutionSyncMeasurement)

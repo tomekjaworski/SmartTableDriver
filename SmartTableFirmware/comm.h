@@ -27,10 +27,10 @@ struct TX
 	PROTO_HEADER header;
 	uint16_t crc;
 
-	volatile const uint8_t* window_position;
-	volatile const uint8_t* window_end;
+	const uint8_t* window_position;
+	const uint8_t* window_end;
 
-	volatile const uint8_t* ppayload;
+	const uint8_t* ppayload;
 
 	uint8_t payload[TX_PAYLOAD_CAPACITY];
 };
@@ -38,13 +38,13 @@ struct TX
 
 struct RX
 {
-	volatile uint8_t* buffer_position;
-	volatile bool got_data;
+	uint8_t* buffer_position;
+	bool got_data;
 
 	// buffer - mind the order!
 	struct {
-		volatile PROTO_HEADER header;
-		volatile uint8_t payload[RX_PAYLOAD_CAPACITY];
+		PROTO_HEADER header;
+		uint8_t payload[RX_PAYLOAD_CAPACITY];
 	} __attribute__((packed)) buffer;
 };
 
