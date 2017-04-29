@@ -38,6 +38,7 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 
 #define RX_RESET do { rx.buffer_position = (uint8_t*)&rx.buffer; } while (0);
 
+extern int otable[10][10];
 
 int main(void)
 {
@@ -84,7 +85,9 @@ int main(void)
 
 		if (rx.buffer.header.type == MessageType::GetFullResolutionSyncMeasurement)
 		{
-			im_full_resolution_synchronized();
+			//im_full_resolution_synchronized();
+			im_execute_sync();
+			send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurement, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
 		}
 
 		RX_RESET;

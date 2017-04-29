@@ -19,6 +19,8 @@
       <File Name="Message.h"/>
       <File Name="timeout_error.hpp"/>
     </VirtualDirectory>
+    <File Name="ImageDebuggerClient.cpp"/>
+    <File Name="ImageDebuggerClient.h"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
@@ -34,7 +36,9 @@
       <Compiler Options="-g;-O0;-std=gnu++14;-Wall" C_Options="-g;-O0;-std=gnu++14;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
       </Compiler>
-      <Linker Options="" Required="yes"/>
+      <Linker Options="" Required="yes">
+        <Library Value="ws2_32"/>
+      </Linker>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Debug" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="Default"/>

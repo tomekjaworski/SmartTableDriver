@@ -5,7 +5,8 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <list>
-
+#include <chrono>
+#include <thread>
 
 #include <string>
 #include <algorithm>
@@ -16,10 +17,9 @@
 
 
 #include "Message.h"
-
 #include "ansi.h"
-
 #include "timeout_error.hpp"
+#include "ImageDebuggerClient.h"
 
 bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response);
 
@@ -73,6 +73,37 @@ int main(int argc, char **argv)
 			printf(ARED "FAILED: " AYELLOW "%s\n" ARESET, ex.what());
 		}
 	}
+	
+	
+	SerialPort::Ptr pserial = ports.front();
+	device_address_t addr = 0x14;
+	
+	while(1)
+	{
+		Message msg_response, msg_meas(addr, MessageType::GetFullResolutionSyncMeasurement);
+		SendAndWaitForResponse(*pserial, msg_meas, msg_response);
+
+		uint16_t* img = (uint16_t*)msg_response.getPayload();
+		
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < 10; j++)
+			{
+				printf("%04d ", img[j + i * 10]);
+			}
+			
+			printf("\n");
+		}
+		printf("\n");
+		
+		
+		
+		IDBG_ShowImage("GetFullResolutionSyncMeasurement", 10, 10, img, "U16");
+		
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	}
+	
+	return 0;
 	
 	//
     // declare device groups
@@ -263,7 +294,7 @@ int main(int argc, char **argv)
 bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response)
 {
 
-	int32_t timeout = 500;
+	int32_t timeout = 1500;
 
 	
 	//uint8_t buffer[1024];
