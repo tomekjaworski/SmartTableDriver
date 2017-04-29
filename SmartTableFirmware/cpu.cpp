@@ -25,14 +25,36 @@
 #define UBR0_VALUE (F_CPU/(16UL*SERIAL_BAUD))-1
 #endif
 
-#define TIMER0_1MS_RELOAD 10
+
+/*
+		 SCK			PB5
+	D10- LED2			PB2
+	D9 - LED1			PB1
+	D8 - DATA			PB0
+	D7 - CLOCK			PD7
+	D6 - SYNC_IO		PD6
+	D5 - RESET1			PD5
+	D4 - RESET2			PD4
+	D3 - NC				PD3
+	D2 - DIR			PD2
+*/
+
 
 void cpu_init(void)
 {
-	DDRB |= _BV(PORTB2);
-	DDRB |= _BV(PORTB1);
-	DDRB |= _BV(PORTB5);
-	DDRD = 0b00000110; // 0:RX, 1:TX, 3:DIR			1-wyjscie (1 i 3) ddr - data direction
+	DDRB = 0x00;
+	DDRB |= _BV(PORTB2); // LED2
+	DDRB |= _BV(PORTB1); //	LED1
+	DDRB |= _BV(PORTB5); //	SCK
+	DDRB |= _BV(PORTB0); //	DATA
+
+	DDRD = 0x00;
+	DDRD |= _BV(PORTD7); // CLOCK
+	DDRD |= _BV(PORTD5); // RESET1
+	DDRD |= _BV(PORTD4); // RESET2
+
+	DDRD |= _BV(PORTD2); // DIR
+	DDRD |= _BV(PORTD1); // TX
 
 	// port szergowy
 	uint16_t br = UBR0_VALUE;
@@ -59,6 +81,10 @@ void cpu_init(void)
 	TIMSK0 |= (1 << OCIE0A);
 	TCCR0B |= (1 << CS00) | (1 << CS01); // clk / 64
 
+	// reset photodiodes selectors
+	RESET1_LOW;
+	RESET2_LOW;
+
 	// czy ja zyjê????
 	for(int i = 0; i < 100; i++)
 	{
@@ -72,6 +98,9 @@ void cpu_init(void)
 	RS485_DIR_RECEIVE;
 	LED0_OFF; LED1_OFF; LED_OFF;
 	_delay_ms(1000);
+
+	RESET1_HIGH;
+	RESET2_HIGH;
 
 	// start przerwan
 	sei();
