@@ -172,7 +172,7 @@ bool check_rx(void)
 	// ok, we have received at least whole message; check CRC
 	uint16_t calculated_crc = calc_crc16((void*)&rx.buffer, sizeof(PROTO_HEADER) + rx.buffer.header.payload_length);
 	uint16_t received_crc = *(uint16_t*)(rx.buffer.payload + rx.buffer.header.payload_length);
-	if (calculated_crc != received_crc && false)
+	if (calculated_crc != received_crc)
 	{
 		// checksums does not match
 		RX_RESET;
