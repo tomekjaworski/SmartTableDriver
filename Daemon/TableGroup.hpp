@@ -8,23 +8,30 @@ public:
 	
 private:
 	SerialPort::Ptr sp;
+	MessageReceiver mr;
+
 	std::vector<TableDevice::Ptr> devices;
+	std::vector<Message> messages;
 	
 public:
 
 	SerialPort::Ptr& getSerialPort(void) { return this->sp; }
 	const SerialPort::Ptr& getSerialPort(void) const { return this->sp; }
 
+	MessageReceiver& getReceiver(void) { return this->mr; }
+	const MessageReceiver& getReceiver(void) const { return this->mr; }
+
 	TableGroup()
 		: sp(nullptr)
 	{
-		//
+		messages.reserve(32);
+		
 	}
 	
 	TableGroup(SerialPort::Ptr& sp)
 		: sp(sp)
 	{
-		//
+		messages.reserve(32);
 	}
 	
 	TableDevice::Ptr findByAddress(device_address_t addr)
@@ -39,6 +46,11 @@ public:
 	void addTableDevice(TableDevice::Ptr& pdev)
 	{
 		this->devices.push_back(pdev);
+	}
+	
+	void addMessageToQueue(Message& msg)
+	{
+		this->messages.push_back(msg);
 	}
 	
 	std::vector<TableDevice::Ptr>::iterator begin(void) { return this->devices.begin(); }

@@ -26,22 +26,8 @@
 #include "TableGroup.hpp"
 
 bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response);
-
-void ShowTopology(const std::string& prompt, const std::vector<std::vector<TableDevice::Ptr> >& groups)
-{
-	printf("%s:\n", prompt.c_str());
-	for (size_t gid = 0; gid < groups.size(); gid++)
-	{
-		printf(" Group %d: ", gid + 1);
-		for(TableDevice::Ptr pdev : groups[gid])
-			printf(AYELLOW "%02x " ARESET, pdev->getAddress());
-			
-		if (groups[gid].empty())
-			printf(ARED "None" ARESET);
-		printf("\n");
-	}
-}
-
+void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups);
+void ShowTopology(const std::string& prompt, const std::vector<std::vector<TableDevice::Ptr> >& groups);
 
 
 int main(int argc, char **argv)
@@ -346,7 +332,7 @@ int main(int argc, char **argv)
 				bc.time_point = current_time;
 				
 				device_address_t addr = pdev->getAddress();
-				Message msg_response, msg_timing(addr, MessageType::SetBurstConfiguration, &current_time, sizeof(BURST_CONFIGURATION));
+				Message msg_response, msg_timing(addr, MessageType::SetBurstConfiguration, &bc, sizeof(BURST_CONFIGURATION));
 				
 				SendAndWaitForResponse(*pdev->getSerialPort(), msg_timing, msg_response);
 				if (msg_response.getType() != MessageType::SetBurstConfiguration || msg_response.getAddress() != pdev->getAddress() || !msg_response.getPayloadAsBoolean())
@@ -366,8 +352,10 @@ int main(int argc, char **argv)
 		}
 		
 		printf("\n");
-
 	}
+
+
+	AcquireFullImage(tgroups);
 
 
 	//
@@ -399,6 +387,81 @@ int main(int argc, char **argv)
 	
 	
 	return 0;
+}
+
+void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
+{
+	int32_t timeout = 1500;
+
+	
+	//
+	// discard old data
+	for(TableGroup::Ptr& pgroup : tgroups)
+	{
+		SerialPort::Ptr pserial = pgroup->getSerialPort();
+		pserial->discardAllData();
+		pgroup->getReceiver().purgeAllData();
+	}
+	
+	//
+	// send broadcast message
+	Message msg(ADDRESS_BROADCAST, MessageType::DoBurstMeasurement);
+	for(TableGroup::Ptr& pgroup : tgroups)
+	{
+		SerialPort::Ptr pserial = pgroup->getSerialPort();
+		pserial->send(msg.getBinary(), msg.getBinaryLength());
+	}
+		
+	std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
+
+	do {
+		fd_set rfd;
+		FD_ZERO(&rfd);
+		
+		// add all serial ports to read list
+		int max_fd = 0;
+		for(TableGroup::Ptr& pgroup : tgroups)
+		{
+			SerialPort::Ptr pserial = pgroup->getSerialPort();
+			FD_SET(pserial->getHandle(), &rfd);
+			max_fd = std::max(max_fd, pserial->getHandle());
+		}
+		
+		// wait for data
+		timeval tv = { .tv_sec = 0, .tv_usec = 50 * 1000 };
+		int sret = ::select(max_fd + 1, &rfd, nullptr, nullptr, &tv);
+		
+		if (sret == 0)
+			goto _check_timeout; // timeout - let's loop		
+			
+		if (sret == -1) {
+			perror(__func__);
+			Environment::terminateOnError("select", 0);
+		}			
+		
+		// got some data
+		for(TableGroup::Ptr& pgroup : tgroups)
+		{
+			SerialPort::Ptr pserial = pgroup->getSerialPort();
+			if (!FD_ISSET(pserial->getHandle(), &rfd))
+				continue;
+				
+			// put data int
+			MessageReceiver& receiver = pgroup->getReceiver();
+			receiver.receive(pserial->getHandle());
+			
+			// check for complete message
+			Message response;
+			if (receiver.getMessage(response))
+				pgroup->addMessageToQueue(response);
+		}
+		
+_check_timeout:;
+		std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count() > timeout)
+			throw timeout_error("AcquireFullImage");
+		
+	} while(true);
 }
 
 
@@ -455,3 +518,19 @@ _check_timeout:;
 	
 	return false;
 }
+
+void ShowTopology(const std::string& prompt, const std::vector<std::vector<TableDevice::Ptr> >& groups)
+{
+	printf("%s:\n", prompt.c_str());
+	for (size_t gid = 0; gid < groups.size(); gid++)
+	{
+		printf(" Group %d: ", gid + 1);
+		for(TableDevice::Ptr pdev : groups[gid])
+			printf(AYELLOW "%02x " ARESET, pdev->getAddress());
+			
+		if (groups[gid].empty())
+			printf(ARED "None" ARESET);
+		printf("\n");
+	}
+}
+
