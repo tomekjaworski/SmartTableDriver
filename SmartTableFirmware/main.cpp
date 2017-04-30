@@ -125,6 +125,7 @@ bool check_rx(void)
 
 		if (rx.buffer.header.address != ADDRESS_BROADCAST
 			&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x18)
+			&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x04)
 			&& rx.buffer.header.address != 0x13
 			&& rx.buffer.header.address != 0x15
 			&& rx.buffer.header.address != DEVICE_ADDRESS)
