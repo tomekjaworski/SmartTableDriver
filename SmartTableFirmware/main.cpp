@@ -131,8 +131,9 @@ bool check_rx(void)
 			&& rx.buffer.header.address != DEVICE_ADDRESS)
 		{
 			// remove one byte at the start of the rx buffer
-			memmove((uint8_t*)&rx.buffer + 1, (uint8_t*)&rx.buffer, RX_COUNT - 1);
-			rx.buffer_position--;
+			RX_RESET;
+			//memmove((uint8_t*)&rx.buffer + 1, (uint8_t*)&rx.buffer, RX_COUNT - 1);
+			//rx.buffer_position--;
 		}
 		
 		// wait for more data
