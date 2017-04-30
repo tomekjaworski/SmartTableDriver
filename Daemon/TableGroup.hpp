@@ -53,6 +53,8 @@ public:
 		this->messages.push_back(msg);
 	}
 	
+	size_t getDeviceCount(void) const { return this->devices.size(); }
+	
 	std::vector<TableDevice::Ptr>::iterator begin(void) { return this->devices.begin(); }
 	std::vector<TableDevice::Ptr>::iterator end(void) { return this->devices.end(); }
 	std::vector<TableDevice::Ptr>::const_iterator begin(void) const { return this->devices.begin(); }

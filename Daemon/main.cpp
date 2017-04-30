@@ -406,10 +406,12 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
 	//
 	// send broadcast message
 	Message msg(ADDRESS_BROADCAST, MessageType::DoBurstMeasurement);
+	int device_count = 0;
 	for(TableGroup::Ptr& pgroup : tgroups)
 	{
 		SerialPort::Ptr pserial = pgroup->getSerialPort();
 		pserial->send(msg.getBinary(), msg.getBinaryLength());
+		device_count += pgroup->getDeviceCount();
 	}
 		
 	std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
@@ -453,8 +455,15 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
 			// check for complete message
 			Message response;
 			if (receiver.getMessage(response))
+			{
 				pgroup->addMessageToQueue(response);
+				device_count--;
+			}
 		}
+		
+		if (device_count == 0)
+			return;
+		
 		
 _check_timeout:;
 		std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
