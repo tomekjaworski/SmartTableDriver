@@ -2,14 +2,13 @@
 #include <string.h>
 #include <assert.h>
 
-#include <termios.h>
-#include <fcntl.h>
 #include <list>
 #include <chrono>
 #include <thread>
 
 #include <string>
 #include <algorithm>
+#include <sstream>
 
 #include "SerialPort.hpp"
 #include "Environment.hpp"
@@ -21,22 +20,28 @@
 #include "timeout_error.hpp"
 #include "ImageDebuggerClient.h"
 
+
+#include "Location.hpp"
+#include "TableDevice.hpp"
+
 bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response);
 
-void ShowTopology(const std::string& propmpt, const std::vector<std::vector<device_address_t> >& groups)
+void ShowTopology(const std::string& prompt, const std::vector<std::vector<TableDevice::Ptr> >& groups)
 {
-	printf("%s:\n", propmpt.c_str());
+	printf("%s:\n", prompt.c_str());
 	for (size_t gid = 0; gid < groups.size(); gid++)
 	{
 		printf(" Group %d: ", gid + 1);
-		for(device_address_t dev_id : groups[gid])
-			printf(AYELLOW "%02x " ARESET, dev_id);
+		for(TableDevice::Ptr pdev : groups[gid])
+			printf(AYELLOW "%02x " ARESET, pdev->getAddress());
 			
 		if (groups[gid].empty())
 			printf(ARED "None" ARESET);
 		printf("\n");
 	}
 }
+
+#include <unordered_map>
 
 int main(int argc, char **argv)
 {
@@ -73,7 +78,7 @@ int main(int argc, char **argv)
 			printf(ARED "FAILED: " AYELLOW "%s\n" ARESET, ex.what());
 		}
 	}
-	
+	/*
 	
 	SerialPort::Ptr pserial = ports.front();
 	device_address_t addr = 0x14;
@@ -104,7 +109,7 @@ int main(int argc, char **argv)
 	}
 	
 	return 0;
-	
+	*/
 	//
     // declare device groups
     /*
@@ -120,29 +125,60 @@ int main(int argc, char **argv)
      *  4  13--14--15  16--17--18  5
      *                                         
      */
-	std::vector<device_address_t> g1 = { 0x01, 0x02, 0x03, 0x04 };
-	std::vector<device_address_t> g2 = { 0x07, 0x08, 0x09, 0x0A };
-	std::vector<device_address_t> g3 = { 0x0D, 0x0E, 0x0F, 0x10 };
-	std::vector<device_address_t> g4 = { 0x13, 0x14, 0x15 };
-	std::vector<device_address_t> g5 = { 0x16, 0x17, 0x18 };
-	std::vector<device_address_t> g6 = { 0x05, 0x0B, 0x11 };
-	std::vector<device_address_t> g7 = { 0x06, 0x0C, 0x12 };
 	
-	std::vector<std::vector<device_address_t> > groups = { g1, g2, g3, g4, g5, g6, g7 };
+	std::vector<TableDevice::Ptr> g1 = {	TableDevice::Ptr(new TableDevice(0x01, Location(0, 0))),
+											TableDevice::Ptr(new TableDevice(0x02, Location(1, 0))),
+											TableDevice::Ptr(new TableDevice(0x03, Location(2, 0))),
+											TableDevice::Ptr(new TableDevice(0x04, Location(3, 0))) 
+										};
+
+	std::vector<TableDevice::Ptr> g2 = {	TableDevice::Ptr(new TableDevice(0x07, Location(0, 1))),
+											TableDevice::Ptr(new TableDevice(0x08, Location(1, 1))),
+											TableDevice::Ptr(new TableDevice(0x09, Location(2, 1))),
+											TableDevice::Ptr(new TableDevice(0x0A, Location(3, 1))) 
+										};
+
+	std::vector<TableDevice::Ptr> g3 = {	TableDevice::Ptr(new TableDevice(0x0D, Location(0, 2))),
+											TableDevice::Ptr(new TableDevice(0x0E, Location(1, 2))),
+											TableDevice::Ptr(new TableDevice(0x0F, Location(2, 2))),
+											TableDevice::Ptr(new TableDevice(0x10, Location(3, 2))) 
+										};
+
+	std::vector<TableDevice::Ptr> g4 = {	TableDevice::Ptr(new TableDevice(0x13, Location(0, 3))),
+											TableDevice::Ptr(new TableDevice(0x14, Location(1, 3))),
+											TableDevice::Ptr(new TableDevice(0x15, Location(2, 3))) 
+										};
+
+	std::vector<TableDevice::Ptr> g5 = {	TableDevice::Ptr(new TableDevice(0x16, Location(3, 3))),
+											TableDevice::Ptr(new TableDevice(0x17, Location(4, 3))),
+											TableDevice::Ptr(new TableDevice(0x18, Location(5, 3))) 
+										};
+
+	std::vector<TableDevice::Ptr> g6 = {	TableDevice::Ptr(new TableDevice(0x05, Location(4, 0))),
+											TableDevice::Ptr(new TableDevice(0x0B, Location(4, 1))),
+											TableDevice::Ptr(new TableDevice(0x11, Location(4, 2))) 
+										};
+
+	std::vector<TableDevice::Ptr> g7 = {	TableDevice::Ptr(new TableDevice(0x06, Location(5, 0))),
+											TableDevice::Ptr(new TableDevice(0x0C, Location(5, 1))),
+											TableDevice::Ptr(new TableDevice(0x12, Location(5, 2))) 
+										};
+
+	std::vector<std::vector<TableDevice::Ptr> > groups = { g1, g2, g3, g4, g5, g6, g7 };
 	
 
 	//
 	// concatenate all available addresses
 	printf("Building topological information... ");
-	std::list<device_address_t> addresses;
+	std::unordered_map<device_address_t, TableDevice::Ptr> addresses;
 	for(const auto& group : groups)
-		for(device_address_t dev_addr : group)
-			if (std::find(addresses.begin(), addresses.end(), dev_addr) != addresses.end())
+		for(TableDevice::Ptr pdevice : group)
+			if (addresses.find(pdevice->getAddress()) != addresses.end())
 			{
-				printf(ARED "Duplicated device address: 0x%02x!; quitting...\n" ARESET, dev_addr);
+				printf(ARED "Duplicated device address: 0x%02x!; quitting...\n" ARESET, pdevice->getAddress());
 				exit(1);
 			} else
-				addresses.push_back(dev_addr);
+				addresses[pdevice->getAddress()] = pdevice;
 
 	printf(AGREEN "Done. Got %d devices in %d groups\n" ARESET, addresses.size(), groups.size());
 	ShowTopology("Expected topology", groups);
@@ -152,11 +188,12 @@ int main(int argc, char **argv)
 	// Find all Smart Table devices that we need to communicate with and create a map
 	
 	printf("Scanning for SmartTable devices...\n");
-	SerialPort::Ptr device2serial[256] = {};
-	std::list<device_address_t> missing_devices;
+	std::list<TableDevice::Ptr> missing_devices;
 	
-	for(device_address_t dev_addr : addresses) {
-		printf(" Looking for " AYELLOW "0x%02x" ARESET "... ", dev_addr);
+	for(auto& address_tuple : addresses) {
+		TableDevice::Ptr& dev_addr = address_tuple.second;
+		
+		printf(" Looking for " AYELLOW "0x%02x" ARESET "... ", dev_addr->getAddress());
 		
 		bool found = false;
 		std::string port_name = "unknown";
@@ -164,14 +201,14 @@ int main(int argc, char **argv)
 			try {
 				
 				// send a ping to selected device on selected serial port and wait for an answer
-				Message mping(dev_addr, MessageType::Ping);
+				Message mping(dev_addr->getAddress(), MessageType::Ping);
 				Message response;
 				
 				SendAndWaitForResponse(*sp, mping, response);
-				if (response.getType() != MessageType::Pong || response.getAddress() != dev_addr)
+				if (response.getType() != MessageType::Pong || response.getAddress() != dev_addr->getAddress())
 					continue; // error
 					
-				device2serial[dev_addr] = sp;
+				dev_addr->setSerialPort(sp);
 				found = true;
 				port_name = sp->getPortName();
 			
@@ -197,8 +234,8 @@ int main(int argc, char **argv)
 	int usable_dev_count = 0;
 	for(auto& group : groups)
 	{
-		for(device_address_t missing_device : missing_devices) {
-			auto pos = std::find(group.begin(), group.end(), missing_device);
+		for(TableDevice::Ptr pmissing_device : missing_devices) {
+			auto pos = std::find_if(group.begin(), group.end(), [&pmissing_device](const auto& arg) { return arg->getAddress() == pmissing_device->getAddress(); });
 			if (pos == group.end())
 				continue; // not this group
 			group.erase(pos);
@@ -213,7 +250,7 @@ int main(int argc, char **argv)
 
 	//
 	// Show current topology
-	ShowTopology("Current tepology (after device detection)", groups);
+	ShowTopology("Current topology (after device detection)", groups);
 		
 	
 	// match groups to USB devices, since theirs order can change every time the system boots up
@@ -221,36 +258,36 @@ int main(int argc, char **argv)
 	bool ok = true;
 	for(const auto& group : groups) {
 		SerialPort::Ptr expected_port = nullptr;
-		for(device_address_t dev_addr : group) {
+		for(const TableDevice::Ptr& dev_addr : group) {
 			
 			// set first pointer to SerialPort as expected pointer
 			if (expected_port == nullptr)
-				expected_port = device2serial[dev_addr];
+				expected_port = dev_addr->getSerialPort();
 				
 			// we expect, that port's pointer will be the same
-			if (device2serial[dev_addr] == expected_port)
+			if (dev_addr->getSerialPort() == expected_port)
 				continue; // it's the same port, so group is not divided
 			
 			ok = false;
 			
 			// first device ws not found, so it has no port
 			if (expected_port == nullptr) {
-				printf(" Device 0x%02X: expected null pointer\n", dev_addr);
+				printf(" Device 0x%02X: expected null pointer\n", dev_addr->getAddress());
 				
 				continue;
 			}
 
 			// second and further device was not found
-			if (device2serial[dev_addr] == nullptr) {
-				printf(" Device 0x%02X: expected serial %s (%p) but got null pointer\n", dev_addr,
+			if (dev_addr->getSerialPort() == nullptr) {
+				printf(" Device 0x%02X: expected serial %s (%p) but got null pointer\n", dev_addr->getAddress(),
 				expected_port->getPortName().c_str(), expected_port.get());
 				continue;
 			}
 
 			// there's a mismatch between logical description (groups) and physical connections
-			printf(" Device 0x%02X: expected serial %s (%p) but got %s (%p)\n", dev_addr,
+			printf(" Device 0x%02X: expected serial %s (%p) but got %s (%p)\n", dev_addr->getAddress(),
 				expected_port->getPortName().c_str(), expected_port.get(),
-				device2serial[dev_addr]->getPortName().c_str(), device2serial[dev_addr]);
+				dev_addr->getSerialPort()->getPortName().c_str(), dev_addr.get());
 		}
 	}
 	
@@ -259,6 +296,7 @@ int main(int argc, char **argv)
 
 	//
 	// get version of each device
+	/*
 	for (device_address_t dev_addr = 0; dev_addr < 0xF0; dev_addr++)
 	{
 		if (device2serial[dev_addr] == nullptr)
@@ -270,8 +308,9 @@ int main(int argc, char **argv)
 		assert(response.getType() == MessageType::GetVersion || response.getAddress() == dev_addr);
 		
 		std::string sver((const char*)response.getPayload(), response.getPayloadLength());
-		printf("Device "AYELLOW"%02X"ARESET": "AYELLOW"%s"ARESET"\n", dev_addr, sver.c_str());
+		printf("Device " AYELLOW "%02X" ARESET ": " AYELLOW "%s" ARESET "\n", dev_addr, sver.c_str());
 	}
+	 * */
 
 
 	// tests
@@ -285,10 +324,6 @@ int main(int argc, char **argv)
 	
 	return 0;
 }
-
-#include <assert.h>
-#include <unistd.h>
-#include <chrono>
 
 
 bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response)

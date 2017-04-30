@@ -18,6 +18,8 @@
       <File Name="CRC.hpp"/>
       <File Name="Message.h"/>
       <File Name="timeout_error.hpp"/>
+      <File Name="Location.hpp"/>
+      <File Name="TableDevice.hpp"/>
     </VirtualDirectory>
     <File Name="ImageDebuggerClient.cpp"/>
     <File Name="ImageDebuggerClient.h"/>
