@@ -152,21 +152,35 @@ enum class MessageType : uint8_t
 	None = 1,
 
 	Ping = 2,								// send by the processing CPU (PC) to selected board
-	Pong = 3,								// response to Ping message
-	GetVersion = 4,							// get version of the firmware
-	GetFullResolutionSyncMeasurement = 5,	// Do full resolution measurement, wait for it, and then send results
+	Pong,									// response to Ping message
+	GetVersion,								// get version of the firmware
+	GetFullResolutionSyncMeasurement,		// Do full resolution measurement, wait for it, and then send results
 	
+	SetBurstConfiguration,
+	DoBurstMeasurement,
+	
+	__MAX,
 	__MIN = Ping,
-	__MAX = GetFullResolutionSyncMeasurement,
 };
 
+
+struct BURST_CONFIGURATION {
+	uint16_t time_point;
+	uint8_t bits_per_point;
+} __attribute__((packed));
 
 
 struct PROTO_HEADER {
 	device_address_t address;		// receiver address (if given) or ADDRESS_BROADCAST
 	MessageType type;				// type of the received message
 	uint8_t payload_length;			//
-};
+} __attribute__((packed));
+
+// data size asserts
+static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
+static_assert(sizeof(PROTO_HEADER) == 3, "PROTO_HEADER has invalid size");
+static_assert(sizeof(BURST_CONFIGURATION) == 3, "BURST_CONFIGURATION has invalid size");
+
 
 
 #endif /* PROTOCOL_H_ */

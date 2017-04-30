@@ -23,9 +23,6 @@ const char* build_date = __DATE__;
 const char* build_time = __TIME__;
 const char* build_version = "1.0";
 
-// data size asserts
-static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
-static_assert(sizeof(PROTO_HEADER) == 3, "PROTO_HEADER has invalid size");
 
 void cpu_init(void);
 void send(device_address_t addr, MessageType type, const uint8_t* payload, uint8_t payload_length);
@@ -88,6 +85,23 @@ int main(void)
 			//im_full_resolution_synchronized();
 			im_execute_sync();
 			send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurement, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
+		}
+
+		if (rx.buffer.header.type == MessageType::SetBurstConfiguration)
+		{
+			// rx.buffer.header.payload_length mus be equal to sizeof(struct BURST_CONFIGURATION)
+			bool ok = sizeof(struct BURST_CONFIGURATION) == rx.buffer.header.payload_length;
+			if (ok) {
+				BURST_CONFIGURATION *pburst_config = (BURST_CONFIGURATION *)rx.buffer.payload;
+				burst.time_point = pburst_config->time_point;
+			}
+			tx.payload[0] = ok;
+			send(rx.buffer.header.address, MessageType::SetBurstConfiguration, (const uint8_t*)tx.payload, 1);
+		}
+
+		if (rx.buffer.header.type == MessageType::DoBurstMeasurement)
+		{
+			
 		}
 
 		RX_RESET;

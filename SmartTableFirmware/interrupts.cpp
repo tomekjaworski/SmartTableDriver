@@ -14,8 +14,10 @@
 #include "eeprom_config.h"
 #include "comm.h"
 #include "dbg_putchar.h"
+#include "intensity_measurements.h"
 
 uint8_t __cnt;
+
 ISR(TIMER0_COMPA_vect)
 {
 	if (__cnt++ > 100)
@@ -23,6 +25,8 @@ ISR(TIMER0_COMPA_vect)
 		__cnt = 0;
 		LED0_TOGGLE;
 	}
+
+	burst.timer++;
 }
 
 ISR(USART_TX_vect) // goes off after transmitter have sent one byte (its only byte)

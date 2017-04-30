@@ -13,6 +13,7 @@
 #include "hardware.h"
 #include "dbg_putchar.h"
 
+struct BURST burst = {};
 
 #define NOP asm volatile("nop");
 
