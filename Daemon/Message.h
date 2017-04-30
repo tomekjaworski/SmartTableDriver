@@ -58,6 +58,8 @@ public:
 		phdr->address = device_address;
 		phdr->payload_length = payload_length;
 		phdr->type = type;
+		if (device_address == ADDRESS_BROADCAST)
+			phdr->type = (MessageType)((uint8_t)phdr->type | (uint8_t)MessageType::__BroadcastFlag);
 	
 		if (payload != nullptr)
 			memcpy(this->data + sizeof(PROTO_HEADER), payload, payload_length);
