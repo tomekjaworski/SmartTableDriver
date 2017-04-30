@@ -1,14 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-
 #include <list>
 #include <chrono>
 #include <thread>
-
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include <unordered_map>
 
 #include "SerialPort.hpp"
 #include "Environment.hpp"
@@ -23,6 +22,8 @@
 
 #include "Location.hpp"
 #include "TableDevice.hpp"
+
+#include "TableGroup.hpp"
 
 bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response);
 
@@ -41,13 +42,13 @@ void ShowTopology(const std::string& prompt, const std::vector<std::vector<Table
 	}
 }
 
-#include <unordered_map>
+
 
 int main(int argc, char **argv)
 {
 	printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
 	printf("Built on %s @ %s\n\n", __DATE__, __TIME__);
-	
+	setbuf(stdout, NULL);
 	// 
 	// show available serial ports
 	std::string s = "";
@@ -254,45 +255,120 @@ int main(int argc, char **argv)
 		
 	
 	// match groups to USB devices, since theirs order can change every time the system boots up
+	std::vector <TableGroup::Ptr> tgroups;
 	printf("Matching groups to USB devices...\n");
-	bool ok = true;
-	for(const auto& group : groups) {
+	for(auto& group : groups) {
 		SerialPort::Ptr expected_port = nullptr;
-		for(const TableDevice::Ptr& dev_addr : group) {
+		for(TableDevice::Ptr& pdevice : group) {
 			
-			// set first pointer to SerialPort as expected pointer
-			if (expected_port == nullptr)
-				expected_port = dev_addr->getSerialPort();
-				
-			// we expect, that port's pointer will be the same
-			if (dev_addr->getSerialPort() == expected_port)
-				continue; // it's the same port, so group is not divided
+			// find a table group with the same serial port as the device
+			auto pos = std::find_if(tgroups.begin(), tgroups.end(), [&pdevice] (const TableGroup::Ptr& ptg) { return ptg->getSerialPort() == pdevice->getSerialPort(); });
+			TableGroup::Ptr pgroup = nullptr;
+			if (pos == tgroups.end())
+			{
+				// no such group
+				pgroup = TableGroup::Ptr(new TableGroup(pdevice->getSerialPort()));
+				tgroups.push_back(pgroup);
+			} else
+				pgroup = *pos;
 			
-			ok = false;
 			
-			// first device ws not found, so it has no port
-			if (expected_port == nullptr) {
-				printf(" Device 0x%02X: expected null pointer\n", dev_addr->getAddress());
-				
-				continue;
+			TableDevice::Ptr pdev = pgroup->findByAddress(pdevice->getAddress());
+			if (pdev != nullptr)
+			{
+				// that shouldn't happen...
+				printf("?????");
+				exit(1);
 			}
-
-			// second and further device was not found
-			if (dev_addr->getSerialPort() == nullptr) {
-				printf(" Device 0x%02X: expected serial %s (%p) but got null pointer\n", dev_addr->getAddress(),
-				expected_port->getPortName().c_str(), expected_port.get());
-				continue;
-			}
-
-			// there's a mismatch between logical description (groups) and physical connections
-			printf(" Device 0x%02X: expected serial %s (%p) but got %s (%p)\n", dev_addr->getAddress(),
-				expected_port->getPortName().c_str(), expected_port.get(),
-				dev_addr->getSerialPort()->getPortName().c_str(), dev_addr.get());
+			
+			pgroup->addTableDevice(pdevice);
 		}
 	}
 	
-	if (ok)
-		printf("Ok.\n");
+	//
+	// sort table devices in each table group and then sort table groups for first device's address
+	for(TableGroup::Ptr& pgroup : tgroups)
+		std::sort(pgroup->begin(), pgroup->end(), [](const TableDevice::Ptr& p1, const TableDevice::Ptr& p2) { return p1->getAddress() <= p2->getAddress(); });
+	std::sort(tgroups.begin(), tgroups.end(), [](const TableGroup::Ptr& g1, const TableGroup::Ptr& g2) { return (*g1->begin())->getAddress() <= (*g2->begin())->getAddress(); });
+
+
+	
+	//
+	// Show Serial port-centric topology
+	printf("Serial port-based topology:\n");
+	for(const TableGroup::Ptr& pgroup : tgroups)
+	{
+		printf(" Port " AGREEN "%s" ARESET " with devices: ", pgroup->getSerialPort()->getPortName().c_str());
+
+		bool first = true;
+		int count = 0;
+		for (const TableDevice::Ptr& pdev : *pgroup)
+		{
+			if (!first)
+				printf(" ");
+				
+			
+			printf(AYELLOW "%02X" ARESET, pdev->getAddress());
+			count++;
+			first = false;
+		}
+		
+		printf(" (count=%d)\n", count);
+	}
+	
+	//
+	// calculate time points for full burst transmission
+	uint16_t measure_time = 200; // measurement time, counted from broadcasted start
+	uint16_t transmission_time = 100; // transmistion time that each device nned to fully send it's data
+	
+	// Transmission timing diagram:
+	// 
+	// | <- start
+	// |    (broadcast)
+	// |--- measurement ---|-- 1st transmission --|-- 2nd transmission --|-- 3rd transmission --|-- 4tht transmission --|-- ..... LAST transmission |
+	// |    measure_time      transmission-time       transmission-time      transmission-time      transmission-time        transmission-time
+	
+	printf("Setting timing information... \n");
+	int gid = 1;
+	for(TableGroup::Ptr& pgroup : tgroups)
+	{
+		printf(" Group " AGREEN "%d" ARESET ": ", gid++);
+		
+		uint16_t current_time = measure_time;
+		for (TableDevice::Ptr& pdev : *pgroup)
+		{
+			try {
+				
+				printf(AYELLOW "%02X" ARESET, pdev->getAddress());
+				
+				BURST_CONFIGURATION bc;
+				bc.bits_per_point = 16;
+				bc.time_point = current_time;
+				
+				device_address_t addr = pdev->getAddress();
+				Message msg_response, msg_timing(addr, MessageType::SetBurstConfiguration, &current_time, sizeof(BURST_CONFIGURATION));
+				
+				SendAndWaitForResponse(*pdev->getSerialPort(), msg_timing, msg_response);
+				if (msg_response.getType() != MessageType::SetBurstConfiguration || msg_response.getAddress() != pdev->getAddress() || !msg_response.getPayloadAsBoolean())
+					throw std::runtime_error("msg_response.getType() != MessageType::SetBurstConfiguration || msg_response.getAddress() != pdev->getAddress()");
+
+				printf(AGREEN "-ok " ARESET);					
+				current_time += transmission_time;
+
+			
+			} catch(const timeout_error& te) {
+				printf(ARED "-timeout " ARESET);
+				continue;
+			} catch (const std::exception& ex) {
+				printf(ARED "-err(%s) " ARESET, ex.what());
+			}
+			
+		}
+		
+		printf("\n");
+
+	}
+
 
 	//
 	// get version of each device

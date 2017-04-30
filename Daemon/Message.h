@@ -99,6 +99,12 @@ public:
 	const void* getPayload(void) const { return this->data + sizeof(PROTO_HEADER); }
 	size_t getPayloadLength(void) const { return getHeader().payload_length; }
 	
+	bool getPayloadAsBoolean(void) const {
+		if (this->getPayloadLength() == 0)
+			return false;
+		return *(bool*)this->getPayload();
+	}
+	
 };
 
 #endif // _MESSAGE_H_

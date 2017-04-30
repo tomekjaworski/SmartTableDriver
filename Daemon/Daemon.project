@@ -20,6 +20,7 @@
       <File Name="timeout_error.hpp"/>
       <File Name="Location.hpp"/>
       <File Name="TableDevice.hpp"/>
+      <File Name="TableGroup.hpp"/>
     </VirtualDirectory>
     <File Name="ImageDebuggerClient.cpp"/>
     <File Name="ImageDebuggerClient.h"/>
