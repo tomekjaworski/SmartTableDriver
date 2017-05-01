@@ -154,7 +154,16 @@ void SerialPort::done(void)
 
 int SerialPort::send(const void* data, size_t length)
 {
-	return ::write(this->fd, data, length);
+	int sent = ::write(this->fd, data, length);
+	bytes_sent += sent;
+	return sent;
+}
+
+int SerialPort::receive(void* data, size_t capacity)
+{
+	int recvd = ::read(this->fd, data, capacity);
+	bytes_received += recvd;
+	return recvd;
 }
 
 

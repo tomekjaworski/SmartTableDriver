@@ -3,6 +3,8 @@
 #include "CRC.hpp"
 #include <assert.h>
 
+#include "SerialPort.hpp"
+
 
 MessageReceiver::MessageReceiver(void)
 {
@@ -25,7 +27,7 @@ void MessageReceiver::purgeAllData(void)
 	this->position = 0;
 }
 
-ssize_t MessageReceiver::receive(int fd)
+ssize_t MessageReceiver::receive(SerialPort& source)
 {
 	uint32_t space_left = this->capacity - this->position;
 	if (space_left < 1024)
@@ -42,7 +44,7 @@ ssize_t MessageReceiver::receive(int fd)
 		delete[] new_ptr;
 	}
 	
-	ssize_t bytes_read = ::read(fd, data + position, capacity - position);
+	ssize_t bytes_read = source.receive(data + position, capacity - position);
 	assert(bytes_read > 0);
 	
 	position += bytes_read;

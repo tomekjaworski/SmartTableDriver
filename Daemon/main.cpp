@@ -453,7 +453,7 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
 				
 			// put data int
 			MessageReceiver& receiver = pgroup->getReceiver();
-			receiver.receive(pserial->getHandle());
+			receiver.receive(*pserial);
 			
 			// check for complete message
 			Message response;
@@ -526,7 +526,7 @@ bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& r
 			Environment::terminateOnError("select", 0);
 		}
 	
-		mr.receive(serial.getHandle());
+		mr.receive(serial);
 		//ssize_t bytes_read = ::read(serial.getHandle(), buffer + position, sizeof(buffer) - position);
 		//assert(bytes_read > 0);
 		//position += bytes_read;

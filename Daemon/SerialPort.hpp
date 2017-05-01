@@ -19,6 +19,8 @@ public:
 	//int sync_counter;
 	//int bytes_received;
 	
+	uint64_t bytes_sent, bytes_received;
+	
 
 public:
 	typedef std::shared_ptr<SerialPort> Ptr;
@@ -39,7 +41,8 @@ public:
 	void done(void);
 
 	int send(const void* data, size_t length);
-	
+	int receive(void* data, size_t capacity);
+
 	
 	int getHandle(void) const { return this->fd; }
 	

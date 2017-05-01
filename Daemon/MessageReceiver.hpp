@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "Message.h"
 
+class SerialPort;
+
 class MessageReceiver
 {
 	uint8_t* data;
@@ -15,7 +17,7 @@ public:
 	~MessageReceiver();
 	
 	
-	int receive(int fd);
+	int receive(SerialPort& source);
 	
 	bool getMessage(Message& output_message);
 	void purgeAllData(void);
