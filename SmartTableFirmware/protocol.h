@@ -158,6 +158,7 @@ enum class MessageType : uint8_t
 	
 	SetBurstConfiguration,
 	DoBurstMeasurement,
+	GetBurstMeasurementStatistics,
 	
 	__MAX,
 	__MIN = Ping,
@@ -166,8 +167,18 @@ enum class MessageType : uint8_t
 
 struct BURST_CONFIGURATION {
 	uint16_t time_point;
+	uint16_t silence_interval;
 	uint8_t bits_per_point;
+	
 } __attribute__((packed));
+
+
+struct BURST_STATISTICS {
+	uint16_t last_measure_time;
+	uint16_t last_transmission_time;
+	uint16_t count;
+} __attribute__((packed));
+
 
 
 struct PROTO_HEADER {
@@ -179,7 +190,8 @@ struct PROTO_HEADER {
 // data size asserts
 static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
 static_assert(sizeof(PROTO_HEADER) == 3, "PROTO_HEADER has invalid size");
-static_assert(sizeof(BURST_CONFIGURATION) == 3, "BURST_CONFIGURATION has invalid size");
+static_assert(sizeof(BURST_CONFIGURATION) == 5, "BURST_CONFIGURATION has invalid size");
+static_assert(sizeof(BURST_STATISTICS) == 6, "BURST_STATISTICS has invalid size");
 
 
 

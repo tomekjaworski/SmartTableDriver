@@ -9,10 +9,14 @@
 #ifndef INTENSITY_MEASUREMENTS_H_
 #define INTENSITY_MEASUREMENTS_H_
 
+#include "protocol.h"
+
 struct BURST {
-	uint16_t time_point;
 	volatile bool enabled;
 	volatile uint16_t timer;
+
+	volatile BURST_CONFIGURATION config;
+	volatile BURST_STATISTICS stats;
 };
 
 extern struct BURST burst;

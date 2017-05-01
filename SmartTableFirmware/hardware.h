@@ -30,4 +30,11 @@
 #define RESET1_LOW		do { PORTD &= ~_BV(PORTD5); } while(0);//0
 #define RESET2_LOW		do { PORTD &= ~_BV(PORTD4); } while(0);//0
 
+#define SET_RECEIVER_INTERRUPT(__state) do {	if (__state)	\
+		UCSR0B |= (1 << RXCIE0);								\
+		else													\
+		UCSR0B &= ~(1 << RXCIE0);								\
+	} while (0);
+
+
 #endif /* HARDWARE_H_ */

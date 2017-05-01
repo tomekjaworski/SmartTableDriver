@@ -64,7 +64,7 @@ bool MessageReceiver::getMessage(Message& output_message)
 		// Header verification: address
 		const PROTO_HEADER* phdr = (const PROTO_HEADER*)this->data;
 		
-		if (phdr->address >= 0xF0 || phdr->address == 0x00) // addresses are only 0x01 - 0xEF
+		if ((phdr->address >= 0xF0 || phdr->address == 0x00) && phdr->address != ADDRESS_BROADCAST) // addresses are only 0x01 - 0xEF
 		{
 			// remove one byte and loop
 			offset += 1;

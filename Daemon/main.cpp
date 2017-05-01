@@ -321,6 +321,8 @@ int main(int argc, char **argv)
 		printf(" Group " AGREEN "%d" ARESET ": ", gid++);
 		
 		uint16_t current_time = measure_time;
+		uint16_t silence_interval = measure_time + pgroup->getDeviceCount() * transmission_time;
+		
 		for (TableDevice::Ptr& pdev : *pgroup)
 		{
 			try {
@@ -330,6 +332,7 @@ int main(int argc, char **argv)
 				BURST_CONFIGURATION bc;
 				bc.bits_per_point = 16;
 				bc.time_point = current_time;
+				bc.silence_interval = silence_interval;
 				
 				device_address_t addr = pdev->getAddress();
 				Message msg_response, msg_timing(addr, MessageType::SetBurstConfiguration, &bc, sizeof(BURST_CONFIGURATION));
@@ -391,7 +394,7 @@ int main(int argc, char **argv)
 
 void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
 {
-	int32_t timeout = 1500;
+	int32_t timeout = 3000;
 
 	
 	//
@@ -457,12 +460,12 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
 			if (receiver.getMessage(response))
 			{
 				pgroup->addMessageToQueue(response);
-				device_count--;
+				device_count=0;
 			}
 		}
 		
 		if (device_count == 0)
-			return;
+			break;
 		
 		
 _check_timeout:;
@@ -471,6 +474,21 @@ _check_timeout:;
 			throw timeout_error("AcquireFullImage");
 		
 	} while(true);
+	
+	printf("Got all images!\n");
+	
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	
+	
+	// get burst statistics
+	Message response, mstats(0x14, MessageType::GetBurstMeasurementStatistics);
+			
+	SerialPort::Ptr pserial = (*(tgroups[0]->begin()))->getSerialPort();
+	SendAndWaitForResponse(*pserial, mstats, response);
+	assert(response.getType() == MessageType::GetBurstMeasurementStatistics && response.getAddress() == 0x14 && response.getPayloadLength() == sizeof(BURST_STATISTICS));
+	BURST_STATISTICS *pstats = (BURST_STATISTICS *)response.getPayload();
+	
+	printf("Device %02x: Measure count=%d; measure time=%dms; transmission time=%dms\n", response.getAddress(), pstats->count, pstats->last_measure_time, pstats->last_transmission_time);
 }
 
 

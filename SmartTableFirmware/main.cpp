@@ -93,7 +93,7 @@ int main(void)
 			bool ok = sizeof(struct BURST_CONFIGURATION) == rx.buffer.header.payload_length;
 			if (ok) {
 				BURST_CONFIGURATION *pburst_config = (BURST_CONFIGURATION *)rx.buffer.payload;
-				burst.time_point = pburst_config->time_point;
+				memcpy((void*)&burst.config, pburst_config, sizeof(BURST_CONFIGURATION));
 			}
 			tx.payload[0] = ok;
 			send(rx.buffer.header.address, MessageType::SetBurstConfiguration, (const uint8_t*)tx.payload, 1);
@@ -101,7 +101,38 @@ int main(void)
 
 		if (rx.buffer.header.type == MessageType::DoBurstMeasurement)
 		{
-			
+			// shut down receiver and do the measurements
+			SET_RECEIVER_INTERRUPT(false);
+			burst.timer = 0x0000;
+			im_execute_sync();
+			burst.stats.last_measure_time = burst.timer;
+			burst.stats.count++;
+
+			// wait for precise point in time
+			uint16_t timer_copy;
+			do {
+			     ATOMIC_BLOCK(ATOMIC_FORCEON) { timer_copy = burst.timer; }
+			} while (timer_copy < burst.config.time_point); // wait 
+
+			// synchronized send - start async and wait for finish
+			send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurement, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
+			while (tx.state != TransmitterState::IDLE);
+			burst.stats.last_transmission_time = burst.timer - burst.config.time_point;
+
+			// wait for the rest of silence time
+			do {
+				ATOMIC_BLOCK(ATOMIC_FORCEON) { timer_copy = burst.timer; }
+			} while (timer_copy < burst.config.silence_interval); // wait
+
+			// enable receiver
+			dummy = UDR0;
+			SET_RECEIVER_INTERRUPT(true);
+		}
+
+		if (rx.buffer.header.type == MessageType::GetBurstMeasurementStatistics)
+		{
+			memmove(tx.payload, &burst.stats, sizeof(BURST_STATISTICS));
+			send(rx.buffer.header.address, MessageType::GetBurstMeasurementStatistics, (const uint8_t*)tx.payload, sizeof(BURST_STATISTICS));
 		}
 
 		RX_RESET;
@@ -179,8 +210,10 @@ bool check_rx(void)
 		return false;
 	}
 
+	// reset broadcast bit in message type
+	rx.buffer.header.type = (MessageType)((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag);
+	
 	// ok - everything seems to good...
-
 	return true;
 }
 

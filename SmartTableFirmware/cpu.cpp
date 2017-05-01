@@ -70,6 +70,7 @@ void cpu_init(void)
 	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00) | _BV(UPM01);	// 8E1
 	UCSR0B = _BV(RXEN0) | _BV(TXEN0);	// wlacz rx i txs
 	UCSR0B |= (1 << RXCIE0);
+	SET_RECEIVER_INTERRUPT(true);
 
 	// struktury portu szeregowego
 	tx.state = TransmitterState::IDLE;
