@@ -36,6 +36,7 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 #define RX_RESET do { rx.buffer_position = (uint8_t*)&rx.buffer; } while (0);
 
 extern int otable[10][10];
+volatile uint8_t dummy;
 
 int main(void)
 {

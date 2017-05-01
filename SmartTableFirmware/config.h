@@ -9,7 +9,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define SERIAL_BAUD 19200	// 8E1 (!!!)
+#define SERIAL_BAUD 500000	// 8E1 (!!!)
 
 #define DEVICE_ADDRESS		(device_address_t)0x14
 
