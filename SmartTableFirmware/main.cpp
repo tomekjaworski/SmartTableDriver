@@ -44,7 +44,7 @@ int main(void)
 	RX_RESET;
 	
 	im_initialize();
-	_delay_ms(1000);
+	//_delay_ms(1000);
 
 //	while(1)
 //	{
@@ -54,7 +54,7 @@ int main(void)
 
 
 	//configuration_load();
-	//im_execute_sync();
+	im_execute_sync();
 
 
 

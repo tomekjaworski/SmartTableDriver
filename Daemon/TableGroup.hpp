@@ -2,7 +2,7 @@
 #define TABLEGROUP_HPP
 
 
-class TableGroup : public std::vector<TableDevice::Ptr> {
+class TableGroup {
 public:
 	typedef std::shared_ptr<TableGroup> Ptr;
 	

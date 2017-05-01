@@ -20,7 +20,7 @@ uint8_t __cnt;
 
 ISR(TIMER0_COMPA_vect)
 {
-	if (__cnt++ > 100)
+	if (__cnt++ > 200)
 	{
 		__cnt = 0;
 		LED0_TOGGLE;
