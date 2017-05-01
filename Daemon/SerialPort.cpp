@@ -102,11 +102,11 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		struct termios ser;
 		tcgetattr(this->fd, &ser);
 		
-		speed_t speed = B19200;
+		speed_t speed = B500000;
 		ret = cfsetospeed(&ser, speed);
 		if (ret == -1) Environment::terminateOnError("cfsetospeed", 2);
 			
-		ret = cfsetispeed(&ser, speed);
+		ret = cfsetispeed(&ser, B0); // set transmission speed same as outgoing
 		if (ret == -1) Environment::terminateOnError("cfsetispeed", 3);
 		
 		ser.c_cflag |= PARENB;	// enable parity checking/generation
