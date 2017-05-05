@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+#include <cstdio>
+#include <cassert>
+#include <climits>
 #include <list>
 #include <chrono>
 #include <thread>
@@ -238,6 +238,23 @@ int main(int argc, char **argv)
 	//
 	// Show current topology
 	ShowTopology("Current topology (after device detection)", groups);
+	
+	// get target image dimensions
+	int minx = INT_MAX, miny = INT_MAX, maxx = INT_MIN, maxy = INT_MIN;
+	for(auto& group : groups)
+		for(TableDevice::Ptr& pdevice : group) {
+			minx = std::min(minx, pdevice->getLocation().getColumn());
+			miny = std::min(miny, pdevice->getLocation().getRow());
+			maxx = std::max(maxx, (1 + pdevice->getLocation().getColumn() * 10));
+			maxy = std::max(maxy, (1 + pdevice->getLocation().getRow() * 10));
+		}
+	
+	assert(minx >= 0 && miny >= 0 && maxx <= 6*10 && maxy <= 4 * 10);
+	
+	int image_width = maxx - minx;
+	int image_height = maxy - miny;
+	printf("Target image information: Width = %d, Height = %d; Left = %d, Top = %d, Right = %d, Bottom = %d\n",
+		image_width, image_height, minx, miny, maxx, maxy);
 		
 	
 	// match groups to USB devices, since theirs order can change every time the system boots up

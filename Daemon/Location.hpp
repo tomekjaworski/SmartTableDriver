@@ -7,6 +7,7 @@ class Location {
 	int row;
 	int col;
 	
+public:	
 	int getRow(void) const { return this->row; }
 	int getColumn(void) const { return this->col; }
 	
