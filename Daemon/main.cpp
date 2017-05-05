@@ -358,7 +358,8 @@ int main(int argc, char **argv)
 	}
 
 
-	AcquireFullImage(tgroups);
+
+	//AcquireFullImage(tgroups);
 
 
 	//
@@ -381,10 +382,31 @@ int main(int argc, char **argv)
 
 
 	// tests
+	while(1)
 	{
+		TableGroup::Ptr ptg = tgroups[0];
+		SerialPort::Ptr pserial = ptg->getSerialPort();
+		
 		device_address_t addr = 0x14;
 		Message msg_response, msg_meas(addr, MessageType::GetFullResolutionSyncMeasurement);
-
+		
+		SendAndWaitForResponse(*pserial, msg_meas, msg_response);
+		assert(msg_response.getType() == MessageType::GetFullResolutionSyncMeasurement || msg_response.getAddress() == addr);
+		
+		int payload_length = msg_response.getPayloadLength();
+		printf("Payload length = %d\n", payload_length);
+		const uint16_t* ptr = (const uint16_t*)msg_response.getPayload();
+		
+		IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
+		
+		for (int i = 0; i < 10; i++)
+		{
+			for (int i = 0; i < 10; i++)
+				printf("%5d ", *ptr++);
+			printf("\n");
+		}
+		
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 	
 	
