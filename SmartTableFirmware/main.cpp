@@ -10,6 +10,7 @@
 #include <util/delay.h>
 #include <avr/pgmspace.h>
 #include <string.h>
+#include <util/atomic.h>
 
 #include "dbg_putchar.h"
 #include "crc16.h"
