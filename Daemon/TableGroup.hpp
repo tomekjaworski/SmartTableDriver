@@ -11,7 +11,8 @@ private:
 	MessageReceiver mr;
 
 	std::vector<TableDevice::Ptr> devices;
-	std::vector<Message> messages;
+	int bits_per_point;
+	//std::vector<Message> messages;
 	
 public:
 
@@ -20,18 +21,27 @@ public:
 
 	MessageReceiver& getReceiver(void) { return this->mr; }
 	const MessageReceiver& getReceiver(void) const { return this->mr; }
+	
+	void setBitsPerPoint(int bits) {
+		if (bits <= 0 || bits >= 16)
+			std::range_error("bits");
+		this->bits_per_point = bits;
+	}
+	
+	int getBitsPerPoint(void) const { return this->bits_per_point; }
+	
 
 	TableGroup()
 		: sp(nullptr)
 	{
-		messages.reserve(32);
+		//messages.reserve(32);
 		
 	}
 	
 	TableGroup(SerialPort::Ptr& sp)
 		: sp(sp)
 	{
-		messages.reserve(32);
+		//messages.reserve(32);
 	}
 	
 	TableDevice::Ptr findByAddress(device_address_t addr)
@@ -48,10 +58,10 @@ public:
 		this->devices.push_back(pdev);
 	}
 	
-	void addMessageToQueue(Message& msg)
-	{
-		this->messages.push_back(msg);
-	}
+	//void addMessageToQueue(Message& msg)
+	//{
+	//	this->messages.push_back(msg);
+	//}
 	
 	size_t getDeviceCount(void) const { return this->devices.size(); }
 	

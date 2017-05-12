@@ -99,6 +99,7 @@ bool MessageReceiver::getMessage(Message& output_message)
 		
 		// The Checksum is OK!
 		output_message = Message(data + offset, sizeof(PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t));
+		offset += sizeof(PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t);
 		
 		got_message = true;
 		break;

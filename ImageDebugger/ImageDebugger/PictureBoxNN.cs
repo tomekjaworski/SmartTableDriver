@@ -68,7 +68,7 @@ namespace ImageDebuggerServer
             if (bmp == null)
                 return;
 
-            if (this.size_mode == PictureBoxSizeMode.StretchImage)
+            if (this.size_mode == PictureBoxSizeMode.Zoom)
                 base.Image = ScaleBitmap(bmp, ClientSize);
             else
                 base.Image = bmp;

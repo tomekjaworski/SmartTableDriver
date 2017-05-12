@@ -24,9 +24,16 @@
 #include "TableDevice.hpp"
 
 #include "TableGroup.hpp"
+#include "Image.hpp"
 
-bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response);
-void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups);
+
+int kbhit (void);
+
+
+bool SendAndWaitForResponse(SerialPort::Ptr serial, const Message& query, Message& response, int timeout);
+bool SendAndWaitForResponse(std::list<SerialPort::Ptr>& serials, const Message& query, Message& response, SerialPort::Ptr& response_port, int timeout);
+
+void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups, Image& img);
 void ShowTopology(const std::string& prompt, const std::vector<std::vector<TableDevice::Ptr> >& groups);
 
 
@@ -113,42 +120,42 @@ int main(int argc, char **argv)
      *                                         
      */
 	
-	std::vector<TableDevice::Ptr> g1 = {	TableDevice::Ptr(new TableDevice(0x01, Location(0, 0))),
-											TableDevice::Ptr(new TableDevice(0x02, Location(1, 0))),
-											TableDevice::Ptr(new TableDevice(0x03, Location(2, 0))),
-											TableDevice::Ptr(new TableDevice(0x04, Location(3, 0))) 
+	std::vector<TableDevice::Ptr> g1 = {	TableDevice::Ptr(new TableDevice(0x01, Location(00, 00))),
+											TableDevice::Ptr(new TableDevice(0x02, Location(10, 00))),
+											TableDevice::Ptr(new TableDevice(0x03, Location(20, 00))),
+											TableDevice::Ptr(new TableDevice(0x04, Location(30, 00))) 
 										};
 
-	std::vector<TableDevice::Ptr> g2 = {	TableDevice::Ptr(new TableDevice(0x07, Location(0, 1))),
-											TableDevice::Ptr(new TableDevice(0x08, Location(1, 1))),
-											TableDevice::Ptr(new TableDevice(0x09, Location(2, 1))),
-											TableDevice::Ptr(new TableDevice(0x0A, Location(3, 1))) 
+	std::vector<TableDevice::Ptr> g2 = {	TableDevice::Ptr(new TableDevice(0x07, Location(00, 10))),
+											TableDevice::Ptr(new TableDevice(0x08, Location(10, 10))),
+											TableDevice::Ptr(new TableDevice(0x09, Location(20, 10))),
+											TableDevice::Ptr(new TableDevice(0x0A, Location(30, 10))) 
 										};
 
-	std::vector<TableDevice::Ptr> g3 = {	TableDevice::Ptr(new TableDevice(0x0D, Location(0, 2))),
-											TableDevice::Ptr(new TableDevice(0x0E, Location(1, 2))),
-											TableDevice::Ptr(new TableDevice(0x0F, Location(2, 2))),
-											TableDevice::Ptr(new TableDevice(0x10, Location(3, 2))) 
+	std::vector<TableDevice::Ptr> g3 = {	TableDevice::Ptr(new TableDevice(0x0D, Location(00, 20))),
+											TableDevice::Ptr(new TableDevice(0x0E, Location(10, 20))),
+											TableDevice::Ptr(new TableDevice(0x0F, Location(20, 20))),
+											TableDevice::Ptr(new TableDevice(0x10, Location(30, 20))) 
 										};
 
-	std::vector<TableDevice::Ptr> g4 = {	TableDevice::Ptr(new TableDevice(0x13, Location(0, 3))),
-											TableDevice::Ptr(new TableDevice(0x14, Location(1, 3))),
-											TableDevice::Ptr(new TableDevice(0x15, Location(2, 3))) 
+	std::vector<TableDevice::Ptr> g4 = {	TableDevice::Ptr(new TableDevice(0x13, Location(00, 30))),
+											TableDevice::Ptr(new TableDevice(0x14, Location(10, 30))),
+											TableDevice::Ptr(new TableDevice(0x15, Location(20, 30))) 
 										};
 
-	std::vector<TableDevice::Ptr> g5 = {	TableDevice::Ptr(new TableDevice(0x16, Location(3, 3))),
-											TableDevice::Ptr(new TableDevice(0x17, Location(4, 3))),
-											TableDevice::Ptr(new TableDevice(0x18, Location(5, 3))) 
+	std::vector<TableDevice::Ptr> g5 = {	TableDevice::Ptr(new TableDevice(0x16, Location(30, 30))),
+											TableDevice::Ptr(new TableDevice(0x17, Location(40, 30))),
+											TableDevice::Ptr(new TableDevice(0x18, Location(50, 30))) 
 										};
 
-	std::vector<TableDevice::Ptr> g6 = {	TableDevice::Ptr(new TableDevice(0x05, Location(4, 0))),
-											TableDevice::Ptr(new TableDevice(0x0B, Location(4, 1))),
-											TableDevice::Ptr(new TableDevice(0x11, Location(4, 2))) 
+	std::vector<TableDevice::Ptr> g6 = {	TableDevice::Ptr(new TableDevice(0x05, Location(40, 00))),
+											TableDevice::Ptr(new TableDevice(0x0B, Location(40, 10))),
+											TableDevice::Ptr(new TableDevice(0x11, Location(40, 20))) 
 										};
 
-	std::vector<TableDevice::Ptr> g7 = {	TableDevice::Ptr(new TableDevice(0x06, Location(5, 0))),
-											TableDevice::Ptr(new TableDevice(0x0C, Location(5, 1))),
-											TableDevice::Ptr(new TableDevice(0x12, Location(5, 2))) 
+	std::vector<TableDevice::Ptr> g7 = {	TableDevice::Ptr(new TableDevice(0x06, Location(50, 00))),
+											TableDevice::Ptr(new TableDevice(0x0C, Location(50, 10))),
+											TableDevice::Ptr(new TableDevice(0x12, Location(50, 20))) 
 										};
 
 	std::vector<std::vector<TableDevice::Ptr> > groups = { g1, g2, g3, g4, g5, g6, g7 };
@@ -182,40 +189,32 @@ int main(int argc, char **argv)
 		
 		printf(" Looking for " AYELLOW "0x%02x" ARESET "... ", dev_addr->getAddress());
 		
-		bool found = false;
-		std::string port_name = "unknown";
-		for(SerialPort::Ptr& sp : ports) {
-			try {
-				
-				// send a ping to selected device on selected serial port and wait for an answer
-				Message mping(dev_addr->getAddress(), MessageType::Ping);
-				Message response;
-				
-				SendAndWaitForResponse(*sp, mping, response);
-				if (response.getType() != MessageType::Pong || response.getAddress() != dev_addr->getAddress())
-					continue; // error
-					
-				dev_addr->setSerialPort(sp);
-				found = true;
-				port_name = sp->getPortName();
+		try {
 			
-			} catch(const timeout_error& te) {
-				// ok, timeout means no reponse. Thats ok, i guess..
+			// send a ping to selected device on selected serial port and wait for an answer
+			Message mping(dev_addr->getAddress(), MessageType::Ping);
+			Message response;
+			
+			SerialPort::Ptr response_port;
+			
+			SendAndWaitForResponse(ports, mping, response, response_port, 400);
+			if (response.getType() != MessageType::Pong || response.getAddress() != dev_addr->getAddress())
+			{
+				throw std::runtime_error("protocol");
 				continue;
-			} catch (const std::exception& ex) {
-				printf(ARED "Failed: %s\n" ARESET, ex.what());
 			}
-		}
-		
-		if (found)
-			printf(AGREEN "Found" ARESET " on %s\n", port_name.c_str());
-		else
+			
+			printf(AGREEN "Found" ARESET " on %s\n", response_port->getPortName().c_str());
+			dev_addr->setSerialPort(response_port);
+			
+		} catch(const std::exception &ex)
 		{
-			printf(ARED "Missing\n" ARESET);
+			printf(ARED "Missing" ARESET " (%s)\n", ex.what());
 			missing_devices.push_back(dev_addr);
 		}
+
 	}
-	
+		
 	//
 	// remove missing devices from groups
 	int usable_dev_count = 0;
@@ -245,14 +244,14 @@ int main(int argc, char **argv)
 		for(TableDevice::Ptr& pdevice : group) {
 			minx = std::min(minx, pdevice->getLocation().getColumn());
 			miny = std::min(miny, pdevice->getLocation().getRow());
-			maxx = std::max(maxx, (1 + pdevice->getLocation().getColumn() * 10));
-			maxy = std::max(maxy, (1 + pdevice->getLocation().getRow() * 10));
+			maxx = std::max(maxx, 10 + pdevice->getLocation().getColumn() - 1);
+			maxy = std::max(maxy, 10 + pdevice->getLocation().getRow() - 1);
 		}
 	
 	assert(minx >= 0 && miny >= 0 && maxx <= 6*10 && maxy <= 4 * 10);
 	
-	int image_width = maxx - minx;
-	int image_height = maxy - miny;
+	int image_width = maxx - minx + 1;
+	int image_height = maxy - miny + 1;
 	printf("Target image information: Width = %d, Height = %d; Left = %d, Top = %d, Right = %d, Bottom = %d\n",
 		image_width, image_height, minx, miny, maxx, maxy);
 		
@@ -321,8 +320,8 @@ int main(int argc, char **argv)
 	
 	//
 	// calculate time points for full burst transmission
-	uint16_t measure_time = 200; // measurement time, counted from broadcasted start
-	uint16_t transmission_time = 100; // transmistion time that each device nned to fully send it's data
+	uint16_t measure_time = 100; // measurement time, counted from broadcasted start
+	uint16_t transmission_time = 10; // transmistion time that each device nned to fully send it's data
 	
 	// Transmission timing diagram:
 	// 
@@ -339,6 +338,8 @@ int main(int argc, char **argv)
 		
 		uint16_t current_time = measure_time;
 		uint16_t silence_interval = measure_time + pgroup->getDeviceCount() * transmission_time;
+
+		pgroup->setBitsPerPoint(16);
 		
 		for (TableDevice::Ptr& pdev : *pgroup)
 		{
@@ -347,18 +348,19 @@ int main(int argc, char **argv)
 				printf(AYELLOW "%02X" ARESET, pdev->getAddress());
 				
 				BURST_CONFIGURATION bc;
-				bc.bits_per_point = 16;
+				bc.bits_per_point = pgroup->getBitsPerPoint();
 				bc.time_point = current_time;
 				bc.silence_interval = silence_interval;
 				
 				device_address_t addr = pdev->getAddress();
 				Message msg_response, msg_timing(addr, MessageType::SetBurstConfiguration, &bc, sizeof(BURST_CONFIGURATION));
 				
-				SendAndWaitForResponse(*pdev->getSerialPort(), msg_timing, msg_response);
+				SendAndWaitForResponse(pdev->getSerialPort(), msg_timing, msg_response, 1000);
 				if (msg_response.getType() != MessageType::SetBurstConfiguration || msg_response.getAddress() != pdev->getAddress() || !msg_response.getPayloadAsBoolean())
 					throw std::runtime_error("msg_response.getType() != MessageType::SetBurstConfiguration || msg_response.getAddress() != pdev->getAddress()");
 
-				printf(AGREEN "-ok " ARESET);					
+				printf(AGREEN "-ok " ARESET);
+				printf("(tp=%dms; si=%dms)", bc.time_point, bc.silence_interval);
 				current_time += transmission_time;
 
 			
@@ -375,9 +377,21 @@ int main(int argc, char **argv)
 	}
 
 
+	Image img(60, 40);
+	while(!kbhit())
+		AcquireFullImage(tgroups, img);
 
-	//AcquireFullImage(tgroups);
+	// get burst statistics
+	TableDevice::Ptr p = *tgroups[0]->begin();
+	Message response, mstats(p->getAddress(), MessageType::GetBurstMeasurementStatistics);
+			
+	SendAndWaitForResponse(p->getSerialPort(), mstats, response, 1000);
+	assert(response.getType() == MessageType::GetBurstMeasurementStatistics && response.getAddress() == p->getAddress() && response.getPayloadLength() == sizeof(BURST_STATISTICS));
+	BURST_STATISTICS *pstats = (BURST_STATISTICS *)response.getPayload();
+	
+	printf("  Device %02x: Measure count=%d; measure time=%dms; transmission time=%dms\n", response.getAddress(), pstats->count, pstats->last_measure_time, pstats->last_transmission_time);
 
+	std::this_thread::sleep_for(std::chrono::seconds(10));
 
 	//
 	// get version of each device
@@ -399,6 +413,7 @@ int main(int argc, char **argv)
 
 
 	// tests
+	/*
 	while(1)
 	{
 		TableGroup::Ptr ptg = tgroups[0];
@@ -407,7 +422,7 @@ int main(int argc, char **argv)
 		device_address_t addr = 0x14;
 		Message msg_response, msg_meas(addr, MessageType::GetFullResolutionSyncMeasurement);
 		
-		SendAndWaitForResponse(*pserial, msg_meas, msg_response);
+		SendAndWaitForResponse(pserial, msg_meas, msg_response, 5000);
 		assert(msg_response.getType() == MessageType::GetFullResolutionSyncMeasurement || msg_response.getAddress() == addr);
 		
 		int payload_length = msg_response.getPayloadLength();
@@ -425,15 +440,25 @@ int main(int argc, char **argv)
 		
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
-	
+	*/
 	
 	
 	return 0;
 }
 
-void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
+const Location* getLocationByAddress(device_address_t addr, std::vector<TableGroup::Ptr>& tgroups)
 {
-	int32_t timeout = 3000;
+	for(const TableGroup::Ptr& pgroup : tgroups)
+		for(const TableDevice::Ptr& pdevice : *pgroup)
+			if (pdevice->getAddress() == addr)
+				return &pdevice->getLocation();
+				
+	return nullptr;
+}
+
+void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups, Image& img)
+{
+	int32_t timeout = 200;
 
 	
 	//
@@ -472,7 +497,7 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
 		}
 		
 		// wait for data
-		timeval tv = { .tv_sec = 0, .tv_usec = 50 * 1000 };
+		timeval tv = { .tv_sec = 0, .tv_usec = 75 * 1000 };
 		int sret = ::select(max_fd + 1, &rfd, nullptr, nullptr, &tv);
 		
 		if (sret == 0)
@@ -496,10 +521,11 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
 			
 			// check for complete message
 			Message response;
-			if (receiver.getMessage(response))
+			while (receiver.getMessage(response))
 			{
-				pgroup->addMessageToQueue(response);
-				device_count=0;
+				const Location* ploc = getLocationByAddress(response.getAddress(), tgroups);
+				img.processMeasurementPayload(response.getPayload(), pgroup->getBitsPerPoint(), ploc);
+				device_count--;
 			}
 		}
 		
@@ -510,80 +536,20 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups)
 _check_timeout:;
 		std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count() > timeout)
-			throw timeout_error("AcquireFullImage");
+			{
+				printf("TO(%d)", device_count);
+				break;
+			}
 		
 	} while(true);
 	
 	printf("Got all images!\n");
-	
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	
-	
-	// get burst statistics
-	Message response, mstats(0x14, MessageType::GetBurstMeasurementStatistics);
-			
-	SerialPort::Ptr pserial = (*(tgroups[0]->begin()))->getSerialPort();
-	SendAndWaitForResponse(*pserial, mstats, response);
-	assert(response.getType() == MessageType::GetBurstMeasurementStatistics && response.getAddress() == 0x14 && response.getPayloadLength() == sizeof(BURST_STATISTICS));
-	BURST_STATISTICS *pstats = (BURST_STATISTICS *)response.getPayload();
-	
-	printf("Device %02x: Measure count=%d; measure time=%dms; transmission time=%dms\n", response.getAddress(), pstats->count, pstats->last_measure_time, pstats->last_transmission_time);
+	IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
 }
 
-
-bool SendAndWaitForResponse(SerialPort& serial, const Message& query, Message& response)
-{
-
-	int32_t timeout = 1500;
-
-	
-	//uint8_t buffer[1024];
-	//ssize_t position = 0;
-	
-	// prepare receiver and send query
-	MessageReceiver mr;
-
-	serial.discardAllData();
-	serial.send(query.getBinary(), query.getBinaryLength());
-	
-	std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
-	
-	// now wait for response
-	do {
-		fd_set rfd;
-		FD_ZERO(&rfd);
-		FD_SET(serial.getHandle(), &rfd);
-		
-		timeval tv = { .tv_sec = 0, .tv_usec = 50 * 1000 };
-		int sret = ::select(serial.getHandle() + 1, &rfd, nullptr, nullptr, &tv);
-		
-		if (sret == 0)
-			goto _check_timeout; // timeout - let's loop
-			
-		if (sret == -1) {
-			perror(__func__);
-			Environment::terminateOnError("select", 0);
-		}
-	
-		mr.receive(serial);
-		//ssize_t bytes_read = ::read(serial.getHandle(), buffer + position, sizeof(buffer) - position);
-		//assert(bytes_read > 0);
-		//position += bytes_read;
-		
-		if (mr.getMessage(response))
-			return true;
-		
-		
-		// check for timeout
-_check_timeout:;
-		std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
-		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count() > timeout)
-			throw timeout_error("SendAndWaitForResponse");
-		
-	} while (true);
-	
-	return false;
-}
 
 void ShowTopology(const std::string& prompt, const std::vector<std::vector<TableDevice::Ptr> >& groups)
 {
