@@ -45,7 +45,7 @@ int main(void)
 	RX_RESET;
 	
 	im_initialize();
-	//_delay_ms(1000);
+	device_address = pgm_read_byte(device_address_block + 4);
 
 //	while(1)
 //	{
@@ -157,11 +157,11 @@ bool check_rx(void)
 			return false; // nie ma czego synchronizowaæ
 
 		if (rx.buffer.header.address != ADDRESS_BROADCAST
-			&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x18)
-			&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x04)
-			&& rx.buffer.header.address != 0x13
-			&& rx.buffer.header.address != 0x15
-			&& rx.buffer.header.address != DEVICE_ADDRESS)
+			//&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x18)
+			//&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x04)
+			//&& rx.buffer.header.address != 0x13
+			//&& rx.buffer.header.address != 0x15
+			&& rx.buffer.header.address != device_address)
 		{
 			// remove one byte at the start of the rx buffer
 			RX_RESET;
@@ -221,11 +221,30 @@ bool check_rx(void)
 
 void send(device_address_t addr, MessageType type, const uint8_t* payload, uint8_t payload_length)
 {	
+
 	// prepare header
-	tx.header.address = addr;
 	tx.header.type = type;
 	tx.header.payload_length = payload_length;
 	tx.ppayload = payload;
+
+	// set sender address
+#define SEND_ADDRESS_MODE	3
+
+#if SEND_ADDRESS_MODE == 0
+	// set sender address to same as incoming (mind the broadcast!)
+	tx.header.address = rx.buffer.header.address;
+#elseif SEND_ADDRESS_MODE == 1
+	// set sender address always to the configured one
+	tx.header.address = device_address;
+#else
+	// mix mode 0 and 1
+	if (rx.buffer.header.address == ADDRESS_BROADCAST)
+		tx.header.address = device_address;
+	else
+		tx.header.address = rx.buffer.header.address;
+#endif
+
+
 
 	// setup the transmitter
 	tx.state = TransmitterState::SendingHeader;

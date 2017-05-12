@@ -190,6 +190,9 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="config.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="config.h">
       <SubType>compile</SubType>
     </Compile>
@@ -218,12 +221,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="crc16.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="eeprom_config.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="eeprom_config.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="hardware.h">
