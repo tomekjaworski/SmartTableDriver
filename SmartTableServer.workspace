@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="SmartTableServer" Database="" Version="10.0.0">
   <Project Name="Daemon" Path="Daemon/Daemon.project" Active="Yes"/>
+  <Project Name="OpenCV" Path="opencv-build/OpenCV.project" Active="No"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
       <Project Name="Daemon" ConfigName="Debug"/>
+      <Project Name="OpenCV" ConfigName="Release"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="Release" Selected="no">
+    <WorkspaceConfiguration Name="Release" Selected="yes">
       <Environment/>
       <Project Name="Daemon" ConfigName="Release"/>
+      <Project Name="OpenCV" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>
