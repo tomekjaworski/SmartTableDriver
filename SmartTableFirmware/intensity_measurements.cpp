@@ -197,10 +197,10 @@ void im_execute_sync(void)
 		IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
 		_delay_ms(2);
 
-		utable[i][0] = IM_ADC_READ(0);
-		utable[i][1] = IM_ADC_READ(1);
-		utable[i][2] = IM_ADC_READ(2);
-		utable[i][3] = IM_ADC_READ(3);
+		utable[i][0] = IM_ADC_READ(3);
+		utable[i][1] = IM_ADC_READ(2);
+		utable[i][2] = IM_ADC_READ(1);
+		utable[i][3] = IM_ADC_READ(0);
 		utable[i][4] = IM_ADC_READ(4);
 		utable[i][5] = IM_ADC_READ(5);
 		utable[i][6] = IM_ADC_READ(6);

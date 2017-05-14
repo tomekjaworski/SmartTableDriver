@@ -21,9 +21,12 @@
       <File Name="Location.hpp"/>
       <File Name="TableDevice.hpp"/>
       <File Name="TableGroup.hpp"/>
+      <File Name="Image.hpp"/>
     </VirtualDirectory>
     <File Name="ImageDebuggerClient.cpp"/>
     <File Name="ImageDebuggerClient.h"/>
+    <File Name="IO.cpp"/>
+    <File Name="keyboard.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

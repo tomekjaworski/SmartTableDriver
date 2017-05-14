@@ -10,6 +10,7 @@
 #include <util/delay.h>
 #include <avr/pgmspace.h>
 #include <string.h>
+#include <util/atomic.h>
 
 #include "dbg_putchar.h"
 #include "crc16.h"
@@ -44,19 +45,9 @@ int main(void)
 	RX_RESET;
 	
 	im_initialize();
-	//_delay_ms(1000);
+	device_address = pgm_read_byte(device_address_block + 4);
 
-//	while(1)
-//	{
-	//	begin_transmission(test, strlen(test));
-	//	_delay_ms(200);
-//	}
-
-
-	//configuration_load();
 	im_execute_sync();
-
-
 
 	while(1)
 	{
@@ -102,12 +93,17 @@ int main(void)
 
 		if (rx.buffer.header.type == MessageType::DoBurstMeasurement)
 		{
-			// shut down receiver and do the measurements
+			// shut down receiver
 			SET_RECEIVER_INTERRUPT(false);
-			burst.timer = 0x0000;
+
+			// do the measurements and get it's time
+			ATOMIC_BLOCK(ATOMIC_FORCEON) { burst.timer = 0x0000; }
 			im_execute_sync();
-			burst.stats.last_measure_time = burst.timer;
-			burst.stats.count++;
+			ATOMIC_BLOCK(ATOMIC_FORCEON) {
+				burst.stats.last_measure_time = burst.timer;
+				burst.stats.count++;
+			}
+
 
 			// wait for precise point in time
 			uint16_t timer_copy;
@@ -116,14 +112,19 @@ int main(void)
 			} while (timer_copy < burst.config.time_point); // wait 
 
 			// synchronized send - start async and wait for finish
-			send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurement, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
+			send(rx.buffer.header.address, MessageType::DoBurstMeasurement, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
 			while (tx.state != TransmitterState::IDLE);
-			burst.stats.last_transmission_time = burst.timer - burst.config.time_point;
 
+			// Store transmission time
+			ATOMIC_BLOCK(ATOMIC_FORCEON) {
+				burst.stats.last_transmission_time = burst.timer - burst.config.time_point;
+			}
+			
 			// wait for the rest of silence time
 			do {
 				ATOMIC_BLOCK(ATOMIC_FORCEON) { timer_copy = burst.timer; }
 			} while (timer_copy < burst.config.silence_interval); // wait
+
 
 			// enable receiver
 			dummy = UDR0;
@@ -156,11 +157,11 @@ bool check_rx(void)
 			return false; // nie ma czego synchronizowaæ
 
 		if (rx.buffer.header.address != ADDRESS_BROADCAST
-			&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x18)
-			&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x04)
-			&& rx.buffer.header.address != 0x13
-			&& rx.buffer.header.address != 0x15
-			&& rx.buffer.header.address != DEVICE_ADDRESS)
+			//&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x18)
+			//&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x04)
+			//&& rx.buffer.header.address != 0x13
+			//&& rx.buffer.header.address != 0x15
+			&& rx.buffer.header.address != device_address)
 		{
 			// remove one byte at the start of the rx buffer
 			RX_RESET;
@@ -220,11 +221,30 @@ bool check_rx(void)
 
 void send(device_address_t addr, MessageType type, const uint8_t* payload, uint8_t payload_length)
 {	
+
 	// prepare header
-	tx.header.address = addr;
 	tx.header.type = type;
 	tx.header.payload_length = payload_length;
 	tx.ppayload = payload;
+
+	// set sender address
+#define SEND_ADDRESS_MODE	3
+
+#if SEND_ADDRESS_MODE == 0
+	// set sender address to same as incoming (mind the broadcast!)
+	tx.header.address = rx.buffer.header.address;
+#elseif SEND_ADDRESS_MODE == 1
+	// set sender address always to the configured one
+	tx.header.address = device_address;
+#else
+	// mix mode 0 and 1
+	if (rx.buffer.header.address == ADDRESS_BROADCAST)
+		tx.header.address = device_address;
+	else
+		tx.header.address = rx.buffer.header.address;
+#endif
+
+
 
 	// setup the transmitter
 	tx.state = TransmitterState::SendingHeader;

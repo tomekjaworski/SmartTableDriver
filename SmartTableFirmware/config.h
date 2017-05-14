@@ -11,7 +11,9 @@
 
 #define SERIAL_BAUD 500000	// 8E1 (!!!)
 
-#define DEVICE_ADDRESS		(device_address_t)0x14
+#define __DEVICE_ADDRESS		(device_address_t)0x14
 
+extern const device_address_t device_address_block[] PROGMEM;
+extern device_address_t device_address;
 
 #endif /* CONFIG_H_ */
