@@ -101,6 +101,8 @@ public:
 	const void* getPayload(void) const { return this->data + sizeof(PROTO_HEADER); }
 	size_t getPayloadLength(void) const { return getHeader().payload_length; }
 	
+	bool isResponse(void) const { return static_cast<uint8_t>(this->getHeader().type) & static_cast<uint8_t>(MessageType::__ResponseFlag); }
+	
 	bool getPayloadAsBoolean(void) const {
 		if (this->getPayloadLength() == 0)
 			return false;

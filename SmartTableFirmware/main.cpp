@@ -58,28 +58,28 @@ int main(void)
 			continue; // not yet again
 
 		// ok, we have data
-		if (rx.buffer.header.type == MessageType::Ping)
+		if (rx.buffer.header.type == MessageType::PingRequest)
 		{
 			memmove(tx.payload, rx.buffer.payload, rx.buffer.header.payload_length);
-			send(rx.buffer.header.address, MessageType::Pong, (const uint8_t*)tx.payload, rx.buffer.header.payload_length);
+			send(rx.buffer.header.address, MessageType::PingResponse, (const uint8_t*)tx.payload, rx.buffer.header.payload_length);
 		}
 
-		if (rx.buffer.header.type == MessageType::GetVersion)
+		if (rx.buffer.header.type == MessageType::GetVersionRequest)
 		{
 			strcpy((char*)tx.payload, "version="); strcat((char*)tx.payload, build_version);
 			strcat((char*)tx.payload, ";date="); strcat((char*)tx.payload, build_date);
 			strcat((char*)tx.payload, ";time="); strcat((char*)tx.payload, build_time);
-			send(rx.buffer.header.address, MessageType::GetVersion, (const uint8_t*)tx.payload, strlen((const char*)tx.payload));
+			send(rx.buffer.header.address, MessageType::GetVersionResponse, (const uint8_t*)tx.payload, strlen((const char*)tx.payload));
 		}
 
-		if (rx.buffer.header.type == MessageType::GetFullResolutionSyncMeasurement)
+		if (rx.buffer.header.type == MessageType::GetFullResolutionSyncMeasurementRequest)
 		{
 			//im_full_resolution_synchronized();
 			im_execute_sync();
-			send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurement, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
+			send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurementResponse, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
 		}
 
-		if (rx.buffer.header.type == MessageType::SetBurstConfiguration)
+		if (rx.buffer.header.type == MessageType::SetBurstConfigurationRequest)
 		{
 			// rx.buffer.header.payload_length mus be equal to sizeof(struct BURST_CONFIGURATION)
 			bool ok = sizeof(struct BURST_CONFIGURATION) == rx.buffer.header.payload_length;
@@ -88,10 +88,10 @@ int main(void)
 				memcpy((void*)&burst.config, pburst_config, sizeof(BURST_CONFIGURATION));
 			}
 			tx.payload[0] = ok;
-			send(rx.buffer.header.address, MessageType::SetBurstConfiguration, (const uint8_t*)tx.payload, 1);
+			send(rx.buffer.header.address, MessageType::SetBurstConfigurationResponse, (const uint8_t*)tx.payload, 1);
 		}
 
-		if (rx.buffer.header.type == MessageType::DoBurstMeasurement)
+		if (rx.buffer.header.type == MessageType::DoBurstMeasurementRequest)
 		{
 			// shut down receiver
 			SET_RECEIVER_INTERRUPT(false);
@@ -112,7 +112,7 @@ int main(void)
 			} while (timer_copy < burst.config.time_point); // wait 
 
 			// synchronized send - start async and wait for finish
-			send(rx.buffer.header.address, MessageType::DoBurstMeasurement, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
+			send(rx.buffer.header.address, MessageType::DoBurstMeasurementResponse, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
 			while (tx.state != TransmitterState::IDLE);
 
 			// Store transmission time
@@ -131,10 +131,10 @@ int main(void)
 			SET_RECEIVER_INTERRUPT(true);
 		}
 
-		if (rx.buffer.header.type == MessageType::GetBurstMeasurementStatistics)
+		if (rx.buffer.header.type == MessageType::GetBurstMeasurementStatisticsRequest)
 		{
 			memmove(tx.payload, &burst.stats, sizeof(BURST_STATISTICS));
-			send(rx.buffer.header.address, MessageType::GetBurstMeasurementStatistics, (const uint8_t*)tx.payload, sizeof(BURST_STATISTICS));
+			send(rx.buffer.header.address, MessageType::GetBurstMeasurementStatisticsResponse, (const uint8_t*)tx.payload, sizeof(BURST_STATISTICS));
 		}
 
 		RX_RESET;
@@ -184,7 +184,7 @@ bool check_rx(void)
 	}
 	
 	// CHECK: is the message type valid?
-	if (((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) < (uint8_t)MessageType::__MIN || ((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) > (uint8_t)MessageType::__MAX)
+	if (((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) < (uint8_t)MessageType::__RequestMinCode || ((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) > (uint8_t)MessageType::__RequestMaxCode)
 	{
 		// NO: message type is out of range
 		RX_RESET;

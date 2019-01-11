@@ -148,20 +148,39 @@ static_assert(sizeof(ADC_BLOCK1_N8_B1) == 1, "ADC_BLOCK1_N8_B1 has invalid_size"
 enum class MessageType : uint8_t
 {
 	__BroadcastFlag = 0x80,
-	Invalid = 0,
-	None = 1,
+	__ResponseFlag = 0x40,
+	Invalid = 0x00,
+	None = 0x01,
 
-	Ping = 2,								// send by the processing CPU (PC) to selected board
-	Pong,									// response to Ping message
-	GetVersion,								// get version of the firmware
-	GetFullResolutionSyncMeasurement,		// Do full resolution measurement, wait for it, and then send results
+	// Classical ping-pong messages to see if a device is alive and kickin'
+	PingRequest = 0x02,
+	PingResponse = 0x02 | __ResponseFlag,
 	
-	SetBurstConfiguration,
-	DoBurstMeasurement,
-	GetBurstMeasurementStatistics,
+	// Get version of the active firmware
+	GetVersionRequest = 0x03,
+	GetVersionResponse = 0x03 | __ResponseFlag,
 	
-	__MAX,
-	__MIN = Ping,
+	// Do the full resolution measurement, wait for it and then send the results (array of 100 uint16_ts)
+	GetFullResolutionSyncMeasurementRequest = 0x04,
+	GetFullResolutionSyncMeasurementResponse = 0x04 | __ResponseFlag,
+	
+	// Set timing configuration for the burst mode
+	SetBurstConfigurationRequest = 0x05,
+	SetBurstConfigurationResponse = 0x05 | __ResponseFlag,
+	
+	// Execute a burst measurement
+	DoBurstMeasurementRequest = 0x06,
+	DoBurstMeasurementResponse = 0x06 | __ResponseFlag,
+	
+	// Get statistics of previously executed burst measurement
+	GetBurstMeasurementStatisticsRequest = 0x07,
+	GetBurstMeasurementStatisticsResponse = 0x07 | __ResponseFlag,
+	
+	__RequestMinCode = PingRequest,
+	__RequestMaxCode = GetBurstMeasurementStatisticsRequest,
+	
+	//__MAX,
+	//__MIN = Ping,
 };
 
 

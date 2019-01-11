@@ -192,13 +192,13 @@ int main(int argc, char **argv)
 		try {
 			
 			// send a ping to selected device on selected serial port and wait for an answer
-			Message mping(dev_addr->getAddress(), MessageType::Ping);
+			Message mping(dev_addr->getAddress(), MessageType::PingRequest);
 			Message response;
 			
 			SerialPort::Ptr response_port;
 			
 			SendAndWaitForResponse(ports, mping, response, response_port, 400);
-			if (response.getType() != MessageType::Pong || response.getAddress() != dev_addr->getAddress())
+			if (response.getType() != MessageType::PingResponse || response.getAddress() != dev_addr->getAddress())
 			{
 				throw std::runtime_error("protocol");
 				continue;
@@ -353,10 +353,9 @@ int main(int argc, char **argv)
 				bc.silence_interval = silence_interval;
 				
 				device_address_t addr = pdev->getAddress();
-				Message msg_response, msg_timing(addr, MessageType::SetBurstConfiguration, &bc, sizeof(BURST_CONFIGURATION));
 				
 				SendAndWaitForResponse(pdev->getSerialPort(), msg_timing, msg_response, 1000);
-				if (msg_response.getType() != MessageType::SetBurstConfiguration || msg_response.getAddress() != pdev->getAddress() || !msg_response.getPayloadAsBoolean())
+				if (msg_response.getType() != MessageType::SetBurstConfigurationResponse || msg_response.getAddress() != pdev->getAddress() || !msg_response.getPayloadAsBoolean())
 					throw std::runtime_error("msg_response.getType() != MessageType::SetBurstConfiguration || msg_response.getAddress() != pdev->getAddress()");
 
 				printf(AGREEN "-ok " ARESET);
@@ -400,30 +399,44 @@ int main(int argc, char **argv)
 	{
 		if (device2serial[dev_addr] == nullptr)
 			continue; // no device at this point
-			
-		Message response, mver(dev_addr, MessageType::GetVersion);
+	
+	printf("Listing version of installed firmware...\n");
+	for(const TableGroup::Ptr& pgroup : tgroups)
+		for(const TableDevice::Ptr& pdevice : *pgroup)
+		{
+			try {
 				
-		SendAndWaitForResponse(*device2serial[dev_addr], mver, response);
-		assert(response.getType() == MessageType::GetVersion || response.getAddress() == dev_addr);
-		
-		std::string sver((const char*)response.getPayload(), response.getPayloadLength());
-		printf("Device " AYELLOW "%02X" ARESET ": " AYELLOW "%s" ARESET "\n", dev_addr, sver.c_str());
-	}
-	 * */
+//				if (pdevice->getAddress() == 0x02)
+//					continue;
+				
+				SerialPort::Ptr pserial = pdevice->getSerialPort();
+				
+				Message response, mver(pdevice->getAddress(), MessageType::GetVersionRequest);
+					
+				SendAndWaitForResponse(pserial, mver, response, 1000);
+				assert(response.getType() == MessageType::GetVersionResponse || response.getAddress() == pdevice->getAddress());
+			
+				std::string sver((const char*)response.getPayload(), response.getPayloadLength());
+				printf("Device " AYELLOW "%02X" ARESET ": " AYELLOW "%s" ARESET "\n", pdevice->getAddress(), sver.c_str());
+				
+			} catch(const timeout_error& ex) {
+				printf("Device " AYELLOW "%02X" ARESET ": Przekroczony czas połączenia.\n", pdevice->getAddress());
+			}
+		}
+	 
 
 
 	// tests
 	/*
 	while(1)
 	{
-		TableGroup::Ptr ptg = tgroups[0];
-		SerialPort::Ptr pserial = ptg->getSerialPort();
+		TableGroup::Ptr pgroup = tgroups[0];
+		TableDevice::Ptr pdev = *pgroup->begin();
 		
-		device_address_t addr = 0x14;
-		Message msg_response, msg_meas(addr, MessageType::GetFullResolutionSyncMeasurement);
+		Message msg_response, msg_meas(pdev->getAddress(), MessageType::GetFullResolutionSyncMeasurementRequest);
 		
-		SendAndWaitForResponse(pserial, msg_meas, msg_response, 5000);
-		assert(msg_response.getType() == MessageType::GetFullResolutionSyncMeasurement || msg_response.getAddress() == addr);
+		SendAndWaitForResponse(pdev->getSerialPort(), msg_meas, msg_response, 5000);
+		assert(msg_response.getType() == MessageType::GetFullResolutionSyncMeasurementResponse || msg_response.getAddress() == pdev->getAddress());
 		
 		int payload_length = msg_response.getPayloadLength();
 		printf("Payload length = %d\n", payload_length);
@@ -472,7 +485,7 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups, Image& img)
 	
 	//
 	// send broadcast message
-	Message msg(ADDRESS_BROADCAST, MessageType::DoBurstMeasurement);
+	Message msg(ADDRESS_BROADCAST, MessageType::DoBurstMeasurementRequest);
 	int device_count = 0;
 	for(TableGroup::Ptr& pgroup : tgroups)
 	{

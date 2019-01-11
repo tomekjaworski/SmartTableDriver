@@ -88,7 +88,9 @@ bool MessageReceiver::getMessage(Message& output_message)
 		}
 		
 		// Header verification: message type
-		if (phdr->type < MessageType::__MIN || phdr->type > MessageType::__MAX)
+		if (!(static_cast<int>(phdr->type) & static_cast<int>(MessageType::__ResponseFlag)) ||
+			(static_cast<int>(phdr->type) & ~static_cast<int>(MessageType::__ResponseFlag)) < static_cast<int>(MessageType::__RequestMinCode) ||
+			(static_cast<int>(phdr->type) & ~static_cast<int>(MessageType::__ResponseFlag)) > static_cast<int>(MessageType::__RequestMaxCode))
 		{
 			// remove one byte and loop
 			offset += 1;
