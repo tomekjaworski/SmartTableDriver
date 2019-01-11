@@ -79,6 +79,8 @@ std::string Environment::getFullPath(const std::string& relative_path) const
 void Environment::terminateOnError(const std::string& message, int exit_error_code)
 {
 	::perror(message.c_str());
+	if (errno != 0)
+		printf("   errno=%d\n", errno);
 	if (exit_error_code != 0)
 		exit(exit_error_code);
 }

@@ -141,6 +141,7 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 void SerialPort::discardAllData(void)
 {
 	int ret = tcflush(this->fd, TCIOFLUSH);
+	printf("tcflush: fd=%d; ret=%d\n", this->fd, ret);
 	if (ret == -1)
 		Environment::terminateOnError("tcflush", 5);
 
@@ -148,6 +149,7 @@ void SerialPort::discardAllData(void)
 
 void SerialPort::done(void)
 {
+	printf("SerialPort::done\n");
 	close(this->fd);
 	this->fd = -1;
 }

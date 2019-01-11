@@ -40,7 +40,7 @@ void ShowTopology(const std::string& prompt, const std::vector<std::vector<Table
 int main(int argc, char **argv)
 {
 	printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
-	printf("Built on %s @ %s\n\n", __DATE__, __TIME__);
+	printf("Built on %s @ %s %d\n\n", __DATE__, __TIME__, sizeof(void*));
 	setbuf(stdout, NULL);
 	// 
 	// show available serial ports
@@ -456,6 +456,7 @@ int main(int argc, char **argv)
 	*/
 	
 	
+	getchar();
 	return 0;
 }
 
