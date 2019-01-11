@@ -17,6 +17,18 @@
 #include "Message.h"
 #include "timeout_error.hpp"
 
+static void dump(const void* ptr, int count)
+{
+	printf("[");
+	const uint8_t* p = static_cast<const uint8_t*>(ptr);
+	for (int i = 0; i < count; i++)
+		if (i < count - 1)
+			printf("%02x ", p[i]);
+		else
+			printf("%02x]\n", p[i]);
+			
+	fflush(stdout);
+}
 
 bool SendAndWaitForResponse(SerialPort::Ptr serial, const Message& query, Message& response, int timeout)
 {
@@ -24,7 +36,8 @@ bool SendAndWaitForResponse(SerialPort::Ptr serial, const Message& query, Messag
 	MessageReceiver mr;
 
 	serial->discardAllData();
-	serial->send(query.getBinary(), query.getBinaryLength());
+	serial->send(query.getDataPointer(), query.getDataCount());
+	//dump(query.getBinary(), query.getBinaryLength());
 	
 	std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
 	
@@ -75,7 +88,9 @@ bool SendAndWaitForResponse(std::list<SerialPort::Ptr>& serials, const Message& 
 	for (SerialPort::Ptr& p : serials)
 	{
 		p->discardAllData();
-		p->send(query.getBinary(), query.getBinaryLength());
+		int sent = p->send(query.getDataPointer(), query.getDataCount());
+		
+		//printf("SendAndWaitForResponse SEND: requested=%d; sent=%d\n", query.getBinaryLength(), sent);
 	}
 	
 	std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();

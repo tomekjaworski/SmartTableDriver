@@ -477,7 +477,7 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups, Image& img)
 	for(TableGroup::Ptr& pgroup : tgroups)
 	{
 		SerialPort::Ptr pserial = pgroup->getSerialPort();
-		pserial->send(msg.getBinary(), msg.getBinaryLength());
+		pserial->send(msg.getDataPointer(), msg.getDataCount());
 		device_count += pgroup->getDeviceCount();
 	}
 		

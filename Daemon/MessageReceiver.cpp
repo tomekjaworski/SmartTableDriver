@@ -5,6 +5,20 @@
 
 #include "SerialPort.hpp"
 
+static void dump(const void* ptr, int count)
+{
+	printf("[");
+	const uint8_t* p = static_cast<const uint8_t*>(ptr);
+	for (int i = 0; i < count; i++)
+		if (i < count - 1)
+			printf("%02x ", p[i]);
+		else
+			printf("%02x]\n", p[i]);
+			
+	fflush(stdout);
+}
+
+
 
 MessageReceiver::MessageReceiver(void)
 {
@@ -48,7 +62,7 @@ ssize_t MessageReceiver::receive(SerialPort& source)
 	assert(bytes_read > 0);
 	
 	position += bytes_read;
-	
+	//dump(data, position);
 	return bytes_read;
 }
 

@@ -26,7 +26,7 @@ public:
 		if (msg.data == nullptr)
 			return;
 			
-		size_t len = msg.getBinaryLength();
+		size_t len = msg.getDataCount();
 		this->data = new uint8_t[len];
 		memcpy(this->data, msg.data, len);
 	}
@@ -95,8 +95,8 @@ public:
 	device_address_t getAddress(void) const { return this->getHeader().address; }
 	MessageType getType(void) const { return this->getHeader().type; }
 	
-	const void* getBinary(void) const { return this->data; }
-	size_t getBinaryLength(void) const { return sizeof(PROTO_HEADER) + getHeader().payload_length + sizeof(uint16_t); }
+	const void* getDataPointer(void) const { return this->data; }
+	size_t getDataCount(void) const { return sizeof(PROTO_HEADER) + getHeader().payload_length + sizeof(uint16_t); }
 	
 	const void* getPayload(void) const { return this->data + sizeof(PROTO_HEADER); }
 	size_t getPayloadLength(void) const { return getHeader().payload_length; }
