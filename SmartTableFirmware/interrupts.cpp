@@ -27,6 +27,7 @@ ISR(TIMER0_COMPA_vect)
 	}
 
 	burst.timer++;
+	rx.idle_timer++;
 }
 
 ISR(USART_TX_vect) // goes off after transmitter have sent one byte (its only byte)

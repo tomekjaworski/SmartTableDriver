@@ -10,6 +10,7 @@
 #define CONFIG_H_
 
 #define SERIAL_BAUD 500000	// 8E1 (!!!)
+#define SERIAL_IDLE_LIMIT	5	// [ms]
 
 #define __DEVICE_ADDRESS		(device_address_t)0x14
 

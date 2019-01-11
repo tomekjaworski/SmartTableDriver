@@ -40,6 +40,7 @@ struct RX
 {
 	uint8_t* buffer_position;
 	bool got_data;
+	uint8_t idle_timer;
 
 	// buffer - mind the order!
 	struct {

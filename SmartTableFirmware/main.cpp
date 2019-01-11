@@ -52,7 +52,16 @@ int main(void)
 	while(1)
 	{
 		if (!rx.got_data)
+		{
+			if (rx.idle_timer > SERIAL_IDLE_LIMIT)
+			{
+				RX_RESET;
+				rx.idle_timer = 0;
+			}
 			continue; // not yet
+		}
+		
+		rx.idle_timer = 0;
 		
 		if (!check_rx())
 			continue; // not yet again
