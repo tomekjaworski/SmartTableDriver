@@ -7,6 +7,7 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 #include <unordered_map>
 
 #include "SerialPort.hpp"
@@ -71,7 +72,11 @@ bool SendAndWaitForResponse(SerialPort::Ptr serial, const Message& query, Messag
 _check_timeout:;
 		std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count() > timeout)
-			throw timeout_error("SendAndWaitForResponse");
+		{
+			char buffer[256];
+			sprintf(buffer, "Timeout (SendAndWaitForResponse): addr=%02X; command=%d", query.getAddress(), static_cast<int>(query.getType()));
+			throw timeout_error(std::string(buffer));
+		}
 		
 	} while (true);
 	

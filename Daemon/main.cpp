@@ -36,14 +36,7 @@ bool SendAndWaitForResponse(std::list<SerialPort::Ptr>& serials, const Message& 
 void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups, Image& img);
 void ShowTopology(const std::string& prompt, const std::vector<std::vector<TableDevice::Ptr> >& groups);
 
-
-int main(int argc, char **argv)
-{
-	printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
-	printf("Built on %s @ %s %d\n\n", __DATE__, __TIME__, sizeof(void*));
-	setbuf(stdout, NULL);
-	// 
-	// show available serial ports
+void ShowAvailableSerialPorts(void) {
 	std::string s = "";
 	auto port_name_list = SerialPort::getSerialDevices();
 	for (const auto& pname : port_name_list)
@@ -53,11 +46,11 @@ int main(int argc, char **argv)
 			s += pname;
 			
 	printf("Available serial ports (%d): %s\n", port_name_list.size(), s.c_str());
-	
-	//
-	// open all serial ports
+}
+
+std::list<SerialPort::Ptr> OpenAllSerialPorts(void) {
 	std::list<SerialPort::Ptr> ports;
-	for (const auto& pname : port_name_list)
+	for (const auto& pname : SerialPort::getSerialDevices())
 	{
 		try
 		{
@@ -72,6 +65,73 @@ int main(int argc, char **argv)
 			printf(ARED "FAILED: " AYELLOW "%s\n" ARESET, ex.what());
 		}
 	}
+	return ports;
+}
+
+
+
+void ListFirmwareVersions(const std::vector<TableGroup::Ptr>& tgroup) {
+	printf("Listing version of installed firmware...\n");
+	for(const TableGroup::Ptr& pgroup : tgroup)
+		for(const TableDevice::Ptr& pdevice : *pgroup)
+		{
+			try {
+				
+//				if (pdevice->getAddress() == 0x02)
+//					continue;
+				
+				SerialPort::Ptr pserial = pdevice->getSerialPort();
+				
+				Message response, mver(pdevice->getAddress(), MessageType::GetVersionRequest);
+					
+				SendAndWaitForResponse(pserial, mver, response, 1000);
+				assert(response.getType() == MessageType::GetVersionResponse || response.getAddress() == pdevice->getAddress());
+			
+				std::string sver((const char*)response.getPayload(), response.getPayloadLength());
+				printf("Device " AYELLOW "%02X" ARESET ": " AYELLOW "%s" ARESET "\n", pdevice->getAddress(), sver.c_str());
+				
+			} catch(const timeout_error& ex) {
+				printf("Device " AYELLOW "%02X" ARESET ": Przekroczony czas połączenia.\n", pdevice->getAddress());
+			}
+		}
+	 	
+}
+void ShowTopologyGroupedBySerialPorts(const std::vector<TableGroup::Ptr>& tgroups) {
+	printf("Serial port-based topology:\n");
+	for(const TableGroup::Ptr& pgroup : tgroups)
+	{
+		printf(" Port " AGREEN "%s" ARESET " with devices: ", pgroup->getSerialPort()->getPortName().c_str());
+
+		bool first = true;
+		int count = 0;
+		for (const TableDevice::Ptr& pdev : *pgroup)
+		{
+			if (!first)
+				printf(" ");
+				
+			
+			printf(AYELLOW "%02X" ARESET, pdev->getAddress());
+			count++;
+			first = false;
+		}
+		
+		printf(" (count=%d)\n", count);
+	}
+}
+
+int main(int argc, char **argv)
+{
+	printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
+	printf("Built on %s @ %s %d\n\n", __DATE__, __TIME__, sizeof(void*));
+	setbuf(stdout, NULL);
+	// 
+	// show available serial ports
+	ShowAvailableSerialPorts();
+	//
+	// open all serial ports
+	std::list<SerialPort::Ptr> ports = OpenAllSerialPorts();
+	
+	
 	/*
 	
 	SerialPort::Ptr pserial = ports.front();
@@ -159,6 +219,24 @@ int main(int argc, char **argv)
 										};
 
 	std::vector<std::vector<TableDevice::Ptr> > groups = { g1, g2, g3, g4, g5, g6, g7 };
+
+
+	//
+	// Show current topology
+	ShowTopology("Current topology (after device detection)", groups);
+	
+	// get target image dimensions
+	int minx = INT_MAX, miny = INT_MAX, maxx = INT_MIN, maxy = INT_MIN;
+	for(auto& group : groups)
+		for(TableDevice::Ptr& pdevice : group) {
+			minx = std::min(minx, pdevice->getLocation().getColumn());
+			miny = std::min(miny, pdevice->getLocation().getRow());
+			maxx = std::max(maxx, 10 + pdevice->getLocation().getColumn() - 1);
+			maxy = std::max(maxy, 10 + pdevice->getLocation().getRow() - 1);
+		}
+	
+	assert(minx == 0 && miny == 0 && maxx == 6 * 10 - 1 && maxy == 4 * 10 - 1);
+
 	
 
 	//
@@ -218,6 +296,7 @@ int main(int argc, char **argv)
 	//
 	// remove missing devices from groups
 	int usable_dev_count = 0;
+	int removed_dev_count = 0;
 	for(auto& group : groups)
 	{
 		for(TableDevice::Ptr pmissing_device : missing_devices) {
@@ -225,30 +304,17 @@ int main(int argc, char **argv)
 			if (pos == group.end())
 				continue; // not this group
 			group.erase(pos);
+			removed_dev_count++;
 		}
 		usable_dev_count += group.size();
 	}
-	printf("Number of usable devices: %d\n", usable_dev_count);
+	printf("Number of usable devices: %d; Number of removed devices: %d\n", usable_dev_count, removed_dev_count);
 	
 	//
 	// TODO: remove empty groups
 
 
-	//
-	// Show current topology
-	ShowTopology("Current topology (after device detection)", groups);
-	
-	// get target image dimensions
-	int minx = INT_MAX, miny = INT_MAX, maxx = INT_MIN, maxy = INT_MIN;
-	for(auto& group : groups)
-		for(TableDevice::Ptr& pdevice : group) {
-			minx = std::min(minx, pdevice->getLocation().getColumn());
-			miny = std::min(miny, pdevice->getLocation().getRow());
-			maxx = std::max(maxx, 10 + pdevice->getLocation().getColumn() - 1);
-			maxy = std::max(maxy, 10 + pdevice->getLocation().getRow() - 1);
-		}
-	
-	assert(minx >= 0 && miny >= 0 && maxx <= 6*10 && maxy <= 4 * 10);
+
 	
 	int image_width = maxx - minx + 1;
 	int image_height = maxy - miny + 1;
@@ -256,7 +322,7 @@ int main(int argc, char **argv)
 		image_width, image_height, minx, miny, maxx, maxy);
 		
 	
-	// match groups to USB devices, since theirs order can change every time the system boots up
+	// match groups to USB devices, since their order can change every time the system boots up
 	std::vector <TableGroup::Ptr> tgroups;
 	printf("Matching groups to USB devices...\n");
 	for(auto& group : groups) {
@@ -276,12 +342,7 @@ int main(int argc, char **argv)
 			
 			
 			TableDevice::Ptr pdev = pgroup->findByAddress(pdevice->getAddress());
-			if (pdev != nullptr)
-			{
-				// that shouldn't happen...
-				printf("?????");
-				exit(1);
-			}
+			assert(pdev == nullptr); // that shouldn't happen...
 			
 			pgroup->addTableDevice(pdevice);
 		}
@@ -297,26 +358,7 @@ int main(int argc, char **argv)
 	
 	//
 	// Show Serial port-centric topology
-	printf("Serial port-based topology:\n");
-	for(const TableGroup::Ptr& pgroup : tgroups)
-	{
-		printf(" Port " AGREEN "%s" ARESET " with devices: ", pgroup->getSerialPort()->getPortName().c_str());
-
-		bool first = true;
-		int count = 0;
-		for (const TableDevice::Ptr& pdev : *pgroup)
-		{
-			if (!first)
-				printf(" ");
-				
-			
-			printf(AYELLOW "%02X" ARESET, pdev->getAddress());
-			count++;
-			first = false;
-		}
-		
-		printf(" (count=%d)\n", count);
-	}
+	ShowTopologyGroupedBySerialPorts(tgroups);
 	
 	//
 	// calculate time points for full burst transmission
@@ -329,7 +371,7 @@ int main(int argc, char **argv)
 	// |    (broadcast)
 	// |--- measurement ---|-- 1st transmission --|-- 2nd transmission --|-- 3rd transmission --|-- 4tht transmission --|-- ..... LAST transmission |
 	// |    measure_time      transmission-time       transmission-time      transmission-time      transmission-time        transmission-time
-	
+	/*
 	printf("Setting timing information... \n");
 	int gid = 1;
 	for(TableGroup::Ptr& pgroup : tgroups)
@@ -353,6 +395,7 @@ int main(int argc, char **argv)
 				bc.silence_interval = silence_interval;
 				
 				device_address_t addr = pdev->getAddress();
+				Message msg_response, msg_timing(addr, MessageType::SetBurstConfigurationRequest, &bc, sizeof(BURST_CONFIGURATION));
 				
 				SendAndWaitForResponse(pdev->getSerialPort(), msg_timing, msg_response, 1000);
 				if (msg_response.getType() != MessageType::SetBurstConfigurationResponse || msg_response.getAddress() != pdev->getAddress() || !msg_response.getPayloadAsBoolean())
@@ -374,11 +417,14 @@ int main(int argc, char **argv)
 		
 		printf("\n");
 	}
-
-
+	 */
+	  
+/*
 	Image img(60, 40);
 	while(!kbhit())
 		AcquireFullImage(tgroups, img);
+*/
+/*
 
 	// get burst statistics
 	TableDevice::Ptr p = *tgroups[0]->begin();
@@ -391,69 +437,128 @@ int main(int argc, char **argv)
 	printf("  Device %02x: Measure count=%d; measure time=%dms; transmission time=%dms\n", response.getAddress(), pstats->count, pstats->last_measure_time, pstats->last_transmission_time);
 
 	std::this_thread::sleep_for(std::chrono::seconds(10));
-
+*/
 	//
 	// get version of each device
-	/*
-	for (device_address_t dev_addr = 0; dev_addr < 0xF0; dev_addr++)
-	{
-		if (device2serial[dev_addr] == nullptr)
-			continue; // no device at this point
-	
-	printf("Listing version of installed firmware...\n");
-	for(const TableGroup::Ptr& pgroup : tgroups)
-		for(const TableDevice::Ptr& pdevice : *pgroup)
-		{
-			try {
-				
-//				if (pdevice->getAddress() == 0x02)
-//					continue;
-				
-				SerialPort::Ptr pserial = pdevice->getSerialPort();
-				
-				Message response, mver(pdevice->getAddress(), MessageType::GetVersionRequest);
-					
-				SendAndWaitForResponse(pserial, mver, response, 1000);
-				assert(response.getType() == MessageType::GetVersionResponse || response.getAddress() == pdevice->getAddress());
-			
-				std::string sver((const char*)response.getPayload(), response.getPayloadLength());
-				printf("Device " AYELLOW "%02X" ARESET ": " AYELLOW "%s" ARESET "\n", pdevice->getAddress(), sver.c_str());
-				
-			} catch(const timeout_error& ex) {
-				printf("Device " AYELLOW "%02X" ARESET ": Przekroczony czas połączenia.\n", pdevice->getAddress());
-			}
-		}
-	 
+	ListFirmwareVersions(tgroups);
+
+
 
 
 	// tests
-	/*
+	Image img(60, 40);
+	while(1)
+	{
+		img.clear();
+		for(TableGroup::Ptr group : tgroups) {
+			for(TableDevice::Ptr pdevice : *group) {		
+			
+				try {
+					Message msg_response, msg_meas(pdevice->getAddress(), MessageType::GetFullResolutionSyncMeasurementRequest);
+					const Location& location = pdevice->getLocation();
+					
+					
+					SendAndWaitForResponse(pdevice->getSerialPort(), msg_meas, msg_response, 5000);
+					assert(msg_response.getType() == MessageType::GetFullResolutionSyncMeasurementResponse || msg_response.getAddress() == pdevice->getAddress());
+					
+					int payload_length = msg_response.getPayloadLength();
+					//printf("Payload length = %d\n", payload_length);
+					const uint16_t* ptr = (const uint16_t*)msg_response.getPayload();
+					
+					img.processMeasurementPayload(ptr, 16, location);
+					//IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
+					
+		//			for (int i = 0; i < 10; i++)
+		//			{
+		//				for (int i = 0; i < 10; i++)
+		//					printf("%5d ", *ptr++);
+		//				printf("\n");
+		//			}
+					
+					std::this_thread::sleep_for(std::chrono::milliseconds(10));
+					printf(".");
+
+		/*
+					//
+					//
+					// get burst statistics
+					Message response, mstats(pdev->getAddress(), MessageType::GetBurstMeasurementStatisticsRequest);
+							
+					SendAndWaitForResponse(pdev->getSerialPort(), mstats, response, 1000);
+					assert(response.getType() == MessageType::GetBurstMeasurementStatisticsResponse && response.getAddress() == pdev->getAddress() && response.getPayloadLength() == sizeof(BURST_STATISTICS));
+					BURST_STATISTICS *pstats = (BURST_STATISTICS *)response.getPayload();
+
+					printf("  Device %02x: Measure count=%d; measure time=%dms; transmission time=%dms\n", response.getAddress(), pstats->count, pstats->last_measure_time, pstats->last_transmission_time);
+		*/
+						
+				} catch (const std::runtime_error& error)
+				{
+					printf("RuntimeError: %s\n", error.what());
+				}
+				
+			}
+		
+		}
+
+		printf("\n");
+
+		//
+		IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		
+	}
+
 	while(1)
 	{
 		TableGroup::Ptr pgroup = tgroups[0];
 		TableDevice::Ptr pdev = *pgroup->begin();
 		
-		Message msg_response, msg_meas(pdev->getAddress(), MessageType::GetFullResolutionSyncMeasurementRequest);
-		
-		SendAndWaitForResponse(pdev->getSerialPort(), msg_meas, msg_response, 5000);
-		assert(msg_response.getType() == MessageType::GetFullResolutionSyncMeasurementResponse || msg_response.getAddress() == pdev->getAddress());
-		
-		int payload_length = msg_response.getPayloadLength();
-		printf("Payload length = %d\n", payload_length);
-		const uint16_t* ptr = (const uint16_t*)msg_response.getPayload();
-		
-		IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
-		
-		for (int i = 0; i < 10; i++)
-		{
+		try {
+			Message msg_response, msg_meas(pdev->getAddress(), MessageType::GetFullResolutionSyncMeasurementRequest);
+			
+			SendAndWaitForResponse(pdev->getSerialPort(), msg_meas, msg_response, 5000);
+			assert(msg_response.getType() == MessageType::GetFullResolutionSyncMeasurementResponse || msg_response.getAddress() == pdev->getAddress());
+			
+			int payload_length = msg_response.getPayloadLength();
+			printf("Payload length = %d\n", payload_length);
+			const uint16_t* ptr = (const uint16_t*)msg_response.getPayload();
+			
+			IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
+			
 			for (int i = 0; i < 10; i++)
-				printf("%5d ", *ptr++);
-			printf("\n");
+			{
+				for (int i = 0; i < 10; i++)
+					printf("%5d ", *ptr++);
+				printf("\n");
+			}
+			
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+/*
+			//
+			//
+			// get burst statistics
+			Message response, mstats(pdev->getAddress(), MessageType::GetBurstMeasurementStatisticsRequest);
+					
+			SendAndWaitForResponse(pdev->getSerialPort(), mstats, response, 1000);
+			assert(response.getType() == MessageType::GetBurstMeasurementStatisticsResponse && response.getAddress() == pdev->getAddress() && response.getPayloadLength() == sizeof(BURST_STATISTICS));
+			BURST_STATISTICS *pstats = (BURST_STATISTICS *)response.getPayload();
+
+			printf("  Device %02x: Measure count=%d; measure time=%dms; transmission time=%dms\n", response.getAddress(), pstats->count, pstats->last_measure_time, pstats->last_transmission_time);
+*/
+				
+		} catch (const std::runtime_error& error)
+		{
+			printf("RuntimeError: %s\n", error.what());
 		}
 		
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
-	*/
+
+
+
+
+
+
 	
 	
 	getchar();
@@ -538,7 +643,7 @@ void AcquireFullImage(std::vector<TableGroup::Ptr>& tgroups, Image& img)
 			while (receiver.getMessage(response))
 			{
 				const Location* ploc = getLocationByAddress(response.getAddress(), tgroups);
-				img.processMeasurementPayload(response.getPayload(), pgroup->getBitsPerPoint(), ploc);
+				img.processMeasurementPayload(response.getPayload(), pgroup->getBitsPerPoint(), *ploc);
 				device_count--;
 			}
 		}

@@ -102,7 +102,7 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		struct termios ser;
 		tcgetattr(this->fd, &ser);
 		
-		speed_t speed = B500000;
+		speed_t speed = B19200;
 		ret = cfsetospeed(&ser, speed);
 		if (ret == -1) Environment::terminateOnError("cfsetospeed", 2);
 			
@@ -141,7 +141,7 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 void SerialPort::discardAllData(void)
 {
 	int ret = tcflush(this->fd, TCIOFLUSH);
-	printf("tcflush: fd=%d; ret=%d\n", this->fd, ret);
+	//printf("tcflush: fd=%d; ret=%d\n", this->fd, ret);
 	if (ret == -1)
 		Environment::terminateOnError("tcflush", 5);
 
