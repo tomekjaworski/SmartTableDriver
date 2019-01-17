@@ -18,7 +18,7 @@ struct BURST burst = {};
 #define NOP asm volatile("nop");
 
 
-inline static uint16_t __adc16(uint8_t channel)
+inline static uint16_t __adc10(uint8_t channel)
 {
 	// REF: Capacitor at AREF to GND
 	ADMUX = _BV(REFS0) | (0x0F & channel);
@@ -37,33 +37,71 @@ inline static uint16_t __adc16(uint8_t channel)
 	return ADCW;
 }
 
-
-void im_initialize(uint8_t bits)
+inline static uint8_t __adc8(uint8_t channel)
 {
-	ADCSRA = 0;
+	// REF: Capacitor at AREF to GND
+	ADMUX = _BV(REFS0) | _BV(ADLAR) | (0x0F & channel);
+	// start the conversion
+	ADCSRA |= _BV(ADSC);
 
-	// set ADC prescaler to 125kHz
-	ADCSRA |= _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
+	// ADSC is cleared when the conversion finishes
+	while (ADCSRA & _BV(ADSC));
 
-	// enable ADC conversions and autotriggering
-	//ADCSRA |= _BV(ADATE);
+	return ADCH;
+}
+
+
+void im_initialize8(void)
+{
+	ADCSRA = 0x00;
+
+	// set ADC prescaler to 1:32
+	ADCSRA |= _BV(ADPS2) | /*_BV(ADPS1) |*/ _BV(ADPS0);
+
+	// power up the ADC
 	ADCSRA |= _BV(ADEN);
 
-	// Aref = AVcc, channel ADC0
-	ADMUX = _BV(REFS0);
-
-	// turn of digital input circuity
+	// Aref = AVcc, channel ADC0; adjust left
+	ADMUX = _BV(REFS0) | _BV(ADLAR);
+	
+	// turn off digital input circuity
 	DIDR0 = 0xFF;
 
-
 	// dummy read
-	__attribute__((unused)) uint16_t dummy;
-	for (uint8_t i = 0; i < 8; i++)
-		dummy = __adc16(i);
-
+	__attribute__((unused)) volatile uint16_t dummy;
+	for (uint8_t i = 0; i < 4; i++)
+	{
+		for (uint8_t channel = 0; channel < 8; channel++)
+			dummy = __adc8(channel);
+	}
 
 }
 
+
+void im_initialize10(void)
+{
+	ADCSRA = 0x00;
+
+	// set ADC prescaler to 1:32
+	ADCSRA |= _BV(ADPS2) | /*_BV(ADPS1) |*/ _BV(ADPS0);
+
+	// power up the ADC
+	ADCSRA |= _BV(ADEN);
+
+	// Aref = AVcc, channel ADC0, adjust right
+	ADMUX = _BV(REFS0);
+
+	// turn off digital input circuity
+	DIDR0 = 0xFF;
+
+	// dummy read
+	__attribute__((unused)) volatile uint16_t dummy;
+	for (uint8_t i = 0; i < 4; i++)
+	{
+		for (uint8_t channel = 0; channel < 8; channel++)
+		dummy = __adc10(channel);
+	}
+}
 
 #define IM_DATA_PIN(__state)	do { if (__state) PORTB |= _BV(PORTB0); else PORTB &= ~_BV(PORTB0); } while(0);	//	
 #define IM_CLOCK_PIN(__state)	do { if (__state) PORTD |= _BV(PORTD7); else PORTD &= ~_BV(PORTD7); } while(0);		//
@@ -118,7 +156,7 @@ union im_raw_measurement_t im_data;
 //uint16_t raw[7*15];
 
 
-void im_measure16(void)
+void im_measure10(void)
 {
 	//_delay_ms(500);
 	// 8 -martwy  0-7 9-16
@@ -148,13 +186,55 @@ void im_measure16(void)
 		IM_CLOCK_PULSE;
 		_delay_us(150);
 
-		*ptr++ = __adc16(0);
-		*ptr++ = __adc16(1);
-		*ptr++ = __adc16(2);
-		*ptr++ = __adc16(3);
-		*ptr++ = __adc16(4);
-		*ptr++ = __adc16(5);
-		*ptr++ = __adc16(6);
+		*ptr++ = __adc10(0);
+		*ptr++ = __adc10(1);
+		*ptr++ = __adc10(2);
+		*ptr++ = __adc10(3);
+		*ptr++ = __adc10(4);
+		*ptr++ = __adc10(5);
+		*ptr++ = __adc10(6);
+	}
+}
+
+
+
+void im_measure8(void)
+{
+	//_delay_ms(500);
+	// 8 -martwy  0-7 9-16
+	//	NOP;
+
+	// wstrzyknij LOW
+	IM_DATA_PIN(false);
+	NOP;
+	IM_CLOCK_PULSE;
+	NOP;
+	NOP;
+	IM_DATA_PIN(true);
+
+	NOP;
+	//	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+	//NOP;
+	
+	
+	NOP;
+	IM_CLOCK_PULSE;		//	digitalWrite(clockPin,HIGH);
+	
+	//_delay_ms(1);
+	NOP;
+	uint8_t* ptr = im_data.raw8;
+	for(int i = 0; i < 15; i++)
+	{
+		IM_CLOCK_PULSE;
+		_delay_us(150);
+
+		*ptr++ = __adc8(0);
+		*ptr++ = __adc8(1);
+		*ptr++ = __adc8(2);
+		*ptr++ = __adc8(3);
+		*ptr++ = __adc8(4);
+		*ptr++ = __adc8(5);
+		*ptr++ = __adc8(6);
 	}
 }
 
@@ -185,13 +265,13 @@ void im_execute_sync(void)
 		IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
 		_delay_ms(2);
 
-		utable[i][0] = __adc16(3);
-		utable[i][1] = __adc16(2);
-		utable[i][2] = __adc16(1);
-		utable[i][3] = __adc16(0);
-		utable[i][4] = __adc16(4);
-		utable[i][5] = __adc16(5);
-		utable[i][6] = __adc16(6);
+		utable[i][0] = __adc10(3);
+		utable[i][1] = __adc10(2);
+		utable[i][2] = __adc10(1);
+		utable[i][3] = __adc10(0);
+		utable[i][4] = __adc10(4);
+		utable[i][5] = __adc10(5);
+		utable[i][6] = __adc10(6);
 	}
 
 	// reordering of measurements to match 10x10 points subimage

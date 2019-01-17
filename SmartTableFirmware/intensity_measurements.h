@@ -28,11 +28,12 @@ union im_raw_measurement_t {
 extern struct BURST burst;
 extern union im_raw_measurement_t im_data;
 
-void im_initialize(uint8_t bits);
+void im_initialize8(void);
+void im_initialize10(void);
 void im_execute_sync(void);
 
 void im_measure8(void);
-void im_measure16(void);
+void im_measure10(void);
 
 
 static_assert(sizeof(union im_raw_measurement_t) == 7 * 15 * sizeof(uint16_t), "sizeof(union im_raw_measurement_t)");

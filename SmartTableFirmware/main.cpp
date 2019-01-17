@@ -72,7 +72,7 @@ int main(void)
 	cpu_init();
 	RX_RESET;
 	
-	im_initialize();
+	im_initialize8();
 	device_address = pgm_read_byte(device_address_block + 4);
 
 
@@ -98,7 +98,8 @@ int main(void)
 	while(1)
 	{	
 		_delay_ms(500);
-		im_measure16();
+		im_measure8();
+		//im_measure8();
 	
 		b[0] = '\x0';
 		char* ptr = b;
@@ -109,7 +110,7 @@ int main(void)
 		{
 			for (int c = 0; c < 7; c++)
 			{
-				uint16_t val = im_data.raw16[r * 7 + c];
+				uint16_t val = im_data.raw8[r * 7 + c] << 2;
 				int2hex(ptr, val);
 				ptr += 4;
 				*ptr++ = val > 0x20 ? '*' : ' ';
