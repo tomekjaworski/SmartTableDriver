@@ -28,7 +28,7 @@ union im_raw_measurement_t {
 extern struct BURST burst;
 extern union im_raw_measurement_t im_data;
 
-void im_initialize(void);
+void im_initialize(uint8_t bits);
 void im_execute_sync(void);
 
 void im_measure8(void);

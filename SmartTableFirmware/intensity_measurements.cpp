@@ -18,7 +18,7 @@ struct BURST burst = {};
 #define NOP asm volatile("nop");
 
 
-inline static uint16_t __adc(uint8_t channel)
+inline static uint16_t __adc16(uint8_t channel)
 {
 	// REF: Capacitor at AREF to GND
 	ADMUX = _BV(REFS0) | (0x0F & channel);
@@ -38,7 +38,7 @@ inline static uint16_t __adc(uint8_t channel)
 }
 
 
-void im_initialize(void)
+void im_initialize(uint8_t bits)
 {
 	ADCSRA = 0;
 
@@ -59,7 +59,7 @@ void im_initialize(void)
 	// dummy read
 	__attribute__((unused)) uint16_t dummy;
 	for (uint8_t i = 0; i < 8; i++)
-		dummy = __adc(i);
+		dummy = __adc16(i);
 
 
 }
@@ -67,7 +67,7 @@ void im_initialize(void)
 
 #define IM_DATA_PIN(__state)	do { if (__state) PORTB |= _BV(PORTB0); else PORTB &= ~_BV(PORTB0); } while(0);	//	
 #define IM_CLOCK_PIN(__state)	do { if (__state) PORTD |= _BV(PORTD7); else PORTD &= ~_BV(PORTD7); } while(0);		//
-#define IM_ADC_READ(__id)		__adc(__id)			//
+//#define IM_ADC_READ(__id)		__adc(__id)			//
 
 
 #define IM_CLOCK_PULSE do {			\
@@ -148,13 +148,13 @@ void im_measure16(void)
 		IM_CLOCK_PULSE;
 		_delay_us(150);
 
-		*ptr++ = IM_ADC_READ(0);
-		*ptr++ = IM_ADC_READ(1);
-		*ptr++ = IM_ADC_READ(2);
-		*ptr++ = IM_ADC_READ(3);
-		*ptr++ = IM_ADC_READ(4);
-		*ptr++ = IM_ADC_READ(5);
-		*ptr++ = IM_ADC_READ(6);
+		*ptr++ = __adc16(0);
+		*ptr++ = __adc16(1);
+		*ptr++ = __adc16(2);
+		*ptr++ = __adc16(3);
+		*ptr++ = __adc16(4);
+		*ptr++ = __adc16(5);
+		*ptr++ = __adc16(6);
 	}
 }
 
@@ -185,13 +185,13 @@ void im_execute_sync(void)
 		IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
 		_delay_ms(2);
 
-		utable[i][0] = IM_ADC_READ(3);
-		utable[i][1] = IM_ADC_READ(2);
-		utable[i][2] = IM_ADC_READ(1);
-		utable[i][3] = IM_ADC_READ(0);
-		utable[i][4] = IM_ADC_READ(4);
-		utable[i][5] = IM_ADC_READ(5);
-		utable[i][6] = IM_ADC_READ(6);
+		utable[i][0] = __adc16(3);
+		utable[i][1] = __adc16(2);
+		utable[i][2] = __adc16(1);
+		utable[i][3] = __adc16(0);
+		utable[i][4] = __adc16(4);
+		utable[i][5] = __adc16(5);
+		utable[i][6] = __adc16(6);
 	}
 
 	// reordering of measurements to match 10x10 points subimage
