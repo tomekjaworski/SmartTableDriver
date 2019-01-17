@@ -24,7 +24,6 @@ const char* build_date = __DATE__;
 const char* build_time = __TIME__;
 const char* build_version = "1.0";
 
-
 void cpu_init(void);
 void send(device_address_t addr, MessageType type, const uint8_t* payload, uint8_t payload_length);
 bool check_rx(void);
@@ -39,6 +38,35 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 extern int otable[10][10];
 volatile uint8_t dummy;
 
+char b[15 * (7 * (4+1) + 1) + 1];
+
+void uart_putchar(char c) {
+	loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
+	UDR0 = c;
+}
+
+void send_string(const char* s)
+{
+	while (*s)
+		uart_putchar(*s++);
+}
+
+
+void int2hex(char* buffer, int value)
+{
+	uint8_t a = (value >> 12) & 0xf;
+	uint8_t b = (value >> 8) & 0xf;
+	uint8_t c = (value >> 4) & 0xf;
+	uint8_t d = (value >> 0) & 0xf;
+	
+	*buffer++ = a > 9 ? 'A' + a - 10 : '0' + a;
+	*buffer++ = b > 9 ? 'A' + b - 10 : '0' + b;
+	*buffer++ = c > 9 ? 'A' + c - 10 : '0' + c;
+	*buffer++ = d > 9 ? 'A' + d - 10 : '0' + d;
+}
+
+//extern union im_raw_measurement_t raw;
+
 int main(void)
 {
 	cpu_init();
@@ -47,8 +75,59 @@ int main(void)
 	im_initialize();
 	device_address = pgm_read_byte(device_address_block + 4);
 
-	im_execute_sync();
 
+	// --------------
+	// --------------
+	// --------------
+	// --------------
+	
+	cli();
+	RS485_DIR_SEND;
+	send_string("\n");
+
+/*	while (1)
+	{
+		
+		LED0_ON;
+		_delay_ms(1000);
+		LED0_OFF;
+		_delay_ms(1000);
+	}
+*/
+
+	while(1)
+	{	
+		_delay_ms(500);
+		im_measure16();
+	
+		b[0] = '\x0';
+		char* ptr = b;
+	
+		send_string("\n");
+	
+		for (int r = 0; r < 15; r++)
+		{
+			for (int c = 0; c < 7; c++)
+			{
+				uint16_t val = im_data.raw16[r * 7 + c];
+				int2hex(ptr, val);
+				ptr += 4;
+				*ptr++ = val > 0x20 ? '*' : ' ';
+			}
+			*ptr++ = '\n';
+		}
+		*ptr = '\x0';
+	
+	
+	
+		send_string(b);
+
+	}
+	
+	while(1);
+
+	
+	
 	while(1)
 	{
 		if (!rx.got_data)

@@ -69,6 +69,14 @@ void im_initialize(void)
 #define IM_CLOCK_PIN(__state)	do { if (__state) PORTD |= _BV(PORTD7); else PORTD &= ~_BV(PORTD7); } while(0);		//
 #define IM_ADC_READ(__id)		__adc(__id)			//
 
+
+#define IM_CLOCK_PULSE do {			\
+			IM_CLOCK_PIN(true);		\
+			NOP;					\
+			NOP;					\
+			IM_CLOCK_PIN(false);	\
+			} while(0);
+
 //zamiana 10 i 14
 const int readToNumbers[15][7] = {
 	{43,44,45,46,47,48,49},
@@ -105,68 +113,48 @@ const int readToNumbers[15][7] = {
 int utable[15][7];
 int otable[10][10];
 
-uint16_t raw[7*15];
+union im_raw_measurement_t im_data;
+
+//uint16_t raw[7*15];
 
 
-void im_full_resolution_synchronized(void)
+void im_measure16(void)
 {
-	_delay_ms(500);
+	//_delay_ms(500);
 	// 8 -martwy  0-7 9-16
+//	NOP;
+
+	// wstrzyknij LOW
+	IM_DATA_PIN(false);
 	NOP;
-	IM_DATA_PIN(false);		//  digitalWrite(dataPin,LOW);
+	IM_CLOCK_PULSE;
 	NOP;
-	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
 	NOP;
-	_delay_ms(2);
-	NOP;
-	IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
-	NOP;
-	_delay_ms(2);
-	NOP;
-	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
-	NOP;
-	_delay_ms(2);
-	NOP;
-	IM_DATA_PIN(true);		//	digitalWrite(dataPin,HIGH);
+	IM_DATA_PIN(true);
 
 	NOP;
-	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+//	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+	//NOP;
+	
+	
 	NOP;
-	_delay_ms(2);
+	IM_CLOCK_PULSE;		//	digitalWrite(clockPin,HIGH);
+	
+	//_delay_ms(1);
 	NOP;
-	IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
-	NOP;
-	_delay_ms(2);
-	NOP;
-	uint16_t* ptr = raw;
+	uint16_t* ptr = im_data.raw16;
 	for(int i = 0; i < 15; i++)
 	{
-		NOP;
-		IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
-		NOP;
-		_delay_ms(2);
-		NOP;
-		IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
-		NOP;
-		_delay_ms(2);
-		NOP;
+		IM_CLOCK_PULSE;
+		_delay_us(150);
 
 		*ptr++ = IM_ADC_READ(0);
-		NOP;
-
 		*ptr++ = IM_ADC_READ(1);
-		NOP;
 		*ptr++ = IM_ADC_READ(2);
-		NOP;
 		*ptr++ = IM_ADC_READ(3);
-		NOP;
 		*ptr++ = IM_ADC_READ(4);
-		NOP;
 		*ptr++ = IM_ADC_READ(5);
-		NOP;
 		*ptr++ = IM_ADC_READ(6);
-		NOP;
-		NOP;
 	}
 }
 
@@ -218,6 +206,3 @@ void im_execute_sync(void)
 }
 
 
-void im_execute_async(void)
-{
-}
