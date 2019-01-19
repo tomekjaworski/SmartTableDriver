@@ -72,7 +72,7 @@ int main(void)
 	cpu_init();
 	RX_RESET;
 	
-	im_initialize8();
+	im_initialize10();
 	device_address = pgm_read_byte(device_address_block + 4);
 
 
@@ -83,7 +83,14 @@ int main(void)
 	
 	cli();
 	RS485_DIR_SEND;
-	send_string("\n");
+/*	
+	while(1){
+		//          "1234567890abcdef"
+		send_string("Ala ma kota akot");
+		_delay_ms(10);
+	}
+	
+	
 
 /*	while (1)
 	{
@@ -98,19 +105,27 @@ int main(void)
 	while(1)
 	{	
 		_delay_ms(500);
-		im_measure8();
+		im_measure10();
 		//im_measure8();
 	
 		b[0] = '\x0';
 		char* ptr = b;
 	
 		send_string("\n");
-	
+		uint16_t* dptr = im_data.raw16;
 		for (int r = 0; r < 15; r++)
 		{
-			for (int c = 0; c < 7; c++)
+			uint8_t cmax = 7;
+			if (r == 7)
 			{
-				uint16_t val = im_data.raw8[r * 7 + c] << 2;
+				cmax = 2;
+				for (uint8_t i = 0; i < 5*5; i++)
+				*ptr++ = ' ';
+			}
+				
+			for (int c = 0; c < cmax; c++)
+			{
+				uint16_t val = *dptr++;
 				int2hex(ptr, val);
 				ptr += 4;
 				*ptr++ = val > 0x20 ? '*' : ' ';

@@ -153,35 +153,29 @@ int otable[10][10];
 
 union im_raw_measurement_t im_data;
 
-//uint16_t raw[7*15];
+
+/*
+	sensor selectors:
+	
+	0 1    2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+	8 DEAD 0 1 2 3 4 5 6 7 9  10 11 12 13 14 15 16
+*/
 
 
 void im_measure10(void)
 {
-	//_delay_ms(500);
-	// 8 -martwy  0-7 9-16
-//	NOP;
-
-	// wstrzyknij LOW
+	// inject LOW
 	IM_DATA_PIN(false);
-	NOP;
 	IM_CLOCK_PULSE;
-	NOP;
-	NOP;
-	IM_DATA_PIN(true);
 
-	NOP;
-//	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
-	//NOP;
+	// empty row
+	IM_DATA_PIN(true);
+	IM_CLOCK_PULSE;
 	
-	
-	NOP;
-	IM_CLOCK_PULSE;		//	digitalWrite(clockPin,HIGH);
-	
-	//_delay_ms(1);
-	NOP;
 	uint16_t* ptr = im_data.raw16;
-	for(int i = 0; i < 15; i++)
+	
+	// 7 rows with 7 sensors
+	for(int i = 0; i < 7; i++)
 	{
 		IM_CLOCK_PULSE;
 		_delay_us(150);
@@ -194,35 +188,46 @@ void im_measure10(void)
 		*ptr++ = __adc10(5);
 		*ptr++ = __adc10(6);
 	}
+	
+	// one row with 2 sensors only
+	IM_CLOCK_PULSE;
+	_delay_us(150);
+
+	*ptr++ = __adc10(5);
+	*ptr++ = __adc10(6);
+
+	// 7 rows with 7 sensors
+	for(int i = 0; i < 7; i++)
+	{
+		IM_CLOCK_PULSE;
+		_delay_us(150);
+
+		*ptr++ = __adc10(0);
+		*ptr++ = __adc10(1);
+		*ptr++ = __adc10(2);
+		*ptr++ = __adc10(3);
+		*ptr++ = __adc10(4);
+		*ptr++ = __adc10(5);
+		*ptr++ = __adc10(6);
+	}
+	
 }
 
 
 
 void im_measure8(void)
 {
-	//_delay_ms(500);
-	// 8 -martwy  0-7 9-16
-	//	NOP;
-
-	// wstrzyknij LOW
+	// inject LOW
 	IM_DATA_PIN(false);
-	NOP;
 	IM_CLOCK_PULSE;
-	NOP;
-	NOP;
+	
+	// empty row
 	IM_DATA_PIN(true);
-
-	NOP;
-	//	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
-	//NOP;
-	
-	
-	NOP;
-	IM_CLOCK_PULSE;		//	digitalWrite(clockPin,HIGH);
-	
-	//_delay_ms(1);
-	NOP;
+	IM_CLOCK_PULSE;
+		
 	uint8_t* ptr = im_data.raw8;
+
+	/*
 	for(int i = 0; i < 15; i++)
 	{
 		IM_CLOCK_PULSE;
@@ -236,33 +241,75 @@ void im_measure8(void)
 		*ptr++ = __adc8(5);
 		*ptr++ = __adc8(6);
 	}
+	*/
+	
+	// 7 rows with 7 sensors
+	for(int i = 0; i < 7; i++)
+	{
+		IM_CLOCK_PULSE;
+		_delay_us(150);
+
+		*ptr++ = __adc8(0);
+		*ptr++ = __adc8(1);
+		*ptr++ = __adc8(2);
+		*ptr++ = __adc8(3);
+		*ptr++ = __adc8(4);
+		*ptr++ = __adc8(5);
+		*ptr++ = __adc8(6);
+	}
+	
+	// one row with 2 sensors only
+	IM_CLOCK_PULSE;
+	_delay_us(150);
+
+	*ptr++ = __adc8(5);
+	*ptr++ = __adc8(6);
+
+	// 7 rows with 7 sensors
+	for(int i = 0; i < 7; i++)
+	{
+		IM_CLOCK_PULSE;
+		_delay_us(150);
+
+		*ptr++ = __adc8(0);
+		*ptr++ = __adc8(1);
+		*ptr++ = __adc8(2);
+		*ptr++ = __adc8(3);
+		*ptr++ = __adc8(4);
+		*ptr++ = __adc8(5);
+		*ptr++ = __adc8(6);
+	}		
+	
+	
 }
+
+/*
+ * void im_execute_sync(void)
+ * A low-speed debug version of measurement routing
+ */
 
 void im_execute_sync(void)
 {
+	
+	IM_DATA_PIN(false);
+	IM_CLOCK_PIN(false);
+	_delay_ms(2);
+	IM_CLOCK_PIN(true);
+	_delay_ms(2);
+	IM_CLOCK_PIN(false);
+	_delay_ms(2);
+	IM_DATA_PIN(true);
 
-
-	//_delay_ms(500);
-	// 8 -martwy  0-7 9-16
-	IM_DATA_PIN(false);		//  digitalWrite(dataPin,LOW);
-	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+	IM_CLOCK_PIN(false);
 	_delay_ms(2);
-	IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
-	_delay_ms(2);
-	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
-	_delay_ms(2);
-	IM_DATA_PIN(true);		//	digitalWrite(dataPin,HIGH);
-
-	IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
-	_delay_ms(2);
-	IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
+	IM_CLOCK_PIN(true);
 	_delay_ms(2);
   
 	for(int i = 0; i < 15; i++)
 	{
-		IM_CLOCK_PIN(false);	//	digitalWrite(clockPin,LOW);
+		IM_CLOCK_PIN(false);
 		_delay_ms(2);
-		IM_CLOCK_PIN(true);		//	digitalWrite(clockPin,HIGH);
+		IM_CLOCK_PIN(true);	
 		_delay_ms(2);
 
 		utable[i][0] = __adc10(3);
