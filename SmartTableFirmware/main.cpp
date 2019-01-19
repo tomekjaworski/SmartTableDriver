@@ -72,7 +72,7 @@ int main(void)
 	cpu_init();
 	RX_RESET;
 	
-	im_initialize10();
+	im_initialize8();
 	device_address = pgm_read_byte(device_address_block + 4);
 
 
@@ -80,16 +80,17 @@ int main(void)
 	// --------------
 	// --------------
 	// --------------
-	
+	/*
 	cli();
 	RS485_DIR_SEND;
-/*	
+
+	
 	while(1){
 		//          "1234567890abcdef"
 		send_string("Ala ma kota akot");
-		_delay_ms(10);
+		_delay_ms(100);
 	}
-	
+	*/
 	
 
 /*	while (1)
@@ -101,7 +102,7 @@ int main(void)
 		_delay_ms(1000);
 	}
 */
-
+/*
 	while(1)
 	{	
 		_delay_ms(500);
@@ -142,7 +143,7 @@ int main(void)
 	
 	while(1);
 
-	
+	*/
 	
 	while(1)
 	{
@@ -202,7 +203,8 @@ int main(void)
 
 			// do the measurements and get it's time
 			ATOMIC_BLOCK(ATOMIC_FORCEON) { burst.timer = 0x0000; }
-			im_execute_sync();
+			im_measure8();
+			
 			ATOMIC_BLOCK(ATOMIC_FORCEON) {
 				burst.stats.last_measure_time = burst.timer;
 				burst.stats.count++;
@@ -216,7 +218,8 @@ int main(void)
 			} while (timer_copy < burst.config.time_point); // wait 
 
 			// synchronized send - start async and wait for finish
-			send(rx.buffer.header.address, MessageType::DoBurstMeasurementResponse, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
+			//send(rx.buffer.header.address, MessageType::DoBurstMeasurementResponse, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
+			send(rx.buffer.header.address, MessageType::DoBurstMeasurementResponse, im_data.raw8, 10*10*sizeof(uint8_t));
 			while (tx.state != TransmitterState::IDLE);
 
 			// Store transmission time

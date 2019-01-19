@@ -68,13 +68,8 @@ void im_initialize8(void)
 	DIDR0 = 0xFF;
 
 	// dummy read
-	__attribute__((unused)) volatile uint16_t dummy;
-	for (uint8_t i = 0; i < 4; i++)
-	{
-		for (uint8_t channel = 0; channel < 8; channel++)
-			dummy = __adc8(channel);
-	}
-
+	for (uint8_t i = 0; i < 10; i++)
+		im_measure8();
 }
 
 
@@ -95,12 +90,9 @@ void im_initialize10(void)
 	DIDR0 = 0xFF;
 
 	// dummy read
-	__attribute__((unused)) volatile uint16_t dummy;
-	for (uint8_t i = 0; i < 4; i++)
-	{
-		for (uint8_t channel = 0; channel < 8; channel++)
-		dummy = __adc10(channel);
-	}
+	for (uint8_t i = 0; i < 10; i++)
+		im_measure10();
+
 }
 
 #define IM_DATA_PIN(__state)	do { if (__state) PORTB |= _BV(PORTB0); else PORTB &= ~_BV(PORTB0); } while(0);	//	

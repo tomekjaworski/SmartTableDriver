@@ -119,11 +119,17 @@ void ShowTopologyGroupedBySerialPorts(const std::vector<TableGroup::Ptr>& tgroup
 	}
 }
 
+void dump(const void*, int);
+
 int main(int argc, char **argv)
 {
 	printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
 	printf("Built on %s @ %s %d\n\n", __DATE__, __TIME__, sizeof(void*));
 	setbuf(stdout, NULL);
+	
+	Message mver(0x14, MessageType::GetVersionRequest);
+	dump(mver.getDataPointer(), mver.getDataCount());
+	
 	// 
 	// show available serial ports
 	ShowAvailableSerialPorts();
@@ -443,6 +449,7 @@ int main(int argc, char **argv)
 	ListFirmwareVersions(tgroups);
 
 
+	return 0;
 
 
 	// tests

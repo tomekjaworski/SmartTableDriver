@@ -18,7 +18,7 @@
 #include "Message.h"
 #include "timeout_error.hpp"
 
-static void dump(const void* ptr, int count)
+void dump(const void* ptr, int count)
 {
 	printf("[");
 	const uint8_t* p = static_cast<const uint8_t*>(ptr);

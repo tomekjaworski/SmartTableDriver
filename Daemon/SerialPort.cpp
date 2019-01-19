@@ -1,5 +1,12 @@
-#include <stdio.h>
+
+#ifndef __CYGWIN__
+#include <sys/ioctl.h>
+#include <sys/termbits.h>
+#else
 #include <termios.h>
+#endif
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -12,6 +19,11 @@
 #include <iostream>
 #include "SerialPort.hpp"
 #include "Environment.hpp"
+
+#ifndef __CYGWIN__
+#include <asm/termios.h>
+#endif
+ 
 
 using namespace std::string_literals;
 
@@ -109,6 +121,20 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		ret = cfsetispeed(&ser, B0); // set transmission speed same as outgoing
 		if (ret == -1) Environment::terminateOnError("cfsetispeed", 3);
 		
+#ifndef __CYGWIN__
+		struct termios2 tio;
+		ioctl(fd, TCGETS2, &tio);
+		if (ioctl != 0) Environment::terminateOnError("ioctl", 4);
+		
+		tio.c_cflag &= ~CBAUD;
+		tio.c_cflag |= BOTHER;
+		tio.c_ispeed = tio.c_ospeed = 250000;
+
+		ioctl(fd, TCSETS2, &tio);		
+		if (ioctl != 0) Environment::terminateOnError("ioctl", 5);
+#endif
+		
+		
 		ser.c_cflag |= PARENB;	// enable parity checking/generation
 		ser.c_cflag &= ~PARODD;	// !odd = even
 		ser.c_cflag &= ~CSTOPB; // one stop bit
@@ -129,7 +155,7 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 	
 		// ustaw parametry
 		ret = tcsetattr(this->fd, TCSANOW, &ser);
-		if (ret == -1) Environment::terminateOnError("tcsetattr", 4);
+		if (ret == -1) Environment::terminateOnError("tcsetattr", 6);
 		
 		// discart both buffers
 		this->discardAllData();
