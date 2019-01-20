@@ -1,7 +1,10 @@
 
 #ifndef __CYGWIN__
 #include <sys/ioctl.h>
-#include <sys/termbits.h>
+#define termios asmtermios
+#include <asm/termbits.h>
+#undef termios
+#include <termios.h>
 #else
 #include <termios.h>
 #endif
@@ -21,7 +24,7 @@
 #include "Environment.hpp"
 
 #ifndef __CYGWIN__
-#include <asm/termios.h>
+#include <termios.h>
 #endif
  
 
@@ -75,7 +78,7 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 	{
 		this->port_name = device_name;
 		
-		this->fd = open(device_name.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
+		this->fd = open(device_name.c_str(), O_RDWR | O_NOCTTY);
 		if (this->fd == -1)
 			throw std::runtime_error("Error opening serial port device "s + device_name);
 	} else
@@ -108,8 +111,7 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		std::cout << "Entering fake serial port mode... " << std::endl;
 	} else
 	{
-		int ret = fcntl(this->fd, F_SETFL, NULL);
-		if (ret == -1) Environment::terminateOnError("fcntl", 2);
+		int ret;
 		
 		struct termios ser;
 		tcgetattr(this->fd, &ser);
@@ -120,33 +122,41 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 			
 		ret = cfsetispeed(&ser, B0); // set transmission speed same as outgoing
 		if (ret == -1) Environment::terminateOnError("cfsetispeed", 3);
-		
+		/*
 #ifndef __CYGWIN__
 		struct termios2 tio;
-		ioctl(fd, TCGETS2, &tio);
-		if (ioctl != 0) Environment::terminateOnError("ioctl", 4);
+		ret = ioctl(fd, TCGETS2, &tio);
+		if (ret != 0) Environment::terminateOnError("ioctl", 4);
 		
 		tio.c_cflag &= ~CBAUD;
 		tio.c_cflag |= BOTHER;
-		tio.c_ispeed = tio.c_ospeed = 250000;
+		tio.c_ispeed = tio.c_ospeed = 19200;
 
-		ioctl(fd, TCSETS2, &tio);		
-		if (ioctl != 0) Environment::terminateOnError("ioctl", 5);
+		ret = ioctl(fd, TCSETS2, &tio);		
+		if (ret != 0) Environment::terminateOnError("ioctl", 5);
 #endif
-		
+		*/
 		
 		ser.c_cflag |= PARENB;	// enable parity checking/generation
 		ser.c_cflag &= ~PARODD;	// !odd = even
 		ser.c_cflag &= ~CSTOPB; // one stop bit
+
 		ser.c_cflag |= CREAD;	// enable receiver
 
 		ser.c_cflag &= ~CSIZE;	// clear bit number mask
 		ser.c_cflag |= CS8;		// set 8 bits per byte
 
+		ser.c_cflag &= ~CRTSCTS;
+		ser.c_cflag |= CREAD | CLOCAL;
+		
+		ser.c_iflag &= ~(IXON | IXOFF | IXANY);
+		ser.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+		ser.c_oflag &= ~OPOST;
+
 		// dokumentcja jest niezwykle OBSZERNA na temat tych opcji....
-		ser.c_cflag |= CLOCAL;
-		ser.c_lflag = ICANON;
-		ser.c_oflag &= ~OPOST; 
+		//ser.c_cflag |= CLOCAL;
+		////ser.c_lflag = ICANON;
+		//ser.c_oflag &= ~OPOST; 
 		
 		//cfmakeraw(&ser);
 		
@@ -205,8 +215,12 @@ std::vector<std::string> SerialPort::getSerialDevices(void)
 	for (int n = 0; n < 255; n++)
 	{
 		char dev_name[64];
+#ifndef __CYGWIN__
+		// odroid
+		sprintf(dev_name, "/dev/ttyUSB%d", n);
+#else
 		sprintf(dev_name, "/dev/ttyS%d", n);
-	
+#endif	
 		char target[1000];
 		__attribute__((unused)) int len = readlink(dev_name, target, sizeof(target));
 			

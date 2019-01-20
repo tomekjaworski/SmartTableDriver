@@ -28,7 +28,7 @@
       <File Name="TableGroup.hpp"/>
       <File Name="Image.hpp"/>
     </VirtualDirectory>
-    <File Name="ImageDebuggerClient.cpp"/>
+    <File Name="ImageDebuggerClient.cpp" ExcludeProjConfig="Debug"/>
     <File Name="ImageDebuggerClient.h"/>
     <File Name="IO.cpp"/>
     <File Name="keyboard.cpp"/>
@@ -49,9 +49,7 @@
       <Compiler Options="-g;-O0;-std=gnu++14;-Wall" C_Options="-g;-O0;-std=gnu++14;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
       </Compiler>
-      <Linker Options="" Required="yes">
-        <Library Value="ws2_32"/>
-      </Linker>
+      <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Debug" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="Default"/>

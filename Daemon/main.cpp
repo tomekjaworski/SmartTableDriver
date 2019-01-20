@@ -17,7 +17,10 @@
 #include "Message.h"
 #include "ansi.h"
 #include "timeout_error.hpp"
+
+#ifdef __CYGWIN__
 #include "ImageDebuggerClient.h"
+#endif
 
 
 #include "Location.hpp"
@@ -510,7 +513,7 @@ int main(int argc, char **argv)
 		printf("\n");
 
 		//
-		IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
+		//IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		
 	}
@@ -530,7 +533,7 @@ int main(int argc, char **argv)
 			printf("Payload length = %d\n", payload_length);
 			const uint16_t* ptr = (const uint16_t*)msg_response.getPayload();
 			
-			IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
+			//IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
 			
 			for (int i = 0; i < 10; i++)
 			{
@@ -670,7 +673,7 @@ _check_timeout:;
 	} while(true);
 	
 	printf("Got all images!\n");
-	IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
+//	IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
