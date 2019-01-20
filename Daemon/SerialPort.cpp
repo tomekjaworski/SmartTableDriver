@@ -111,10 +111,10 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		std::cout << "Entering fake serial port mode... " << std::endl;
 	} else
 	{
-		int ret;
 		
 		struct termios ser;
-		tcgetattr(this->fd, &ser);
+		int ret tcgetattr(this->fd, &ser);
+		
 		
 		speed_t speed = B19200;
 		ret = cfsetospeed(&ser, speed);
