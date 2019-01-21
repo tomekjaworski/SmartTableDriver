@@ -478,14 +478,23 @@ int main(int argc, char **argv)
 					
 					//img.processMeasurementPayload(ptr, 16, location);
 					//IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
-					
+					int idx = -1;
+					int id = 0;
 					for (int i = 0; i < 10; i++)
 					{
-						for (int i = 0; i < 10; i++, ptr++)
-							if (*ptr < 0x40)
+						for (int i = 0; i < 10; i++, ptr++) {
+							if (*ptr < 0x40) {
 								printf("[%02x]", *ptr);
+								idx = id;
+							}
 							else
 								printf(" %02x ", *ptr);
+							id++;
+							
+						}
+								
+						if (i == 9)
+							printf(" IDX = %d", idx);
 						printf("\n");
 					}
 					
