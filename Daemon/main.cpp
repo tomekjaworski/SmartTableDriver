@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 											TableDevice::Ptr(new TableDevice(0x12, Location(50, 20))) 
 										};
 
-	std::vector<std::vector<TableDevice::Ptr> > groups = { g1, g2, g3, g4, g5, g6, g7 };
+	std::vector<std::vector<TableDevice::Ptr> > groups = {/* g1, g2, g3, */g4, /*g5, g6, g7 */};
 
 
 	//
@@ -244,7 +244,7 @@ int main(int argc, char **argv)
 			maxy = std::max(maxy, 10 + pdevice->getLocation().getRow() - 1);
 		}
 	
-	assert(minx == 0 && miny == 0 && maxx == 6 * 10 - 1 && maxy == 4 * 10 - 1);
+	//assert(minx == 0 && miny == 0 && maxx == 6 * 10 - 1 && maxy == 4 * 10 - 1);
 
 	
 
@@ -280,6 +280,7 @@ int main(int argc, char **argv)
 			
 			// send a ping to selected device on selected serial port and wait for an answer
 			Message mping(dev_addr->getAddress(), MessageType::PingRequest);
+			dump(mping.getDataPointer(), mping.getDataCount());
 			Message response;
 			
 			SerialPort::Ptr response_port;
@@ -452,41 +453,44 @@ int main(int argc, char **argv)
 	ListFirmwareVersions(tgroups);
 
 
-	return 0;
+	//return 0;
 
 
-	// tests
-	Image img(60, 40);
+
+//	Image img(60, 40);
 	while(1)
 	{
-		img.clear();
+//		img.clear();
 		for(TableGroup::Ptr group : tgroups) {
 			for(TableDevice::Ptr pdevice : *group) {		
 			
 				try {
-					Message msg_response, msg_meas(pdevice->getAddress(), MessageType::GetFullResolutionSyncMeasurementRequest);
+					Message msg_response, msg_meas(pdevice->getAddress(), MessageType::Test8Request);
 					const Location& location = pdevice->getLocation();
 					
 					
-					SendAndWaitForResponse(pdevice->getSerialPort(), msg_meas, msg_response, 5000);
-					assert(msg_response.getType() == MessageType::GetFullResolutionSyncMeasurementResponse || msg_response.getAddress() == pdevice->getAddress());
+					SendAndWaitForResponse(pdevice->getSerialPort(), msg_meas, msg_response, 200);
+					assert(msg_response.getType() == MessageType::Test8Response || msg_response.getAddress() == pdevice->getAddress());
 					
 					int payload_length = msg_response.getPayloadLength();
 					//printf("Payload length = %d\n", payload_length);
-					const uint16_t* ptr = (const uint16_t*)msg_response.getPayload();
+					const uint8_t* ptr = (const uint8_t*)msg_response.getPayload();
 					
-					img.processMeasurementPayload(ptr, 16, location);
+					//img.processMeasurementPayload(ptr, 16, location);
 					//IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
 					
-		//			for (int i = 0; i < 10; i++)
-		//			{
-		//				for (int i = 0; i < 10; i++)
-		//					printf("%5d ", *ptr++);
-		//				printf("\n");
-		//			}
+					for (int i = 0; i < 10; i++)
+					{
+						for (int i = 0; i < 10; i++, ptr++)
+							if (*ptr < 0x40)
+								printf("[%02x]", *ptr);
+							else
+								printf(" %02x ", *ptr);
+						printf("\n");
+					}
 					
-					std::this_thread::sleep_for(std::chrono::milliseconds(10));
-					printf(".");
+				//	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				//	printf(".");
 
 		/*
 					//
@@ -514,7 +518,72 @@ int main(int argc, char **argv)
 
 		//
 		//IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		
+	}
+
+
+
+	// tests
+	Image img(60, 40);
+	while(1)
+	{
+		img.clear();
+		for(TableGroup::Ptr group : tgroups) {
+			for(TableDevice::Ptr pdevice : *group) {		
+			
+				try {
+					Message msg_response, msg_meas(pdevice->getAddress(), MessageType::GetFullResolutionSyncMeasurementRequest);
+					const Location& location = pdevice->getLocation();
+					
+					
+					SendAndWaitForResponse(pdevice->getSerialPort(), msg_meas, msg_response, 200);
+					assert(msg_response.getType() == MessageType::GetFullResolutionSyncMeasurementResponse || msg_response.getAddress() == pdevice->getAddress());
+					
+					int payload_length = msg_response.getPayloadLength();
+					//printf("Payload length = %d\n", payload_length);
+					const uint16_t* ptr = (const uint16_t*)msg_response.getPayload();
+					
+					img.processMeasurementPayload(ptr, 16, location);
+					//IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
+					
+					for (int i = 0; i < 10; i++)
+					{
+						for (int i = 0; i < 10; i++)
+							printf("%03x ", *ptr++);
+						printf("\n");
+					}
+					
+				//	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				//	printf(".");
+
+		/*
+					//
+					//
+					// get burst statistics
+					Message response, mstats(pdev->getAddress(), MessageType::GetBurstMeasurementStatisticsRequest);
+							
+					SendAndWaitForResponse(pdev->getSerialPort(), mstats, response, 1000);
+					assert(response.getType() == MessageType::GetBurstMeasurementStatisticsResponse && response.getAddress() == pdev->getAddress() && response.getPayloadLength() == sizeof(BURST_STATISTICS));
+					BURST_STATISTICS *pstats = (BURST_STATISTICS *)response.getPayload();
+
+					printf("  Device %02x: Measure count=%d; measure time=%dms; transmission time=%dms\n", response.getAddress(), pstats->count, pstats->last_measure_time, pstats->last_transmission_time);
+		*/
+						
+				} catch (const std::runtime_error& error)
+				{
+					printf("RuntimeError: %s\n", error.what());
+				}
+				
+			}
+		
+		}
+
+		printf("\n");
+
+		//
+		//IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		
 	}
 

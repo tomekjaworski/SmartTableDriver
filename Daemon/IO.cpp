@@ -34,20 +34,23 @@ void dump(const void* ptr, int count)
 bool SendAndWaitForResponse(SerialPort::Ptr serial, const Message& query, Message& response, int timeout)
 {
 
-	MessageReceiver mr;
+	MessageReceiver mr; // 14 04 00 33 04
 
 	serial->discardAllData();
 	serial->send(query.getDataPointer(), query.getDataCount());
-	//dump(query.getBinary(), query.getBinaryLength());
+	//dump(query.getDataPointer(), query.getDataCount());
 	
 	std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
 	
 	// now wait for response
+	int loops = 0;
+	ssize_t ss;
 	do {
 		fd_set rfd;
 		FD_ZERO(&rfd);
 		FD_SET(serial->getHandle(), &rfd);
 		
+		loops++;
 		timeval tv = { .tv_sec = 0, .tv_usec = 50 * 1000 };
 		int sret = ::select(serial->getHandle() + 1, &rfd, nullptr, nullptr, &tv);
 		
@@ -59,7 +62,8 @@ bool SendAndWaitForResponse(SerialPort::Ptr serial, const Message& query, Messag
 			Environment::terminateOnError("select", 0);
 		}
 	
-		mr.receive(*serial);
+		ss = mr.receive(*serial);
+//		printf("mr.receive=%d\n", ss);
 		//ssize_t bytes_read = ::read(serial.getHandle(), buffer + position, sizeof(buffer) - position);
 		//assert(bytes_read > 0);
 		//position += bytes_read;
@@ -74,7 +78,9 @@ _check_timeout:;
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count() > timeout)
 		{
 			char buffer[256];
-			sprintf(buffer, "Timeout (SendAndWaitForResponse): addr=%02X; command=%d", query.getAddress(), static_cast<int>(query.getType()));
+			sprintf(buffer, "Timeout (SendAndWaitForResponse): addr=%02X; command=%d; recvd=%d; loops=%d",
+				query.getAddress(), static_cast<int>(query.getType()),
+				mr.getDataCount(), loops);
 			throw timeout_error(std::string(buffer));
 		}
 		
@@ -116,7 +122,7 @@ bool SendAndWaitForResponse(std::list<SerialPort::Ptr>& serials, const Message& 
 		}
 		
 		
-		timeval tv = { .tv_sec = 0, .tv_usec = 75 * 1000 };
+		timeval tv = { .tv_sec = 0, .tv_usec = 175 * 1000 };
 		int sret = ::select(fd_max + 1, &rfd, nullptr, nullptr, &tv);
 		
 		if (sret == 0)

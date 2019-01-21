@@ -176,8 +176,11 @@ enum class MessageType : uint8_t
 	GetBurstMeasurementStatisticsRequest = 0x07,
 	GetBurstMeasurementStatisticsResponse = 0x07 | __ResponseFlag,
 	
+	Test8Request = 0x08,
+	Test8Response = 0x08 | __ResponseFlag,
+	
 	__RequestMinCode = PingRequest,
-	__RequestMaxCode = GetBurstMeasurementStatisticsRequest,
+	__RequestMaxCode = Test8Request,
 	
 	//__MAX,
 	//__MIN = Ping,

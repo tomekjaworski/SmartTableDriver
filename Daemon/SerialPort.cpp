@@ -111,17 +111,16 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		std::cout << "Entering fake serial port mode... " << std::endl;
 	} else
 	{
-		
 		struct termios ser;
-		int ret tcgetattr(this->fd, &ser);
-		
+		int ret = tcgetattr(this->fd, &ser);
+		if (ret != 0) Environment::terminateOnError("tcgetattr", 2);
 		
 		speed_t speed = B19200;
 		ret = cfsetospeed(&ser, speed);
-		if (ret == -1) Environment::terminateOnError("cfsetospeed", 2);
+		if (ret != 0) Environment::terminateOnError("cfsetospeed", 2);
 			
-		ret = cfsetispeed(&ser, B0); // set transmission speed same as outgoing
-		if (ret == -1) Environment::terminateOnError("cfsetispeed", 3);
+		ret = cfsetispeed(&ser, speed); // set transmission speed same as outgoing
+		if (ret != 0) Environment::terminateOnError("cfsetispeed", 3);
 		/*
 #ifndef __CYGWIN__
 		struct termios2 tio;
@@ -150,15 +149,10 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		ser.c_cflag |= CREAD | CLOCAL;
 		
 		ser.c_iflag &= ~(IXON | IXOFF | IXANY);
-		ser.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+		ser.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 		ser.c_oflag &= ~OPOST;
 
-		// dokumentcja jest niezwykle OBSZERNA na temat tych opcji....
-		//ser.c_cflag |= CLOCAL;
-		////ser.c_lflag = ICANON;
-		//ser.c_oflag &= ~OPOST; 
-		
-		//cfmakeraw(&ser);
+		printf("VTIME=%d; VMIN=%d\n", ser.c_cc[VTIME], ser.c_cc[VMIN]);
 		
 		//TODO: jak ustawić długość kolejki FIFO dla wejscia i wyjscia. Albo jak pobrac jej długość?
 		
