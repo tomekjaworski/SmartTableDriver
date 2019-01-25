@@ -458,6 +458,8 @@ int main(int argc, char **argv)
 
 
 //	Image img(60, 40);
+	int errors = 0;
+	int cnt = 0;
 	while(1)
 	{
 //		img.clear();
@@ -468,7 +470,7 @@ int main(int argc, char **argv)
 					Message msg_response, msg_meas(pdevice->getAddress(), MessageType::Test8Request);
 					const Location& location = pdevice->getLocation();
 					
-					
+					cnt++;
 					SendAndWaitForResponse(pdevice->getSerialPort(), msg_meas, msg_response, 200);
 					assert(msg_response.getType() == MessageType::Test8Response || msg_response.getAddress() == pdevice->getAddress());
 					
@@ -478,25 +480,26 @@ int main(int argc, char **argv)
 					
 					//img.processMeasurementPayload(ptr, 16, location);
 					//IDBG_ShowImage("obrazek", 10, 10, ptr, "U16");
-					int idx = -1;
-					int id = 0;
-					for (int i = 0; i < 10; i++)
-					{
-						for (int i = 0; i < 10; i++, ptr++) {
-							if (*ptr < 0x40) {
-								printf("[%02x]", *ptr);
-								idx = id;
-							}
-							else
-								printf(" %02x ", *ptr);
-							id++;
-							
-						}
-								
-						if (i == 9)
-							printf(" IDX = %d", idx);
-						printf("\n");
-					}
+//					int idx = -1;
+//					int id = 0;
+//					
+//					for (int i = 0; i < 10; i++)
+//					{
+//						for (int i = 0; i < 10; i++, ptr++) {
+//							if (*ptr < 0x40) {
+//								printf("[%02x]", *ptr);
+//								idx = id;
+//							}
+//							else
+//								printf(" %02x ", *ptr);
+//							id++;
+//							
+//						}
+//								
+//						if (i == 9)
+//							printf("IDX=%d; errors=%d", idx, errors);
+//						printf("\n");
+//					}
 					
 				//	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 				//	printf(".");
@@ -516,18 +519,19 @@ int main(int argc, char **argv)
 						
 				} catch (const std::runtime_error& error)
 				{
-					printf("RuntimeError: %s\n", error.what());
+					errors++;
+					printf("RuntimeError: %s; errors=%d;cnt=%d\n", error.what(),errors,cnt);
 				}
 				
 			}
 		
 		}
 
-		printf("\n");
+		//printf("\n");
 
 		//
 		//IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		
 	}
 
