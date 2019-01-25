@@ -149,10 +149,19 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		ser.c_cflag |= CREAD | CLOCAL;
 		
 		ser.c_iflag &= ~(IXON | IXOFF | IXANY);
-		ser.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+		ser.c_iflag &= ~(INLCR | ICRNL);
+		ser.c_iflag |= IGNPAR;
+		
+		ser.c_lflag &= ~(ICANON | IEXTEN | ECHO | ECHOE | ISIG);
 		ser.c_oflag &= ~OPOST;
 
 		printf("VTIME=%d; VMIN=%d\n", ser.c_cc[VTIME], ser.c_cc[VMIN]);
+		
+		printf("c_cflag=%d\n", ser.c_cflag);
+		printf("c_iflag=%d\n", ser.c_iflag);
+		printf("c_oflag=%d\n", ser.c_oflag);
+		printf("c_lflag=%d\n", ser.c_lflag);
+		printf("c_line=%d\n", ser.c_line);
 		
 		//TODO: jak ustawić długość kolejki FIFO dla wejscia i wyjscia. Albo jak pobrac jej długość?
 		
