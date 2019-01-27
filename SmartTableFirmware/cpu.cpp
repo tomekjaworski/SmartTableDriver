@@ -78,7 +78,7 @@ void cpu_init(void)
 
 	// Set timer to 1ms
 	TCCR0A |= (1 << WGM01); // CTC mode
-	OCR0A = (8000000UL / 64UL) / 1000UL - 1;
+	OCR0A = (8000000UL / 64UL) / 2000UL - 1;
 	TIMSK0 |= (1 << OCIE0A);
 	TCCR0B |= (1 << CS00) | (1 << CS01); // clk / 64
 
