@@ -184,6 +184,14 @@ int main(void)
 			send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurementResponse, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
 		}
 
+		if (rx.buffer.header.type == MessageType::Test8Request)
+		{
+			//im_full_resolution_synchronized();
+			im_measure8();
+			send(rx.buffer.header.address, MessageType::Test8Response, im_data.raw8, 10*10*sizeof(uint8_t));
+		}
+
+
 		if (rx.buffer.header.type == MessageType::SetBurstConfigurationRequest)
 		{
 			// rx.buffer.header.payload_length mus be equal to sizeof(struct BURST_CONFIGURATION)
@@ -202,35 +210,26 @@ int main(void)
 			SET_RECEIVER_INTERRUPT(false);
 
 			// do the measurements and get it's time
-			ATOMIC_BLOCK(ATOMIC_FORCEON) { burst.timer = 0x0000; }
+			burst.timer = 0x00;
 			im_measure8();
 			
-			ATOMIC_BLOCK(ATOMIC_FORCEON) {
-				burst.stats.last_measure_time = burst.timer;
-				burst.stats.count++;
-			}
-
+			//ATOMIC_BLOCK(ATOMIC_FORCEON) {
+			burst.stats.last_measurement_time = burst.timer;
+			burst.stats.count++;
 
 			// wait for precise point in time
-			uint16_t timer_copy;
-			do {
-			     ATOMIC_BLOCK(ATOMIC_FORCEON) { timer_copy = burst.timer; }
-			} while (timer_copy < burst.config.time_point); // wait 
+			while (burst.timer < burst.config.transmission_start_time); // wait 
 
 			// synchronized send - start async and wait for finish
-			//send(rx.buffer.header.address, MessageType::DoBurstMeasurementResponse, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
 			send(rx.buffer.header.address, MessageType::DoBurstMeasurementResponse, im_data.raw8, 10*10*sizeof(uint8_t));
 			while (tx.state != TransmitterState::IDLE);
 
 			// Store transmission time
-			ATOMIC_BLOCK(ATOMIC_FORCEON) {
-				burst.stats.last_transmission_time = burst.timer - burst.config.time_point;
-			}
+			burst.stats.last_transmission_time = burst.timer - burst.stats.last_measurement_time;
+			
 			
 			// wait for the rest of silence time
-			do {
-				ATOMIC_BLOCK(ATOMIC_FORCEON) { timer_copy = burst.timer; }
-			} while (timer_copy < burst.config.silence_interval); // wait
+			while (burst.timer < burst.config.silence_interval); // wait
 
 
 			// enable receiver

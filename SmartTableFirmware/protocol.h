@@ -175,7 +175,7 @@ enum class MessageType : uint8_t
 	// Get statistics of previously executed burst measurement
 	GetBurstMeasurementStatisticsRequest = 0x07,
 	GetBurstMeasurementStatisticsResponse = 0x07 | __ResponseFlag,
-	
+
 	Test8Request = 0x08,
 	Test8Response = 0x08 | __ResponseFlag,
 	
@@ -194,12 +194,10 @@ struct BURST_CONFIGURATION {
 
 
 struct BURST_STATISTICS {
-	uint8_t last_measure_time;
+	uint8_t last_measurement_time;
 	uint8_t last_transmission_time;
 	uint16_t count;
 } __attribute__((packed));
-
-
 
 struct PROTO_HEADER {
 	device_address_t address;		// receiver address (if given) or ADDRESS_BROADCAST

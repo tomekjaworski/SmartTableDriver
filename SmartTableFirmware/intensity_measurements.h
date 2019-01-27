@@ -13,7 +13,7 @@
 
 struct BURST {
 	volatile bool enabled;
-	volatile uint16_t timer;
+	volatile uint8_t timer;
 
 	volatile BURST_CONFIGURATION config;
 	volatile BURST_STATISTICS stats;
