@@ -467,7 +467,7 @@ int main(int argc, char **argv)
 			for(TableDevice::Ptr pdevice : *group) {		
 			
 				try {
-					Message msg_response, msg_meas(pdevice->getAddress(), MessageType::Test8Request);
+					Message msg_response, msg_meas(pdevice->getAddress(), MessageType::DoBurstMeasurementRequest);
 					const Location& location = pdevice->getLocation();
 					
 					cnt++;
@@ -504,18 +504,19 @@ int main(int argc, char **argv)
 				//	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 				//	printf(".");
 
-		/*
+		
 					//
 					//
 					// get burst statistics
-					Message response, mstats(pdev->getAddress(), MessageType::GetBurstMeasurementStatisticsRequest);
+					Message response, mstats(pdevice->getAddress(), MessageType::GetBurstMeasurementStatisticsRequest);
 							
-					SendAndWaitForResponse(pdev->getSerialPort(), mstats, response, 1000);
-					assert(response.getType() == MessageType::GetBurstMeasurementStatisticsResponse && response.getAddress() == pdev->getAddress() && response.getPayloadLength() == sizeof(BURST_STATISTICS));
+					SendAndWaitForResponse(pdevice->getSerialPort(), mstats, response, 1000);
+					assert(response.getType() == MessageType::GetBurstMeasurementStatisticsResponse && response.getAddress() == pdevice->getAddress() && response.getPayloadLength() == sizeof(BURST_STATISTICS));
 					BURST_STATISTICS *pstats = (BURST_STATISTICS *)response.getPayload();
 
-					printf("  Device %02x: Measure count=%d; measure time=%dms; transmission time=%dms\n", response.getAddress(), pstats->count, pstats->last_measure_time, pstats->last_transmission_time);
-		*/
+					printf("  Device %02x: Measure count=%d; measure time=%.1fms; transmission time=%.1fms\n", response.getAddress(), pstats->count,
+						pstats->last_measure_time * 0.5f, pstats->last_transmission_time * 0.5f);
+		
 						
 				} catch (const std::runtime_error& error)
 				{
@@ -531,7 +532,7 @@ int main(int argc, char **argv)
 
 		//
 		//IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		//std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		
 	}
 
@@ -596,7 +597,7 @@ int main(int argc, char **argv)
 
 		//
 		//IDBG_ShowImage("obrazek", 4*10, 6*10, img.getData(), "U16");
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		//std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		
 	}
 

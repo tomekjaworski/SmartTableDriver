@@ -111,30 +111,33 @@ void SerialPort::init(const std::string& device_name, bool fake_serial_port)
 		std::cout << "Entering fake serial port mode... " << std::endl;
 	} else
 	{
-		struct termios ser;
-		int ret = tcgetattr(this->fd, &ser);
-		if (ret != 0) Environment::terminateOnError("tcgetattr", 2);
 		
-		speed_t speed = B19200;
-		ret = cfsetospeed(&ser, speed);
-		if (ret != 0) Environment::terminateOnError("cfsetospeed", 2);
-			
-		ret = cfsetispeed(&ser, speed); // set transmission speed same as outgoing
-		if (ret != 0) Environment::terminateOnError("cfsetispeed", 3);
-		/*
+		
 #ifndef __CYGWIN__
 		struct termios2 tio;
-		ret = ioctl(fd, TCGETS2, &tio);
+		int ret = ioctl(fd, TCGETS2, &tio);
 		if (ret != 0) Environment::terminateOnError("ioctl", 4);
 		
-		tio.c_cflag &= ~CBAUD;
+		tio.c_cflag &= ~(CBAUD | CBAUDEX);
 		tio.c_cflag |= BOTHER;
-		tio.c_ispeed = tio.c_ospeed = 19200;
+		tio.c_ispeed = tio.c_ospeed = 500000;
 
 		ret = ioctl(fd, TCSETS2, &tio);		
 		if (ret != 0) Environment::terminateOnError("ioctl", 5);
 #endif
-		*/
+				
+		
+		struct termios ser;
+		ret = tcgetattr(this->fd, &ser);
+		if (ret != 0) Environment::terminateOnError("tcgetattr", 2);
+//		
+//		speed_t speed = B19200;
+//		ret = cfsetospeed(&ser, speed);
+//		if (ret != 0) Environment::terminateOnError("cfsetospeed", 2);
+//			
+//		ret = cfsetispeed(&ser, speed); // set transmission speed same as outgoing
+//		if (ret != 0) Environment::terminateOnError("cfsetispeed", 3);
+
 		
 		ser.c_cflag |= PARENB;	// enable parity checking/generation
 		ser.c_cflag &= ~PARODD;	// !odd = even
