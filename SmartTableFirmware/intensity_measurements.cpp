@@ -13,7 +13,7 @@
 #include "hardware.h"
 #include "dbg_putchar.h"
 
-struct BURST burst = {};
+//struct BURST burst = {};
 
 #define NOP asm volatile("nop");
 
@@ -107,6 +107,7 @@ void im_initialize10(void)
 			IM_CLOCK_PIN(false);	\
 			} while(0);
 
+/*
 //zamiana 10 i 14
 const int readToNumbers[15][7] = {
 	{43,44,45,46,47,48,49},
@@ -139,7 +140,7 @@ const int readToNumbers[15][7] = {
 	{95,99, 98,57,58,59,60,61,62,63},
 	{94,93, 92,64,65,66,67,68,69,70}
 };
-
+*/
 //int utable[15][7];
 //int otable[10][10];
 

@@ -11,21 +11,20 @@
 #include <avr/pgmspace.h>
 #include <string.h>
 #include <util/atomic.h>
+#include <stdio.h>
 
 #include "dbg_putchar.h"
-#include "calc_checksum.h"
+#include "checksum.h"
 #include "hardware.h"
 #include "eeprom_config.h"
 #include "comm.h"
 #include "config.h"
 #include "intensity_measurements.h"
 
-const char* build_date = __DATE__;
-const char* build_time = __TIME__;
-const char* build_version = "1.0";
+
 
 void cpu_init(void);
-void send(/*device_address_t addr,*/ MessageType type, const uint8_t* payload, uint8_t payload_length);
+void send(/*device_address_t addr,*/ MessageType type, const void* payload, uint8_t payload_length);
 bool check_rx(void);
 
 inline static void memmove(volatile void* dst, volatile void* src, size_t size)
@@ -66,6 +65,15 @@ void int2hex(char* buffer, int value)
 }
 
 //extern union im_raw_measurement_t raw;
+
+void* put_string(void* buffer, const char* str) {
+	uint8_t len = strlen(str);
+	uint8_t* ptr = (uint8_t*)buffer;
+	*ptr++ = len;
+	memcpy(ptr, str, len + 1);
+	ptr += len + 1;
+	return (void*)ptr;
+}
 
 int main(void)
 {
@@ -171,11 +179,12 @@ int main(void)
 
 		if (rx.buffer.header.type == MessageType::DeviceIdentifierRequest)
 		{
-			uint8_t* ptr = tx.payload;
-			*ptr++ = DEVICE_IDENTIFIER; // 
-			strcpy((char*)ptr, "version="); strcat((char*)ptr, build_version);
-			strcat((char*)ptr, ";date="); strcat((char*)ptr, build_date);
-			strcat((char*)ptr, ";time="); strcat((char*)ptr, build_time);
+			char* ptr = (char*)tx.payload;
+			sprintf(ptr, "id=%d;version=%s;date=%s;time=%s", DEVICE_IDENTIFIER, FIRMWARE_VERSION, FIRMWARE_BUILD_DATE, FIRMWARE_BUILD_TIME);
+			//*ptr++ = DEVICE_IDENTIFIER; // 
+			//strcpy((char*)ptr, "version="); strcat((char*)ptr, FIRMWARE_VERSION);
+			//strcat((char*)ptr, ";date="); strcat((char*)ptr, FIRMWARE_BUILD_DATE);
+			//strcat((char*)ptr, ";time="); strcat((char*)ptr, FIRMWARE_BUILD_TIME);
 			send(MessageType::DeviceIdentifierResponse, (const uint8_t*)ptr, strlen((const char*)ptr));
 		}
 
@@ -195,17 +204,24 @@ int main(void)
 			send(MessageType::SingleMeasurement8Response, im_data.raw8, 10*10*sizeof(uint8_t));
 		}
 
-
-
-
-		if (rx.buffer.header.type == MessageType::Test8Request)
+		if (rx.buffer.header.type == MessageType::SingleMeasurement10Request)
 		{
 			//im_full_resolution_synchronized();
-			im_measure8();
-			send(rx.buffer.header.address, MessageType::Test8Response, im_data.raw8, 10*10*sizeof(uint8_t));
+			im_measure10();
+			send(MessageType::SingleMeasurement10Response, im_data.raw16, 10*10*sizeof(uint16_t));
 		}
 
 
+
+//
+		//if (rx.buffer.header.type == MessageType::Test8Request)
+		//{
+			////im_full_resolution_synchronized();
+			//im_measure8();
+			//send(rx.buffer.header.address, MessageType::Test8Response, im_data.raw8, 10*10*sizeof(uint8_t));
+		//}
+
+/*
 		if (rx.buffer.header.type == MessageType::SetBurstConfigurationRequest)
 		{
 			// rx.buffer.header.payload_length mus be equal to sizeof(struct BURST_CONFIGURATION)
@@ -256,7 +272,7 @@ int main(void)
 			memmove(tx.payload, &burst.stats, sizeof(BURST_STATISTICS));
 			send(rx.buffer.header.address, MessageType::GetBurstMeasurementStatisticsResponse, (const uint8_t*)tx.payload, sizeof(BURST_STATISTICS));
 		}
-
+*/
 		RX_RESET;
 	}
 
@@ -333,36 +349,37 @@ bool check_rx(void)
 	}
 
 	// reset broadcast bit in message type
-	rx.buffer.header.type = (MessageType)((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag);
+	//rx.buffer.header.type = (MessageType)((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag);
 	
 	// ok - everything seems to good...
 	return true;
 }
 
-void send(device_address_t addr, MessageType type, const uint8_t* payload, uint8_t payload_length)
+void send(MessageType type, const void* payload, uint8_t payload_length)
 {	
 
 	// prepare header
 	tx.header.type = type;
 	tx.header.payload_length = payload_length;
-	tx.ppayload = payload;
+	tx.ppayload = (uint8_t*)payload;
+	tx.header.magic = PROTO_MAGIC;
 
-	// set sender address
-#define SEND_ADDRESS_MODE	3
-
-#if SEND_ADDRESS_MODE == 0
-	// set sender address to same as incoming (mind the broadcast!)
-	tx.header.address = rx.buffer.header.address;
-#elseif SEND_ADDRESS_MODE == 1
-	// set sender address always to the configured one
-	tx.header.address = device_address;
-#else
-	// mix mode 0 and 1
-	if (rx.buffer.header.address == ADDRESS_BROADCAST)
-		tx.header.address = device_address;
-	else
-		tx.header.address = rx.buffer.header.address;
-#endif
+	//// set sender address
+//#define SEND_ADDRESS_MODE	3
+//
+//#if SEND_ADDRESS_MODE == 0
+	//// set sender address to same as incoming (mind the broadcast!)
+	//tx.header.address = rx.buffer.header.address;
+//#elseif SEND_ADDRESS_MODE == 1
+	//// set sender address always to the configured one
+	//tx.header.address = device_address;
+//#else
+	//// mix mode 0 and 1
+	//if (rx.buffer.header.address == ADDRESS_BROADCAST)
+		//tx.header.address = device_address;
+	//else
+		//tx.header.address = rx.buffer.header.address;
+//#endif
 
 
 
@@ -372,13 +389,13 @@ void send(device_address_t addr, MessageType type, const uint8_t* payload, uint8
 	tx.window_end = tx.window_position + sizeof(PROTO_HEADER);
 
 	// calculate crc16 of the header and user's payload
-	tx.crc = calc_crc16((void*)&tx.header, sizeof(PROTO_HEADER), payload, payload_length);
+	tx.crc = calc_checksum((void*)&tx.header, sizeof(PROTO_HEADER), payload, payload_length);
 
 	// let's go!
 	//begin_transmission((void*)&tx.buffer, sizeof(PROTO_HEADER) + payload_length + sizeof(uint16_t));
 
 	// nadanie pierwszego bajta uruchamia potok przerwañ
-	RS485_DIR_SEND;
+	//RS485_DIR_SEND;
 	UDR0 = *tx.window_position++;
 	UCSR0B |= _BV(TXCIE0); // uruchom przerwania informuj¹ce o zakoñczeniu nadawania bajta
 

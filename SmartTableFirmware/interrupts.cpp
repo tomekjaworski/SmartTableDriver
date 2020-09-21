@@ -26,7 +26,7 @@ ISR(TIMER0_COMPA_vect)
 		LED0_TOGGLE;
 	}
 
-	burst.timer++;
+	//burst.timer++;
 	rx.idle_timer++;
 }
 

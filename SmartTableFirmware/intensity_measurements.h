@@ -9,7 +9,7 @@
 #ifndef INTENSITY_MEASUREMENTS_H_
 #define INTENSITY_MEASUREMENTS_H_
 
-s#include "protocol.h"
+#include "protocol.h"
 //
 //struct BURST {
 	//volatile bool enabled;

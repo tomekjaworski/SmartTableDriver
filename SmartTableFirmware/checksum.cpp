@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 #include <avr/pgmspace.h>
-#include "crc16.h"
+#include "checksum.h"
 
 uint16_t calc_checksum(const void *buf, uint8_t size)
 {
