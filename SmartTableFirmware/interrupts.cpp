@@ -63,7 +63,7 @@ __skip_payload:
 	if (tx.state == TransmitterState::SendingCRC)
 	{
 		UCSR0B &= ~_BV(TXCIE0); // off
-		RS485_DIR_RECEIVE;
+		//RS485_DIR_RECEIVE;
 		tx.state = TransmitterState::IDLE;
 		return;
 	}
@@ -75,10 +75,10 @@ ISR(USART_RX_vect)
 	__attribute__((unused)) uint8_t data = UDR0;
 
 	if (status & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) // errors: frame error, data overrun, parity error
-	return;
+		return;
 
 	if (RX_COUNT == RX_PAYLOAD_CAPACITY + sizeof(PROTO_HEADER)) // buffer overflow
-	return;
+		return;
 
 	*rx.buffer_position++ = data;
 	rx.got_data = 1;

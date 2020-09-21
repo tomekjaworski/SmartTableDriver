@@ -13,11 +13,11 @@
 #define RX_PAYLOAD_CAPACITY	32
 #define TX_PAYLOAD_CAPACITY	128
 
-#define ADDRESS_BROADCAST	(device_address_t)0xFF
-#define ADDRESS_NONE		(device_address_t)0x00
+//#define ADDRESS_BROADCAST	(device_address_t)0xFF
+//#define ADDRESS_NONE		(device_address_t)0x00
 
 
-typedef unsigned char device_address_t;
+typedef unsigned char device_identifier_t;
 
 
 
@@ -147,69 +147,90 @@ static_assert(sizeof(ADC_BLOCK1_N8_B1) == 1, "ADC_BLOCK1_N8_B1 has invalid_size"
 
 enum class MessageType : uint8_t
 {
-	__BroadcastFlag = 0x80,
-	__ResponseFlag = 0x40,
+	//__BroadcastFlag = 0x80,
+	//__ResponseFlag = 0x40,
 	Invalid = 0x00,
 	None = 0x01,
 
 	// Classical ping-pong messages to see if a device is alive and kickin'
 	PingRequest = 0x02,
-	PingResponse = 0x02 | __ResponseFlag,
+	PingResponse = 0x03,
+	
+	DeviceIdentifierRequest = 0x04,
+	DeviceIdentifierResponse = 0x05,
+	
+	SingleMeasurement8Request = 0x10,
+	SingleMeasurement8Response = 0x11,
+	SingleMeasurement10Request = 0x12,
+	SingleMeasurement10Response = 0x13,
+	
+	TriggeredMeasurement8EnterRequest = 0x20,
+	TriggeredMeasurement8EnterResponse = 0x21,
+	TriggeredMeasurement10EnterRequest = 0x22,
+	TriggeredMeasurement10EnterResponse = 0x23,
+	TriggeredMeasurementLeaveRequest = 0x30,
+	TriggeredMesurementLeaveResponse = 0x31,
+	
 	
 	// Get version of the active firmware
-	GetVersionRequest = 0x03,
-	GetVersionResponse = 0x03 | __ResponseFlag,
+	//GetVersionRequest = 0x03,
+	//GetVersionResponse = 0x03 | __ResponseFlag,
 	
 	// Do the full resolution measurement, wait for it and then send the results (array of 100 uint16_ts)
-	GetFullResolutionSyncMeasurementRequest = 0x04,
-	GetFullResolutionSyncMeasurementResponse = 0x04 | __ResponseFlag,
+	//GetFullResolutionSyncMeasurementRequest = 0x04,
+	//GetFullResolutionSyncMeasurementResponse = 0x04 | __ResponseFlag,
 	
 	// Set timing configuration for the burst mode
-	SetBurstConfigurationRequest = 0x05,
-	SetBurstConfigurationResponse = 0x05 | __ResponseFlag,
+	//SetBurstConfigurationRequest = 0x05,
+	//SetBurstConfigurationResponse = 0x05 | __ResponseFlag,
 	
 	// Execute a burst measurement
-	DoBurstMeasurementRequest = 0x06,
-	DoBurstMeasurementResponse = 0x06 | __ResponseFlag,
+	//DoBurstMeasurementRequest = 0x06,
+	//DoBurstMeasurementResponse = 0x06 | __ResponseFlag,
 	
 	// Get statistics of previously executed burst measurement
-	GetBurstMeasurementStatisticsRequest = 0x07,
-	GetBurstMeasurementStatisticsResponse = 0x07 | __ResponseFlag,
+	//GetBurstMeasurementStatisticsRequest = 0x07,
+	//GetBurstMeasurementStatisticsResponse = 0x07 | __ResponseFlag,
 
-	Test8Request = 0x08,
-	Test8Response = 0x08 | __ResponseFlag,
+	//Test8Request = 0x08,
+	//Test8Response = 0x08 | __ResponseFlag,
 	
-	__RequestMinCode = PingRequest,
-	__RequestMaxCode = Test8Request,
+	//__RequestMinCode = PingRequest,
+	//__RequestMaxCode = Test8Request,
 	
 	//__MAX,
 	//__MIN = Ping,
 };
 
+//
+//struct BURST_CONFIGURATION {
+	//uint8_t transmission_start_time;
+	//uint8_t silence_interval;
+//} __attribute__((packed));
+//
+//
+//struct BURST_STATISTICS {
+	//uint8_t last_measurement_time;
+	//uint8_t last_transmission_time;
+	//uint16_t count;
+//} __attribute__((packed));
 
-struct BURST_CONFIGURATION {
-	uint8_t transmission_start_time;
-	uint8_t silence_interval;
-} __attribute__((packed));
-
-
-struct BURST_STATISTICS {
-	uint8_t last_measurement_time;
-	uint8_t last_transmission_time;
-	uint16_t count;
-} __attribute__((packed));
+#define PROTO_MAGIC (uint8_t)0xAB
 
 struct PROTO_HEADER {
-	device_address_t address;		// receiver address (if given) or ADDRESS_BROADCAST
+	uint8_t magic;		
 	MessageType type;				// type of the received message
 	uint8_t payload_length;			//
+	
+	
+	PROTO_HEADER() : magic(PROTO_MAGIC) {}
 } __attribute__((packed));
 
 // data size asserts
 static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
 static_assert(sizeof(PROTO_HEADER) == 3, "PROTO_HEADER has invalid size");
-static_assert(sizeof(BURST_CONFIGURATION) == 2, "BURST_CONFIGURATION has invalid size");
-static_assert(sizeof(BURST_STATISTICS) == 4, "BURST_STATISTICS has invalid size");
+//static_assert(sizeof(BURST_CONFIGURATION) == 2, "BURST_CONFIGURATION has invalid size");
+//static_assert(sizeof(BURST_STATISTICS) == 4, "BURST_STATISTICS has invalid size");
 
 
 

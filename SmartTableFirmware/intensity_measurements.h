@@ -9,15 +9,15 @@
 #ifndef INTENSITY_MEASUREMENTS_H_
 #define INTENSITY_MEASUREMENTS_H_
 
-#include "protocol.h"
-
-struct BURST {
-	volatile bool enabled;
-	volatile uint8_t timer;
-
-	volatile BURST_CONFIGURATION config;
-	volatile BURST_STATISTICS stats;
-};
+s#include "protocol.h"
+//
+//struct BURST {
+	//volatile bool enabled;
+	//volatile uint8_t timer;
+//
+	//volatile BURST_CONFIGURATION config;
+	//volatile BURST_STATISTICS stats;
+//};
 
 union im_raw_measurement_t {
 	uint8_t raw8[7 * 15];
@@ -25,12 +25,12 @@ union im_raw_measurement_t {
 };
 
 
-extern struct BURST burst;
+//extern struct BURST burst;
 extern union im_raw_measurement_t im_data;
 
 void im_initialize8(void);
 void im_initialize10(void);
-void im_execute_sync(void);
+//void im_execute_sync(void);
 
 void im_measure8(void);
 void im_measure10(void);

@@ -13,7 +13,7 @@
 #include <util/atomic.h>
 
 #include "dbg_putchar.h"
-#include "crc16.h"
+#include "calc_checksum.h"
 #include "hardware.h"
 #include "eeprom_config.h"
 #include "comm.h"
@@ -25,7 +25,7 @@ const char* build_time = __TIME__;
 const char* build_version = "1.0";
 
 void cpu_init(void);
-void send(device_address_t addr, MessageType type, const uint8_t* payload, uint8_t payload_length);
+void send(/*device_address_t addr,*/ MessageType type, const uint8_t* payload, uint8_t payload_length);
 bool check_rx(void);
 
 inline static void memmove(volatile void* dst, volatile void* src, size_t size)
@@ -35,10 +35,10 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 
 #define RX_RESET do { rx.buffer_position = (uint8_t*)&rx.buffer; } while (0);
 
-extern int otable[10][10];
+//extern int otable[10][10];
 volatile uint8_t dummy;
 
-char b[15 * (7 * (4+1) + 1) + 1];
+//char b[15 * (7 * (4+1) + 1) + 1];
 
 void uart_putchar(char c) {
 	loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
@@ -73,7 +73,7 @@ int main(void)
 	RX_RESET;
 	
 	im_initialize8();
-	device_address = pgm_read_byte(device_address_block + 4);
+	//device_address = pgm_read_byte(device_address_block + 4);
 
 
 	// --------------
@@ -166,23 +166,37 @@ int main(void)
 		if (rx.buffer.header.type == MessageType::PingRequest)
 		{
 			memmove(tx.payload, rx.buffer.payload, rx.buffer.header.payload_length);
-			send(rx.buffer.header.address, MessageType::PingResponse, (const uint8_t*)tx.payload, rx.buffer.header.payload_length);
+			send(MessageType::PingResponse, (const uint8_t*)tx.payload, rx.buffer.header.payload_length);
 		}
 
-		if (rx.buffer.header.type == MessageType::GetVersionRequest)
+		if (rx.buffer.header.type == MessageType::DeviceIdentifierRequest)
 		{
-			strcpy((char*)tx.payload, "version="); strcat((char*)tx.payload, build_version);
-			strcat((char*)tx.payload, ";date="); strcat((char*)tx.payload, build_date);
-			strcat((char*)tx.payload, ";time="); strcat((char*)tx.payload, build_time);
-			send(rx.buffer.header.address, MessageType::GetVersionResponse, (const uint8_t*)tx.payload, strlen((const char*)tx.payload));
+			uint8_t* ptr = tx.payload;
+			*ptr++ = DEVICE_IDENTIFIER; // 
+			strcpy((char*)ptr, "version="); strcat((char*)ptr, build_version);
+			strcat((char*)ptr, ";date="); strcat((char*)ptr, build_date);
+			strcat((char*)ptr, ";time="); strcat((char*)ptr, build_time);
+			send(MessageType::DeviceIdentifierResponse, (const uint8_t*)ptr, strlen((const char*)ptr));
 		}
 
-		if (rx.buffer.header.type == MessageType::GetFullResolutionSyncMeasurementRequest)
+		//if (rx.buffer.header.type == MessageType::GetFullResolutionSyncMeasurementRequest)
+		//{
+			////im_full_resolution_synchronized();
+			//im_execute_sync();
+			//send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurementResponse, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
+		//}
+
+
+
+		if (rx.buffer.header.type == MessageType::SingleMeasurement8Request)
 		{
 			//im_full_resolution_synchronized();
-			im_execute_sync();
-			send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurementResponse, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
+			im_measure8();
+			send(MessageType::SingleMeasurement8Response, im_data.raw8, 10*10*sizeof(uint8_t));
 		}
+
+
+
 
 		if (rx.buffer.header.type == MessageType::Test8Request)
 		{
@@ -262,12 +276,12 @@ bool check_rx(void)
 		if (RX_COUNT == 0)
 			return false; // nie ma czego synchronizowaæ
 
-		if (rx.buffer.header.address != ADDRESS_BROADCAST
+		if (rx.buffer.header.magic != PROTO_MAGIC)
 			//&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x18)
 			//&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x04)
 			//&& rx.buffer.header.address != 0x13
 			//&& rx.buffer.header.address != 0x15
-			&& rx.buffer.header.address != device_address)
+			//&& rx.buffer.header.address != device_address)
 		{
 			// remove one byte at the start of the rx buffer
 			RX_RESET;
@@ -282,20 +296,20 @@ bool check_rx(void)
 	// Ok! We've just received complete header
 	
 	// CHECK: if address is consistent with message type
-	if ((rx.buffer.header.address == ADDRESS_BROADCAST) ^ (((uint8_t)rx.buffer.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
-	{
-		// NO: got broadcast address and non-broadcast message (or the other way around)
-		RX_RESET;
-		return false;
-	}
+	//if ((rx.buffer.header.address == ADDRESS_BROADCAST) ^ (((uint8_t)rx.buffer.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
+	//{
+		//// NO: got broadcast address and non-broadcast message (or the other way around)
+		//RX_RESET;
+		//return false;
+	//}
 	
 	// CHECK: is the message type valid?
-	if (((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) < (uint8_t)MessageType::__RequestMinCode || ((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) > (uint8_t)MessageType::__RequestMaxCode)
-	{
-		// NO: message type is out of range
-		RX_RESET;
-		return false;
-	}
+	//if (((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) < (uint8_t)MessageType::__RequestMinCode || ((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) > (uint8_t)MessageType::__RequestMaxCode)
+	//{
+		//// NO: message type is out of range
+		//RX_RESET;
+		//return false;
+	//}
 
 	// CHECK: is payload length less than buffer's capacity
 	if (rx.buffer.header.payload_length > RX_PAYLOAD_CAPACITY) {
@@ -309,7 +323,7 @@ bool check_rx(void)
 		return false; // we have received only a part of the message; let us wait for the rest
 
 	// ok, we have received at least whole message; check CRC
-	uint16_t calculated_crc = calc_crc16((void*)&rx.buffer, sizeof(PROTO_HEADER) + rx.buffer.header.payload_length);
+	uint16_t calculated_crc = calc_checksum((void*)&rx.buffer, sizeof(PROTO_HEADER) + rx.buffer.header.payload_length);
 	uint16_t received_crc = *(uint16_t*)(rx.buffer.payload + rx.buffer.header.payload_length);
 	if (calculated_crc != received_crc)
 	{

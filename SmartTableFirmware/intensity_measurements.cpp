@@ -140,8 +140,8 @@ const int readToNumbers[15][7] = {
 	{94,93, 92,64,65,66,67,68,69,70}
 };
 
-int utable[15][7];
-int otable[10][10];
+//int utable[15][7];
+//int otable[10][10];
 
 union im_raw_measurement_t im_data;
 
@@ -279,7 +279,7 @@ void im_measure8(void)
  * void im_execute_sync(void)
  * A low-speed debug version of measurement routing
  */
-
+/*
 void im_execute_sync(void)
 {
 	
@@ -325,3 +325,4 @@ void im_execute_sync(void)
 }
 
 
+*/

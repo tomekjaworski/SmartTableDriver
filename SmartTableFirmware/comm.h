@@ -33,6 +33,7 @@ struct TX
 	const uint8_t* ppayload;
 
 	uint8_t payload[TX_PAYLOAD_CAPACITY];
+	
 };
 
 

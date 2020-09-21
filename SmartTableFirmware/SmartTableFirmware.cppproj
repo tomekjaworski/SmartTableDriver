@@ -219,10 +219,10 @@
     <Compile Include="cpu.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="crc16.cpp">
+    <Compile Include="calc_checksum.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="crc16.h">
+    <Compile Include="calc_checksum.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="hardware.h">

@@ -22,8 +22,8 @@
 #define LED1_ON do { PORTB &= ~_BV(PORTB1); } while (0);
 #define LED1_TOGGLE do { PORTB ^= _BV(PORTB1); } while (0);
 
-#define RS485_DIR_SEND		do { PORTD |= _BV(PORTD2); } while(0); //1
-#define RS485_DIR_RECEIVE	do { PORTD &= ~_BV(PORTD2); } while(0);//0
+//#define RS485_DIR_SEND		do { PORTD |= _BV(PORTD2); } while(0); //1
+//#define RS485_DIR_RECEIVE	do { PORTD &= ~_BV(PORTD2); } while(0);//0
 
 #define RESET1_HIGH		do { PORTD |= _BV(PORTD5); } while(0); //1
 #define RESET2_HIGH		do { PORTD |= _BV(PORTD4); } while(0); //1
