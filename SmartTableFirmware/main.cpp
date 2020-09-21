@@ -50,30 +50,30 @@ void send_string(const char* s)
 		uart_putchar(*s++);
 }
 
-
-void int2hex(char* buffer, int value)
-{
-	uint8_t a = (value >> 12) & 0xf;
-	uint8_t b = (value >> 8) & 0xf;
-	uint8_t c = (value >> 4) & 0xf;
-	uint8_t d = (value >> 0) & 0xf;
-	
-	*buffer++ = a > 9 ? 'A' + a - 10 : '0' + a;
-	*buffer++ = b > 9 ? 'A' + b - 10 : '0' + b;
-	*buffer++ = c > 9 ? 'A' + c - 10 : '0' + c;
-	*buffer++ = d > 9 ? 'A' + d - 10 : '0' + d;
-}
+//
+//void int2hex(char* buffer, int value)
+//{
+	//uint8_t a = (value >> 12) & 0xf;
+	//uint8_t b = (value >> 8) & 0xf;
+	//uint8_t c = (value >> 4) & 0xf;
+	//uint8_t d = (value >> 0) & 0xf;
+	//
+	//*buffer++ = a > 9 ? 'A' + a - 10 : '0' + a;
+	//*buffer++ = b > 9 ? 'A' + b - 10 : '0' + b;
+	//*buffer++ = c > 9 ? 'A' + c - 10 : '0' + c;
+	//*buffer++ = d > 9 ? 'A' + d - 10 : '0' + d;
+//}
 
 //extern union im_raw_measurement_t raw;
 
-void* put_string(void* buffer, const char* str) {
-	uint8_t len = strlen(str);
-	uint8_t* ptr = (uint8_t*)buffer;
-	*ptr++ = len;
-	memcpy(ptr, str, len + 1);
-	ptr += len + 1;
-	return (void*)ptr;
-}
+//void* put_string(void* buffer, const char* str) {
+	//uint8_t len = strlen(str);
+	//uint8_t* ptr = (uint8_t*)buffer;
+	//*ptr++ = len;
+	//memcpy(ptr, str, len + 1);
+	//ptr += len + 1;
+	//return (void*)ptr;
+//}
 
 int main(void)
 {
@@ -153,12 +153,24 @@ int main(void)
 
 	*/
 	
-	while(1)
-	{
-		if (!rx.got_data)
-		{
-			if (rx.idle_timer > SERIAL_IDLE_LIMIT)
-			{
+	bool prev_trigger = GET_TRIGGER();
+	int8_t data_size = 0;
+	
+	while(1) {
+		bool current_trigger = GET_TRIGGER();
+		if (current_trigger && !prev_trigger) {
+			if (data_size == 8) {
+				im_measure8();
+				send(MessageType::SingleMeasurement8Response, im_data.raw8, 10*10*sizeof(uint8_t));
+			}
+			if (data_size == 10) {
+				im_measure10();
+				send(MessageType::SingleMeasurement10Response, im_data.raw16, 10*10*sizeof(uint16_t));
+			}
+		}
+		
+		if (!rx.got_data) {
+			if (rx.idle_timer > SERIAL_IDLE_LIMIT) {
 				RX_RESET;
 				rx.idle_timer = 0;
 			}
@@ -171,14 +183,12 @@ int main(void)
 			continue; // not yet again
 
 		// ok, we have data
-		if (rx.buffer.header.type == MessageType::PingRequest)
-		{
+		if (rx.buffer.header.type == MessageType::PingRequest) {
 			memmove(tx.payload, rx.buffer.payload, rx.buffer.header.payload_length);
 			send(MessageType::PingResponse, (const uint8_t*)tx.payload, rx.buffer.header.payload_length);
 		}
 
-		if (rx.buffer.header.type == MessageType::DeviceIdentifierRequest)
-		{
+		if (rx.buffer.header.type == MessageType::DeviceIdentifierRequest) {
 			char* ptr = (char*)tx.payload;
 			sprintf(ptr, "id=%d;version=%s;date=%s;time=%s", DEVICE_IDENTIFIER, FIRMWARE_VERSION, FIRMWARE_BUILD_DATE, FIRMWARE_BUILD_TIME);
 			//*ptr++ = DEVICE_IDENTIFIER; // 
@@ -211,9 +221,22 @@ int main(void)
 			send(MessageType::SingleMeasurement10Response, im_data.raw16, 10*10*sizeof(uint16_t));
 		}
 
+		if (rx.buffer.header.type == MessageType::TriggeredMeasurement10EnterRequest) {
+			data_size = 10;
+			send(MessageType::TriggeredMeasurement10EnterResponse, NULL, 0);
+		}
+
+		if (rx.buffer.header.type == MessageType::TriggeredMeasurement8EnterRequest) {
+			data_size = 8;
+			send(MessageType::TriggeredMeasurement8EnterResponse, NULL, 0);
+		}
 
 
-//
+		if (rx.buffer.header.type == MessageType::TriggeredMeasurementLeaveRequest) {
+			data_size = 0;
+			send(MessageType::TriggeredMeasurementLeaveRequest, NULL, 0);
+		}
+		//
 		//if (rx.buffer.header.type == MessageType::Test8Request)
 		//{
 			////im_full_resolution_synchronized();
