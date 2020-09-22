@@ -10,23 +10,15 @@
 #define HARDWARE_H_
 
 
-#define LED_ON do { PORTB |= _BV(PORTB5); } while (0);
-#define LED_OFF do { PORTB &= ~_BV(PORTB5); } while (0);
-#define LED_TOGGLE do { PORTB ^= _BV(PORTB5); } while (0);
-
 #define LED0_OFF do { PORTB |= _BV(PORTB2); } while (0);
 #define LED0_ON do { PORTB &= ~_BV(PORTB2); } while (0);
 #define LED0_TOGGLE do { PORTB ^= _BV(PORTB2); } while (0);
 
-#define LED1_OFF do { PORTB |= _BV(PORTB1); } while (0);
-#define LED1_ON do { PORTB &= ~_BV(PORTB1); } while (0);
-#define LED1_TOGGLE do { PORTB ^= _BV(PORTB1); } while (0);
+#define LED1_ON do { PORTB |= _BV(PORTB5); } while (0);
+#define LED1_OFF do { PORTB &= ~_BV(PORTB5); } while (0);
+#define LED1_TOGGLE do { PORTB ^= _BV(PORTB5); } while (0);
 
 #define GET_TRIGGER()	!!(PORTD & ~_BV(PORTD2))
-
-
-//#define RS485_DIR_SEND		do { PORTD |= _BV(PORTD2); } while(0); //1
-//#define RS485_DIR_RECEIVE	do { PORTD &= ~_BV(PORTD2); } while(0);//0
 
 #define RESET1_HIGH		do { PORTD |= _BV(PORTD5); } while(0); //1
 #define RESET2_HIGH		do { PORTD |= _BV(PORTD4); } while(0); //1
