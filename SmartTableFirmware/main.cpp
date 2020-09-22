@@ -155,10 +155,11 @@ int main(void)
 	
 	bool prev_trigger = GET_TRIGGER();
 	int8_t trigger_data_size = 0;
-	
+
 	while(1) {
 		bool current_trigger = GET_TRIGGER();
 		if (current_trigger && !prev_trigger) {
+			LED1_TOGGLE;
 			if (trigger_data_size == 8) {
 				im_measure8();
 				send(MessageType::SingleMeasurement8Response, im_data.raw8, 10*10*sizeof(uint8_t));

@@ -20,6 +20,9 @@
 
 #define GET_TRIGGER()	!(PIND & _BV(PIND3))
 
+#define LEGACY_RS485_DIR_OUTPUT()	do { PORTD |= _BV(PORTD2); } while(0); //1
+#define LEGACY_RS485_DIR_INPUT()	do { PORTD &= ~_BV(PORTD2); } while(0);//0
+
 #define RESET1_HIGH		do { PORTD |= _BV(PORTD5); } while(0); //1
 #define RESET2_HIGH		do { PORTD |= _BV(PORTD4); } while(0); //1
 #define RESET1_LOW		do { PORTD &= ~_BV(PORTD5); } while(0);//0
