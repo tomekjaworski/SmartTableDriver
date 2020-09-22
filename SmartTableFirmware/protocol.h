@@ -2,7 +2,7 @@
  * protocol.h
  *
  * Created: 22.04.2017 15:08:48
- *  Author: Tomek Jaworski
+ *  Author: Tomasz Jaworski
  */ 
 
 
