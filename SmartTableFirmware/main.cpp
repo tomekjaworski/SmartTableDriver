@@ -154,16 +154,16 @@ int main(void)
 	*/
 	
 	bool prev_trigger = GET_TRIGGER();
-	int8_t data_size = 0;
+	int8_t trigger_data_size = 0;
 	
 	while(1) {
 		bool current_trigger = GET_TRIGGER();
 		if (current_trigger && !prev_trigger) {
-			if (data_size == 8) {
+			if (trigger_data_size == 8) {
 				im_measure8();
 				send(MessageType::SingleMeasurement8Response, im_data.raw8, 10*10*sizeof(uint8_t));
 			}
-			if (data_size == 10) {
+			if (trigger_data_size == 10) {
 				im_measure10();
 				send(MessageType::SingleMeasurement10Response, im_data.raw16, 10*10*sizeof(uint16_t));
 			}
@@ -221,19 +221,33 @@ int main(void)
 			send(MessageType::SingleMeasurement10Response, im_data.raw16, 10*10*sizeof(uint16_t));
 		}
 
-		if (rx.buffer.header.type == MessageType::TriggeredMeasurement10EnterRequest) {
-			data_size = 10;
-			send(MessageType::TriggeredMeasurement10EnterResponse, NULL, 0);
+		if (rx.buffer.header.type == MessageType::TriggeredMeasurementEnterRequest) {
+			bool ok = true;
+			int8_t new_data_size = -1;
+			
+			// 1
+			if (rx.buffer.header.payload_length != 1)
+				ok = false;
+			
+			// 2
+			if (ok) {
+				new_data_size = *(const int8_t*)tx.payload;
+				if (new_data_size < 1 && new_data_size > 10)
+					ok = false;
+			}
+			
+			// 3
+			if (ok) {
+				trigger_data_size = new_data_size;
+				send(MessageType::TriggeredMeasurementEnterResponse, &new_data_size, 1);
+			} else {
+				int8_t response = -1;
+				send(MessageType::TriggeredMeasurementEnterResponse, &response, 1);
+			}
 		}
-
-		if (rx.buffer.header.type == MessageType::TriggeredMeasurement8EnterRequest) {
-			data_size = 8;
-			send(MessageType::TriggeredMeasurement8EnterResponse, NULL, 0);
-		}
-
 
 		if (rx.buffer.header.type == MessageType::TriggeredMeasurementLeaveRequest) {
-			data_size = 0;
+			trigger_data_size = 0;
 			send(MessageType::TriggeredMeasurementLeaveRequest, NULL, 0);
 		}
 		//
@@ -358,12 +372,12 @@ bool check_rx(void)
 	}
 
 	// check if whole message is here
-	if (RX_COUNT < (int)(sizeof(PROTO_HEADER) + rx.buffer.header.payload_length + sizeof(uint16_t)))
+	if (RX_COUNT < (int)(sizeof(PROTO_HEADER) + rx.buffer.header.payload_length + sizeof(checksum_t)))
 		return false; // we have received only a part of the message; let us wait for the rest
 
 	// ok, we have received at least whole message; check CRC
-	uint16_t calculated_crc = calc_checksum((void*)&rx.buffer, sizeof(PROTO_HEADER) + rx.buffer.header.payload_length);
-	uint16_t received_crc = *(uint16_t*)(rx.buffer.payload + rx.buffer.header.payload_length);
+	checksum_t calculated_crc = calc_checksum((void*)&rx.buffer, sizeof(PROTO_HEADER) + rx.buffer.header.payload_length);
+	checksum_t received_crc = *(checksum_t*)(rx.buffer.payload + rx.buffer.header.payload_length);
 	if (calculated_crc != received_crc)
 	{
 		// checksums does not match

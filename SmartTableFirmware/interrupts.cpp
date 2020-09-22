@@ -55,7 +55,7 @@ ISR(USART_TX_vect) // goes off after transmitter have sent one byte (its only by
 __skip_payload:
 		tx.state = TransmitterState::SendingCRC;
 		tx.window_position = (uint8_t*)&tx.crc;
-		tx.window_end = tx.window_position + sizeof(tx.crc);
+		tx.window_end = tx.window_position + sizeof(checksum_t);
 		UDR0 = *tx.window_position++;
 		return;
 	}

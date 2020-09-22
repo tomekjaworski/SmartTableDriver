@@ -12,6 +12,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "protocol.h"
+#include "checksum.h"
 
 enum class TransmitterState : uint8_t {
 	IDLE,
@@ -25,7 +26,7 @@ struct TX
 	TransmitterState state;
 
 	PROTO_HEADER header;
-	uint16_t crc;
+	checksum_t crc;
 
 	const uint8_t* window_position;
 	const uint8_t* window_end;

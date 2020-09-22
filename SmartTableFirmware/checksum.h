@@ -9,9 +9,10 @@
 #ifndef CRC16_H_
 #define CRC16_H_
 
+typedef uint16_t checksum_t;
 
-uint16_t calc_checksum(const void *buf, uint8_t size);
-uint16_t calc_checksum(const void *buf1, uint8_t size1, const void* buf2, uint8_t size2);
+checksum_t calc_checksum(const void *buf, uint8_t size);
+checksum_t calc_checksum(const void *buf1, uint8_t size1, const void* buf2, uint8_t size2);
 
 
 

@@ -9,6 +9,7 @@
 #ifndef PROTOCOL_H_
 #define PROTOCOL_H_
 
+#include "checksum.h"
 
 #define RX_PAYLOAD_CAPACITY	32
 #define TX_PAYLOAD_CAPACITY	128
@@ -38,36 +39,39 @@ enum class ADCBlockType : uint8_t {
 
 struct ADC_BLOCK10_N4_B5 // 4 measurements on 5 bytes
 {
-	uint16_t v1 : 10;
-	uint16_t v2 : 10;
-	uint16_t v3 : 10;
-	uint16_t v4 : 10;
+	uint16_t b1 : 10;
+	uint16_t b2 : 10;
+	uint16_t b3 : 10;
+	uint16_t b4 : 10;
 } __attribute__((packed));
 
 struct ADC_BLOCK9_N8_B9 // 8 measurements on 9 bytes
 {
-	uint16_t v1 : 9;
-	uint16_t v2 : 9;
-	uint16_t v3 : 9;
-	uint16_t v4 : 9;
-	uint16_t v5 : 9;
-	uint16_t v6 : 9;
-	uint16_t v7 : 9;
-	uint16_t v8 : 9;
+	uint16_t b1 : 9;
+	uint16_t b2 : 9;
+	uint16_t b3 : 9;
+	uint16_t b4 : 9;
+	uint16_t b5 : 9;
+	uint16_t b6 : 9;
+	uint16_t b7 : 9;
+	uint16_t b8 : 9;
 } __attribute__((packed));
 
-// 1 measurement on 1 byte - no additional type is needed
+struct ADC_BLOCK8_N1_B1 // 1 measurements on 1 byte
+{
+	uint8_t b1;
+} __attribute__((packed));
 
 struct ADC_BLOCK7_N8_B7 // 8 measurements on 7 bytes
 {
-	uint16_t v1 : 7;
-	uint16_t v2 : 7;
-	uint16_t v3 : 7;
-	uint16_t v4 : 7;
-	uint16_t v5 : 7;
-	uint16_t v6 : 7;
-	uint16_t v7 : 7;
-	uint16_t v8 : 7;
+	uint16_t b1 : 7;
+	uint16_t b2 : 7;
+	uint16_t b3 : 7;
+	uint16_t b4 : 7;
+	uint16_t b5 : 7;
+	uint16_t b6 : 7;
+	uint16_t b7 : 7;
+	uint16_t b8 : 7;
 } __attribute__((packed));
 
 struct ADC_BLOCK6_N4_B3 // 4 measurements on 3 bytes
@@ -92,8 +96,8 @@ struct ADC_BLOCK5_N8_B5 // 8 measurements on 5 bytes
 
 struct ADC_BLOCK4_N2_B1 // 2 measurements on 1 byte
 {
-	uint16_t v1 : 4;
-	uint16_t v2 : 4;
+	uint8_t v1 : 4;
+	uint8_t v2 : 4;
 } __attribute__((packed));
 
 struct ADC_BLOCK3_N8_B3 // 8 measurements on 3 bytes
@@ -110,22 +114,22 @@ struct ADC_BLOCK3_N8_B3 // 8 measurements on 3 bytes
 
 struct ADC_BLOCK2_N4_B1 // 4 measurements on 1 byte
 {
-	uint16_t v1 : 2;
-	uint16_t v2 : 2;
-	uint16_t v3 : 2;
-	uint16_t v4 : 2;
+	uint8_t v1 : 2;
+	uint8_t v2 : 2;
+	uint8_t v3 : 2;
+	uint8_t v4 : 2;
 } __attribute__((packed));
 
 struct ADC_BLOCK1_N8_B1 // 8 measurements on 1 byte
 {
-	uint16_t v1 : 1;
-	uint16_t v2 : 1;
-	uint16_t v3 : 1;
-	uint16_t v4 : 1;
-	uint16_t v5 : 1;
-	uint16_t v6 : 1;
-	uint16_t v7 : 1;
-	uint16_t v8 : 1;
+	uint8_t v1 : 1;
+	uint8_t v2 : 1;
+	uint8_t v3 : 1;
+	uint8_t v4 : 1;
+	uint8_t v5 : 1;
+	uint8_t v6 : 1;
+	uint8_t v7 : 1;
+	uint8_t v8 : 1;
 } __attribute__((packed));
 
 static_assert(sizeof(ADC_BLOCK10_N4_B5) == 5, "ADC_BLOCK10_N4_B5 has invalid_size");
@@ -164,10 +168,8 @@ enum class MessageType : uint8_t
 	SingleMeasurement10Request = 0x12,
 	SingleMeasurement10Response = 0x13,
 	
-	TriggeredMeasurement8EnterRequest = 0x20,
-	TriggeredMeasurement8EnterResponse = 0x21,
-	TriggeredMeasurement10EnterRequest = 0x22,
-	TriggeredMeasurement10EnterResponse = 0x23,
+	TriggeredMeasurementEnterRequest = 0x21,
+	TriggeredMeasurementEnterResponse = 0x23,
 	TriggeredMeasurementLeaveRequest = 0x30,
 	TriggeredMesurementLeaveResponse = 0x31,
 	
@@ -229,6 +231,7 @@ struct PROTO_HEADER {
 // data size asserts
 static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
 static_assert(sizeof(PROTO_HEADER) == 3, "PROTO_HEADER has invalid size");
+static_assert(sizeof(checksum_t) == 2, "checksum_t has invalid size");
 //static_assert(sizeof(BURST_CONFIGURATION) == 2, "BURST_CONFIGURATION has invalid size");
 //static_assert(sizeof(BURST_STATISTICS) == 4, "BURST_STATISTICS has invalid size");
 
