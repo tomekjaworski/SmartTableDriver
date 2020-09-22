@@ -18,7 +18,7 @@
 #define LED1_OFF do { PORTB &= ~_BV(PORTB5); } while (0);
 #define LED1_TOGGLE do { PORTB ^= _BV(PORTB5); } while (0);
 
-#define GET_TRIGGER()	!!(PORTD & ~_BV(PORTD2))
+#define GET_TRIGGER()	!(PIND & _BV(PIND3))
 
 #define RESET1_HIGH		do { PORTD |= _BV(PORTD5); } while(0); //1
 #define RESET2_HIGH		do { PORTD |= _BV(PORTD4); } while(0); //1

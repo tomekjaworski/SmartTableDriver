@@ -220,22 +220,22 @@ int main(void)
 		if (rx.buffer.header.type == MessageType::TriggeredMeasurementEnterRequest) {
 			bool ok = true;
 			int8_t new_data_size = -1;
-			
+
 			// 1
 			if (rx.buffer.header.payload_length != 1)
 				ok = false;
 			
 			// 2
 			if (ok) {
-				new_data_size = *(const int8_t*)tx.payload;
-				if (new_data_size < 1 && new_data_size > 10)
+				new_data_size = *(const int8_t*)rx.buffer.payload;
+				if (new_data_size < 1 || new_data_size > 10)
 					ok = false;
 			}
 			
 			// 3
 			if (ok) {
 				trigger_data_size = new_data_size;
-				send(MessageType::TriggeredMeasurementEnterResponse, &new_data_size, 1);
+				send(MessageType::TriggeredMeasurementEnterResponse, &trigger_data_size, 1);
 			} else {
 				int8_t response = -1;
 				send(MessageType::TriggeredMeasurementEnterResponse, &response, 1);
@@ -244,7 +244,7 @@ int main(void)
 
 		if (rx.buffer.header.type == MessageType::TriggeredMeasurementLeaveRequest) {
 			trigger_data_size = 0;
-			send(MessageType::TriggeredMeasurementLeaveRequest, NULL, 0);
+			send(MessageType::TriggeredMeasurementLeaveResponse, NULL, 0);
 		}
 		//
 		//if (rx.buffer.header.type == MessageType::Test8Request)

@@ -55,6 +55,7 @@ void cpu_init(void)
 
 	//DDRD |= _BV(PORTD2); // DIR
 	DDRD |= _BV(PORTD1); // TX
+	PORTD |= _BV(PORTD3); // pull-up dla wej?cia synchronizuj?cego
 
 	// port szergowy
 	uint16_t br = UBR0_VALUE;

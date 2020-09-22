@@ -164,7 +164,9 @@ enum class MessageType : uint8_t
 	
 	TriggeredMeasurementEnterRequest = 0x21,
 	TriggeredMeasurementEnterResponse = 0x23,
+
 	TriggeredMeasurementLeaveRequest = 0x30,
+	TriggeredMeasurementLeaveResponse = 0x31,
 	
 	
 };
