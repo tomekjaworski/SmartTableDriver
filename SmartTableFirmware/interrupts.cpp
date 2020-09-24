@@ -20,13 +20,11 @@ uint8_t __cnt;
 
 ISR(TIMER0_COMPA_vect)
 {
-	if (__cnt++ > 254)
-	{
+	if (__cnt++ > 254) {
 		__cnt = 0;
 		LED0_TOGGLE;
 	}
 
-	//burst.timer++;
 	rx.idle_timer++;
 }
 
@@ -63,7 +61,6 @@ __skip_payload:
 	if (tx.state == TransmitterState::SendingCRC)
 	{
 		UCSR0B &= ~_BV(TXCIE0); // off
-		//RS485_DIR_RECEIVE;
 		tx.state = TransmitterState::IDLE;
 		return;
 	}

@@ -21,10 +21,8 @@
 #include "config.h"
 #include "intensity_measurements.h"
 
-
-
 void cpu_init(void);
-void send(/*device_address_t addr,*/ MessageType type, const void* payload, uint8_t payload_length);
+void send(MessageType type, const void* payload, uint8_t payload_length);
 bool check_rx(void);
 
 inline static void memmove(volatile void* dst, volatile void* src, size_t size)
@@ -34,46 +32,17 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 
 #define RX_RESET do { rx.buffer_position = (uint8_t*)&rx.buffer; } while (0);
 
-//extern int otable[10][10];
 volatile uint8_t dummy;
-
-//char b[15 * (7 * (4+1) + 1) + 1];
 
 void uart_putchar(char c) {
 	loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
 	UDR0 = c;
 }
 
-void send_string(const char* s)
-{
+void send_string(const char* s) {
 	while (*s)
 		uart_putchar(*s++);
 }
-
-//
-//void int2hex(char* buffer, int value)
-//{
-	//uint8_t a = (value >> 12) & 0xf;
-	//uint8_t b = (value >> 8) & 0xf;
-	//uint8_t c = (value >> 4) & 0xf;
-	//uint8_t d = (value >> 0) & 0xf;
-	//
-	//*buffer++ = a > 9 ? 'A' + a - 10 : '0' + a;
-	//*buffer++ = b > 9 ? 'A' + b - 10 : '0' + b;
-	//*buffer++ = c > 9 ? 'A' + c - 10 : '0' + c;
-	//*buffer++ = d > 9 ? 'A' + d - 10 : '0' + d;
-//}
-
-//extern union im_raw_measurement_t raw;
-
-//void* put_string(void* buffer, const char* str) {
-	//uint8_t len = strlen(str);
-	//uint8_t* ptr = (uint8_t*)buffer;
-	//*ptr++ = len;
-	//memcpy(ptr, str, len + 1);
-	//ptr += len + 1;
-	//return (void*)ptr;
-//}
 
 int main(void)
 {
@@ -81,91 +50,33 @@ int main(void)
 	RX_RESET;
 	
 	im_initialize8();
-	//device_address = pgm_read_byte(device_address_block + 4);
+#if DEBUG	
+	send_string("%%TEST%%");
+#endif
 
-
-	// --------------
-	// --------------
-	// --------------
-	// --------------
-	/*
-	cli();
-	RS485_DIR_SEND;
-
-	
-	while(1){
-		//          "1234567890abcdef"
-		send_string("Ala ma kota akot");
-		_delay_ms(100);
-	}
-	*/
-	
-
-/*	while (1)
-	{
-		
+#if 0
+	while (1) {
 		LED0_ON;
 		_delay_ms(1000);
 		LED0_OFF;
 		_delay_ms(1000);
 	}
-*/
-/*
-	while(1)
-	{	
-		_delay_ms(500);
-		im_measure10();
-		//im_measure8();
-	
-		b[0] = '\x0';
-		char* ptr = b;
-	
-		send_string("\n");
-		uint16_t* dptr = im_data.raw16;
-		for (int r = 0; r < 15; r++)
-		{
-			uint8_t cmax = 7;
-			if (r == 7)
-			{
-				cmax = 2;
-				for (uint8_t i = 0; i < 5*5; i++)
-				*ptr++ = ' ';
-			}
-				
-			for (int c = 0; c < cmax; c++)
-			{
-				uint16_t val = *dptr++;
-				int2hex(ptr, val);
-				ptr += 4;
-				*ptr++ = val > 0x20 ? '*' : ' ';
-			}
-			*ptr++ = '\n';
-		}
-		*ptr = '\x0';
-	
-	
-	
-		send_string(b);
-
-	}
-	
-	while(1);
-
-	*/
+#endif
 	
 	bool prev_trigger = GET_TRIGGER();
 	int8_t trigger_data_size = 0;
-	
+
 	while(1) {
 		bool current_trigger = GET_TRIGGER();
 		if (current_trigger && !prev_trigger) {
+			LED1_TOGGLE;
 			if (trigger_data_size == 8) {
 				im_measure8();
-				send(MessageType::SingleMeasurement8Response, im_data.raw8, 10*10*sizeof(uint8_t));
+				send(MessageType::SingleMeasurement8Response, im_data.raw8, 10 * 10 * sizeof(uint8_t));
 			}
 			if (trigger_data_size == 10) {
 				im_measure10();
-				send(MessageType::SingleMeasurement10Response, im_data.raw16, 10*10*sizeof(uint16_t));
+				send(MessageType::SingleMeasurement10Response, im_data.raw16, 10 * 10 * sizeof(uint16_t));
 			}
 		}
 		
@@ -191,10 +102,6 @@ int main(void)
 		if (rx.buffer.header.type == MessageType::DeviceIdentifierRequest) {
 			char* ptr = (char*)tx.payload;
 			sprintf(ptr, "id=%d;version=%s;date=%s;time=%s", DEVICE_IDENTIFIER, FIRMWARE_VERSION, FIRMWARE_BUILD_DATE, FIRMWARE_BUILD_TIME);
-			//*ptr++ = DEVICE_IDENTIFIER; // 
-			//strcpy((char*)ptr, "version="); strcat((char*)ptr, FIRMWARE_VERSION);
-			//strcat((char*)ptr, ";date="); strcat((char*)ptr, FIRMWARE_BUILD_DATE);
-			//strcat((char*)ptr, ";time="); strcat((char*)ptr, FIRMWARE_BUILD_TIME);
 			send(MessageType::DeviceIdentifierResponse, (const uint8_t*)ptr, strlen((const char*)ptr));
 		}
 
@@ -207,15 +114,13 @@ int main(void)
 
 
 
-		if (rx.buffer.header.type == MessageType::SingleMeasurement8Request)
-		{
+		if (rx.buffer.header.type == MessageType::SingleMeasurement8Request) {
 			//im_full_resolution_synchronized();
 			im_measure8();
 			send(MessageType::SingleMeasurement8Response, im_data.raw8, 10*10*sizeof(uint8_t));
 		}
 
-		if (rx.buffer.header.type == MessageType::SingleMeasurement10Request)
-		{
+		if (rx.buffer.header.type == MessageType::SingleMeasurement10Request) {
 			//im_full_resolution_synchronized();
 			im_measure10();
 			send(MessageType::SingleMeasurement10Response, im_data.raw16, 10*10*sizeof(uint16_t));
@@ -224,22 +129,22 @@ int main(void)
 		if (rx.buffer.header.type == MessageType::TriggeredMeasurementEnterRequest) {
 			bool ok = true;
 			int8_t new_data_size = -1;
-			
+
 			// 1
 			if (rx.buffer.header.payload_length != 1)
 				ok = false;
 			
 			// 2
 			if (ok) {
-				new_data_size = *(const int8_t*)tx.payload;
-				if (new_data_size < 1 && new_data_size > 10)
+				new_data_size = *(const int8_t*)rx.buffer.payload;
+				if (new_data_size < 1 || new_data_size > 10)
 					ok = false;
 			}
 			
 			// 3
 			if (ok) {
 				trigger_data_size = new_data_size;
-				send(MessageType::TriggeredMeasurementEnterResponse, &new_data_size, 1);
+				send(MessageType::TriggeredMeasurementEnterResponse, &trigger_data_size, 1);
 			} else {
 				int8_t response = -1;
 				send(MessageType::TriggeredMeasurementEnterResponse, &response, 1);
@@ -248,68 +153,9 @@ int main(void)
 
 		if (rx.buffer.header.type == MessageType::TriggeredMeasurementLeaveRequest) {
 			trigger_data_size = 0;
-			send(MessageType::TriggeredMeasurementLeaveRequest, NULL, 0);
+			send(MessageType::TriggeredMeasurementLeaveResponse, NULL, 0);
 		}
-		//
-		//if (rx.buffer.header.type == MessageType::Test8Request)
-		//{
-			////im_full_resolution_synchronized();
-			//im_measure8();
-			//send(rx.buffer.header.address, MessageType::Test8Response, im_data.raw8, 10*10*sizeof(uint8_t));
-		//}
-
-/*
-		if (rx.buffer.header.type == MessageType::SetBurstConfigurationRequest)
-		{
-			// rx.buffer.header.payload_length mus be equal to sizeof(struct BURST_CONFIGURATION)
-			bool ok = sizeof(struct BURST_CONFIGURATION) == rx.buffer.header.payload_length;
-			if (ok) {
-				BURST_CONFIGURATION *pburst_config = (BURST_CONFIGURATION *)rx.buffer.payload;
-				memcpy((void*)&burst.config, pburst_config, sizeof(BURST_CONFIGURATION));
-			}
-			tx.payload[0] = ok;
-			send(rx.buffer.header.address, MessageType::SetBurstConfigurationResponse, (const uint8_t*)tx.payload, 1);
-		}
-
-		if (rx.buffer.header.type == MessageType::DoBurstMeasurementRequest)
-		{
-			// shut down receiver
-			SET_RECEIVER_INTERRUPT(false);
-
-			// do the measurements and get it's time
-			burst.timer = 0x00;
-			im_measure8();
-			
-			//ATOMIC_BLOCK(ATOMIC_FORCEON) {
-			burst.stats.last_measurement_time = burst.timer;
-			burst.stats.count++;
-
-			// wait for precise point in time
-			while (burst.timer < burst.config.transmission_start_time); // wait 
-
-			// synchronized send - start async and wait for finish
-			send(rx.buffer.header.address, MessageType::DoBurstMeasurementResponse, im_data.raw8, 10*10*sizeof(uint8_t));
-			while (tx.state != TransmitterState::IDLE);
-
-			// Store transmission time
-			burst.stats.last_transmission_time = burst.timer - burst.stats.last_measurement_time;
-			
-			
-			// wait for the rest of silence time
-			while (burst.timer < burst.config.silence_interval); // wait
-
-
-			// enable receiver
-			dummy = UDR0;
-			SET_RECEIVER_INTERRUPT(true);
-		}
-
-		if (rx.buffer.header.type == MessageType::GetBurstMeasurementStatisticsRequest)
-		{
-			memmove(tx.payload, &burst.stats, sizeof(BURST_STATISTICS));
-			send(rx.buffer.header.address, MessageType::GetBurstMeasurementStatisticsResponse, (const uint8_t*)tx.payload, sizeof(BURST_STATISTICS));
-		}
-*/
+		
 		RX_RESET;
 	}
 
@@ -330,16 +176,9 @@ bool check_rx(void)
 			return false; // nie ma czego synchronizowaæ
 
 		if (rx.buffer.header.magic != PROTO_MAGIC)
-			//&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x18)
-			//&& !(rx.buffer.header.address >= 0x01 && rx.buffer.header.address <= 0x04)
-			//&& rx.buffer.header.address != 0x13
-			//&& rx.buffer.header.address != 0x15
-			//&& rx.buffer.header.address != device_address)
 		{
 			// remove one byte at the start of the rx buffer
 			RX_RESET;
-			//memmove((uint8_t*)&rx.buffer + 1, (uint8_t*)&rx.buffer, RX_COUNT - 1);
-			//rx.buffer_position--;
 		}
 		
 		// wait for more data
@@ -348,22 +187,6 @@ bool check_rx(void)
 
 	// Ok! We've just received complete header
 	
-	// CHECK: if address is consistent with message type
-	//if ((rx.buffer.header.address == ADDRESS_BROADCAST) ^ (((uint8_t)rx.buffer.header.type & (uint8_t)MessageType::__BroadcastFlag) == (uint8_t)MessageType::__BroadcastFlag ))
-	//{
-		//// NO: got broadcast address and non-broadcast message (or the other way around)
-		//RX_RESET;
-		//return false;
-	//}
-	
-	// CHECK: is the message type valid?
-	//if (((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) < (uint8_t)MessageType::__RequestMinCode || ((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag) > (uint8_t)MessageType::__RequestMaxCode)
-	//{
-		//// NO: message type is out of range
-		//RX_RESET;
-		//return false;
-	//}
-
 	// CHECK: is payload length less than buffer's capacity
 	if (rx.buffer.header.payload_length > RX_PAYLOAD_CAPACITY) {
 		//YES: message length is not acceptable
@@ -378,7 +201,7 @@ bool check_rx(void)
 	// ok, we have received at least whole message; check CRC
 	checksum_t calculated_crc = calc_checksum((void*)&rx.buffer, sizeof(PROTO_HEADER) + rx.buffer.header.payload_length);
 	checksum_t received_crc = *(checksum_t*)(rx.buffer.payload + rx.buffer.header.payload_length);
-	if (calculated_crc != received_crc)
+	if (false && (calculated_crc != received_crc))
 	{
 		// checksums does not match
 		RX_RESET;

@@ -52,9 +52,12 @@ void cpu_init(void)
 	DDRD |= _BV(PORTD7); // CLOCK
 	DDRD |= _BV(PORTD5); // RESET1
 	DDRD |= _BV(PORTD4); // RESET2
+	
 
-	//DDRD |= _BV(PORTD2); // DIR
+	DDRD |= _BV(PORTD2); // DIR
 	DDRD |= _BV(PORTD1); // TX
+	
+	PORTD |= _BV(PORTD3); // pull-up dla wej?cia synchronizuj?cego
 
 	// port szergowy
 	uint16_t br = UBR0_VALUE;
@@ -91,13 +94,15 @@ void cpu_init(void)
 	{
 		LED0_TOGGLE;
 		LED1_TOGGLE;
-		LED_TOGGLE;
+		//LED_TOGGLE;
 		_delay_ms(20);
 
 	}
 
-	//RS485_DIR_RECEIVE;
-	LED0_OFF; LED1_OFF; LED_OFF;
+	// RS485 to pozosta?o?c po pierwszej wersji; aby nie modyfikoaw? p?ytki (wylutowywac kostki) 
+	// wystarczy prze??czy? j? w tryb nadawania.
+	LEGACY_RS485_DIR_OUTPUT();
+	LED0_OFF; LED1_OFF;
 	_delay_ms(1000);
 
 	RESET1_HIGH;

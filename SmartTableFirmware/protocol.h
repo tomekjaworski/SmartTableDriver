@@ -2,7 +2,7 @@
  * protocol.h
  *
  * Created: 22.04.2017 15:08:48
- *  Author: Tomek Jaworski
+ *  Author: Tomasz Jaworski
  */ 
 
 
@@ -10,17 +10,13 @@
 #define PROTOCOL_H_
 
 #include "checksum.h"
+#include "protocol.h"
+
 
 #define RX_PAYLOAD_CAPACITY	32
 #define TX_PAYLOAD_CAPACITY	128
 
-//#define ADDRESS_BROADCAST	(device_address_t)0xFF
-//#define ADDRESS_NONE		(device_address_t)0x00
-
-
 typedef unsigned char device_identifier_t;
-
-
 
 enum class ADCBlockType : uint8_t {
 	Invalid = 0,	// none
@@ -170,52 +166,12 @@ enum class MessageType : uint8_t
 	
 	TriggeredMeasurementEnterRequest = 0x21,
 	TriggeredMeasurementEnterResponse = 0x23,
+
 	TriggeredMeasurementLeaveRequest = 0x30,
-	TriggeredMesurementLeaveResponse = 0x31,
+	TriggeredMeasurementLeaveResponse = 0x31,
 	
 	
-	// Get version of the active firmware
-	//GetVersionRequest = 0x03,
-	//GetVersionResponse = 0x03 | __ResponseFlag,
-	
-	// Do the full resolution measurement, wait for it and then send the results (array of 100 uint16_ts)
-	//GetFullResolutionSyncMeasurementRequest = 0x04,
-	//GetFullResolutionSyncMeasurementResponse = 0x04 | __ResponseFlag,
-	
-	// Set timing configuration for the burst mode
-	//SetBurstConfigurationRequest = 0x05,
-	//SetBurstConfigurationResponse = 0x05 | __ResponseFlag,
-	
-	// Execute a burst measurement
-	//DoBurstMeasurementRequest = 0x06,
-	//DoBurstMeasurementResponse = 0x06 | __ResponseFlag,
-	
-	// Get statistics of previously executed burst measurement
-	//GetBurstMeasurementStatisticsRequest = 0x07,
-	//GetBurstMeasurementStatisticsResponse = 0x07 | __ResponseFlag,
-
-	//Test8Request = 0x08,
-	//Test8Response = 0x08 | __ResponseFlag,
-	
-	//__RequestMinCode = PingRequest,
-	//__RequestMaxCode = Test8Request,
-	
-	//__MAX,
-	//__MIN = Ping,
 };
-
-//
-//struct BURST_CONFIGURATION {
-	//uint8_t transmission_start_time;
-	//uint8_t silence_interval;
-//} __attribute__((packed));
-//
-//
-//struct BURST_STATISTICS {
-	//uint8_t last_measurement_time;
-	//uint8_t last_transmission_time;
-	//uint16_t count;
-//} __attribute__((packed));
 
 #define PROTO_MAGIC (uint8_t)0xAB
 
@@ -225,16 +181,14 @@ struct PROTO_HEADER {
 	uint8_t payload_length;			//
 	uint8_t sequence_counter;
 	
-	
 	PROTO_HEADER() : magic(PROTO_MAGIC), sequence_counter(0x00) {}
 } __attribute__((packed));
 
 // data size asserts
 static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
-static_assert(sizeof(PROTO_HEADER) == 3, "PROTO_HEADER has invalid size");
+static_assert(sizeof(PROTO_HEADER) == 4, "PROTO_HEADER has invalid size");
 static_assert(sizeof(checksum_t) == 2, "checksum_t has invalid size");
-//static_assert(sizeof(BURST_CONFIGURATION) == 2, "BURST_CONFIGURATION has invalid size");
-//static_assert(sizeof(BURST_STATISTICS) == 4, "BURST_STATISTICS has invalid size");
+
 
 
 
