@@ -385,9 +385,6 @@ bool check_rx(void)
 		return false;
 	}
 
-	// reset broadcast bit in message type
-	//rx.buffer.header.type = (MessageType)((uint8_t)rx.buffer.header.type & ~(uint8_t)MessageType::__BroadcastFlag);
-	
 	// ok - everything seems to good...
 	return true;
 }
@@ -400,25 +397,7 @@ void send(MessageType type, const void* payload, uint8_t payload_length)
 	tx.header.payload_length = payload_length;
 	tx.ppayload = (uint8_t*)payload;
 	tx.header.magic = PROTO_MAGIC;
-
-	//// set sender address
-//#define SEND_ADDRESS_MODE	3
-//
-//#if SEND_ADDRESS_MODE == 0
-	//// set sender address to same as incoming (mind the broadcast!)
-	//tx.header.address = rx.buffer.header.address;
-//#elseif SEND_ADDRESS_MODE == 1
-	//// set sender address always to the configured one
-	//tx.header.address = device_address;
-//#else
-	//// mix mode 0 and 1
-	//if (rx.buffer.header.address == ADDRESS_BROADCAST)
-		//tx.header.address = device_address;
-	//else
-		//tx.header.address = rx.buffer.header.address;
-//#endif
-
-
+	tx.header.sequence_counter++;
 
 	// setup the transmitter
 	tx.state = TransmitterState::SendingHeader;
@@ -428,11 +407,7 @@ void send(MessageType type, const void* payload, uint8_t payload_length)
 	// calculate crc16 of the header and user's payload
 	tx.crc = calc_checksum((void*)&tx.header, sizeof(PROTO_HEADER), payload, payload_length);
 
-	// let's go!
-	//begin_transmission((void*)&tx.buffer, sizeof(PROTO_HEADER) + payload_length + sizeof(uint16_t));
-
 	// nadanie pierwszego bajta uruchamia potok przerwañ
-	//RS485_DIR_SEND;
 	UDR0 = *tx.window_position++;
 	UCSR0B |= _BV(TXCIE0); // uruchom przerwania informuj¹ce o zakoñczeniu nadawania bajta
 

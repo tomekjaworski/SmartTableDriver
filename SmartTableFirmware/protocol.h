@@ -223,9 +223,10 @@ struct PROTO_HEADER {
 	uint8_t magic;		
 	MessageType type;				// type of the received message
 	uint8_t payload_length;			//
+	uint8_t sequence_counter;
 	
 	
-	PROTO_HEADER() : magic(PROTO_MAGIC) {}
+	PROTO_HEADER() : magic(PROTO_MAGIC), sequence_counter(0x00) {}
 } __attribute__((packed));
 
 // data size asserts
