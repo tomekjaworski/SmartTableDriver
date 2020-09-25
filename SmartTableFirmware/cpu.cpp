@@ -79,11 +79,11 @@ void cpu_init(void)
 	tx.state = TransmitterState::IDLE;
 
 
-	// Set timer to 1ms
+	// Set timer to 250us
 	TCCR0A |= (1 << WGM01); // CTC mode
-	OCR0A = (8000000UL / 64UL) / 2000UL - 1;
+	OCR0A = (8000000UL / 8UL) / 4000UL - 1;
 	TIMSK0 |= (1 << OCIE0A);
-	TCCR0B |= (1 << CS00) | (1 << CS01); // clk / 64
+	TCCR0B |= (1 << CS01) | (0 << CS00); // clk / 8
 
 	// reset photodiodes selectors
 	RESET1_LOW;
