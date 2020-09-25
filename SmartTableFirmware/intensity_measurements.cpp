@@ -66,8 +66,15 @@ void im_initialize8(void)
 	DIDR0 = 0xFF;
 
 	// dummy read
-	for (uint8_t i = 0; i < 10; i++)
+	for (uint8_t i = 0; i < 10; i++) {
+		asm("nop");
+		asm("nop");
+		asm("nop");
 		im_measure8();
+		asm("nop");
+		asm("nop");
+		asm("nop");
+	}
 }
 
 
@@ -90,7 +97,6 @@ void im_initialize10(void)
 	// dummy read
 	for (uint8_t i = 0; i < 10; i++)
 		im_measure10();
-
 }
 
 #define IM_DATA_PIN(__state)	do { if (__state) PORTB |= _BV(PORTB0); else PORTB &= ~_BV(PORTB0); } while(0);	//	
