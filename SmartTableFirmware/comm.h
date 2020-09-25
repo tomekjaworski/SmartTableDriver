@@ -25,7 +25,7 @@ struct TX
 {
 	TransmitterState state;
 
-	PROTO_HEADER header;
+	TX_PROTO_HEADER header;
 	checksum_t crc;
 
 	const uint8_t* window_position;
@@ -46,7 +46,7 @@ struct RX
 
 	// buffer - mind the order!
 	struct {
-		PROTO_HEADER header;
+		RX_PROTO_HEADER header;
 		uint8_t payload[RX_PAYLOAD_CAPACITY];
 	} __attribute__((packed)) buffer;
 };

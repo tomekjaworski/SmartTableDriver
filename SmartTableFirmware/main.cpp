@@ -35,7 +35,7 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size)
 volatile uint8_t dummy;
 
 void uart_putchar(char c) {
-	loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
+	loop_until_bit_is_set(UCSR0A, UDRE0); // Wait until data register empty.
 	UDR0 = c;
 }
 
@@ -168,20 +168,20 @@ bool check_rx(void)
 {
 	rx.got_data = 0;
 
-	// zanim cokolwiek zrobimy, w buforze musi byæ minimum sizeof(PROTO_HEADER) bajtów
-	if (RX_COUNT < (int)sizeof(PROTO_HEADER))
+	// First the receive buffer has to have at least sizeof(RX_PROTO_HEADER) bytes
+	if (RX_COUNT < (int)sizeof(RX_PROTO_HEADER))
 	{
-		// ale jeœli nie ma, to spróbuj trochê pomóc szczêsciu i zrobiæ wstêpn¹ sychronizacjê strumienia danych
+		// If there is not enough data then purge the receiver
 		if (RX_COUNT == 0)
-			return false; // nie ma czego synchronizowaæ
+			return false; // No data - no worry...
 
 		if (rx.buffer.header.magic != PROTO_MAGIC)
 		{
-			// remove one byte at the start of the rx buffer
+			// Remove one byte at the start of the rx buffer
 			RX_RESET;
 		}
 		
-		// wait for more data
+		// Wait for more data
 		return false;
 	}
 
@@ -195,11 +195,11 @@ bool check_rx(void)
 	}
 
 	// check if whole message is here
-	if (RX_COUNT < (int)(sizeof(PROTO_HEADER) + rx.buffer.header.payload_length + sizeof(checksum_t)))
+	if (RX_COUNT < (int)(sizeof(RX_PROTO_HEADER) + rx.buffer.header.payload_length + sizeof(checksum_t)))
 		return false; // we have received only a part of the message; let us wait for the rest
 
 	// ok, we have received at least whole message; check CRC
-	checksum_t calculated_crc = calc_checksum((void*)&rx.buffer, sizeof(PROTO_HEADER) + rx.buffer.header.payload_length);
+	checksum_t calculated_crc = calc_checksum((void*)&rx.buffer, sizeof(RX_PROTO_HEADER) + rx.buffer.header.payload_length);
 	checksum_t received_crc = *(checksum_t*)(rx.buffer.payload + rx.buffer.header.payload_length);
 	if (false && (calculated_crc != received_crc))
 	{
@@ -225,10 +225,10 @@ void send(MessageType type, const void* payload, uint8_t payload_length)
 	// setup the transmitter
 	tx.state = TransmitterState::SendingHeader;
 	tx.window_position = (const uint8_t*)&tx.header;
-	tx.window_end = tx.window_position + sizeof(PROTO_HEADER);
+	tx.window_end = tx.window_position + sizeof(TX_PROTO_HEADER);
 
 	// calculate crc16 of the header and user's payload
-	tx.crc = calc_checksum((void*)&tx.header, sizeof(PROTO_HEADER), payload, payload_length);
+	tx.crc = calc_checksum((void*)&tx.header, sizeof(TX_PROTO_HEADER), payload, payload_length);
 
 	// nadanie pierwszego bajta uruchamia potok przerwañ
 	UDR0 = *tx.window_position++;

@@ -175,18 +175,28 @@ enum class MessageType : uint8_t
 
 #define PROTO_MAGIC (uint8_t)0xAB
 
-struct PROTO_HEADER {
+struct RX_PROTO_HEADER {
 	uint8_t magic;		
+	MessageType type;				// type of the received message
+	uint8_t payload_length;			//
+	
+	RX_PROTO_HEADER() : magic(PROTO_MAGIC) {}
+} __attribute__((packed));
+
+struct TX_PROTO_HEADER {
+	uint8_t magic;
 	MessageType type;				// type of the received message
 	uint8_t payload_length;			//
 	uint8_t sequence_counter;
 	
-	PROTO_HEADER() : magic(PROTO_MAGIC), sequence_counter(0x00) {}
+	TX_PROTO_HEADER() : magic(PROTO_MAGIC), sequence_counter(0x00) {}
 } __attribute__((packed));
+
 
 // data size asserts
 static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
-static_assert(sizeof(PROTO_HEADER) == 4, "PROTO_HEADER has invalid size");
+static_assert(sizeof(RX_PROTO_HEADER) == 3, "RX_PROTO_HEADER has invalid size");
+static_assert(sizeof(TX_PROTO_HEADER) == 4, "RX_PROTO_HEADER has invalid size");
 static_assert(sizeof(checksum_t) == 2, "checksum_t has invalid size");
 
 
