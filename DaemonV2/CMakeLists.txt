@@ -10,11 +10,11 @@ add_executable(
         AnsiCodes.h
 
         main.cpp
-        Location.hpp TableDevice.hpp
+        Location.hpp PhotoModule.hpp
 
         ProgramBase.cpp ProgramBase.hpp
 
         SerialPort.cpp SerialPort.hpp
-        SerialPortReactor.cpp SerialPortReactor.hpp)
+        SerialPortReactor.cpp SerialPortReactor.hpp TableDevice.cpp TableDevice.hpp)
 
 target_link_libraries(${PROJECT_NAME} stdc++fs)

@@ -46,3 +46,8 @@ SerialPort::Ptr SerialPortReactor::GetPortByName(const std::string& portName) {
     return nullptr;
 }
 
+void SerialPortReactor::SendToAll(const void* buffer, int32_t count) {
+    for(SerialPort::Ptr port : this->ports) {
+        port->Send(buffer, count);
+    }
+}

@@ -8,8 +8,8 @@ class Location {
 	int col;
 	
 public:	
-	int getRow(void) const { return this->row; }
-	int getColumn(void) const { return this->col; }
+	int GetRow(void) const { return this->row; }
+	int GetColumn(void) const { return this->col; }
 	
 public:
 	Location(const Location& loc)

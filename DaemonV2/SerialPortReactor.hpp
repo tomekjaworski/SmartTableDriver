@@ -22,6 +22,8 @@ public:
     void DiscardAllReceivedData(void);
 
     SerialPort::Ptr GetPortByName(const std::string& portName);
+
+    void SendToAll(const void* buffer, int32_t count);
 };
 
 
