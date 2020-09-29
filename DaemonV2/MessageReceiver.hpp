@@ -2,14 +2,17 @@
 #define MESSAGERECEIVER_HPP
 
 #include <stdint.h>
-#include "Message.h"
+
+#include "SerialPort.hpp"
+#include "InputMessage.hpp"
+
+#include <array>
 
 class SerialPort;
 
 class MessageReceiver
 {
-	uint8_t* data;
-	uint32_t capacity;
+    std::array<uint8_t, 64 * 1024> queue;
 	uint32_t position;
 	
 public:
@@ -17,15 +20,13 @@ public:
 	~MessageReceiver();
 	
 	
-	ssize_t receive(SerialPort& source);
+	ssize_t Receive(SerialPort::Ptr psource);
 	
-	bool getMessage(Message& output_message);
-	void purgeAllData(void);
+	bool getMessage(InputMessage& message);
+	void PurgeAllData(void);
 
 public:
-	const uint8_t* getDataPointer(void) const { return this->data; }
-	uint32_t getDataCount(void) const { return this->position; }
-	
+
 };
 
 

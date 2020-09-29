@@ -18,7 +18,11 @@ add_executable(
         SerialPortReactor.cpp SerialPortReactor.hpp
         TableDevice.cpp TableDevice.hpp
 
-        Crc16.hpp OutputMessage.hpp
-        OutputMessage.cpp)
+        Crc16.hpp
+        OutputMessage.cpp OutputMessage.hpp
+
+        InputMessage.cpp InputMessage.hpp
+        MessageReceiver.cpp MessageReceiver.hpp
+        Helper.cpp Helper.hpp)
 
 target_link_libraries(${PROJECT_NAME} stdc++fs)

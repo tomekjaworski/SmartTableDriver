@@ -1,133 +1,118 @@
 #include <unistd.h>
 #include "MessageReceiver.hpp"
-#include "CRC.hpp"
-#include <assert.h>
-
-#include "SerialPort.hpp"
-
-static void dump(const void* ptr, int count)
-{
-	printf("[");
-	const uint8_t* p = static_cast<const uint8_t*>(ptr);
-	for (int i = 0; i < count; i++)
-		if (i < count - 1)
-			printf("%02x ", p[i]);
-		else
-			printf("%02x]\n", p[i]);
-			
-	fflush(stdout);
-}
-
-
-
-MessageReceiver::MessageReceiver(void)
-{
-	this->capacity = 64 * 1024;
+#include "Crc16.hpp"
+#include <cassert>
+#include "Helper.hpp"
+#include "../SmartTableFirmware/protocol.h"
+#include <algorithm>
+MessageReceiver::MessageReceiver(void) {
 	this->position = 0;
-	this->data = new uint8_t[this->capacity];
 }
 
 MessageReceiver::~MessageReceiver()
 {
-	if (this->data != nullptr)
-	{
-		delete[] this->data;
-		this->data = nullptr;
-	}
+//	if (this->data != nullptr)
+//	{
+//		delete[] this->data;
+//		this->data = nullptr;
+//	}
 }
 
-void MessageReceiver::purgeAllData(void)
+void MessageReceiver::PurgeAllData(void)
 {
 	this->position = 0;
 }
 
-ssize_t MessageReceiver::receive(SerialPort& source)
+ssize_t MessageReceiver::Receive(SerialPort::Ptr psource)
 {
-	uint32_t space_left = this->capacity - this->position;
-	if (space_left < 1024)
-	{
-		// make some room
-		uint32_t new_cap = this->capacity * 1.5;
-		uint8_t* new_ptr = new uint8_t[new_cap];
-		
-		memcpy(new_ptr, this->data, this->position);
-		
-		std::swap(new_ptr, this->data);
-		std::swap(new_cap, this->capacity);
-		
-		delete[] new_ptr;
-	}
+	uint32_t space_left = this->queue.size() - this->position;
+//	if (space_left < 1024)
+//	{
+//		// make some room
+//		uint32_t new_cap = this->capacity * 1.5;
+//		uint8_t* new_ptr = new uint8_t[new_cap];
+//
+//		memcpy(new_ptr, this->data, this->position);
+//
+//		std::swap(new_ptr, this->data);
+//		std::swap(new_cap, this->capacity);
+//
+//		delete[] new_ptr;
+//	}
 	
-	ssize_t bytes_read = source.receive(data + position, capacity - position);
-	assert(bytes_read > 0);
-	
-	position += bytes_read;
-	//dump(data, position);
+	ssize_t bytes_read = psource->Receive(this->queue.data() + position, this->queue.size() - position);
+	if (bytes_read > 0)
+	    throw std::runtime_error("Out of memory in MessageReceive buffer");
+
+	this->position += bytes_read;
+	Helper::HexDump(this->queue.data(), position);
 	return bytes_read;
 }
 
 
-bool MessageReceiver::getMessage(Message& output_message)
+bool MessageReceiver::getMessage(InputMessage& receivedMessage)
 {
-	uint32_t offset = 0;
+    /*
+     * This code tries to parse the stream of incoming bytes as an input message.
+     * It is based on removing one byte at a time if no match is found.
+     * While normally this approach is not optimal, the expected performance
+     * is not crucial here.
+     */
+
 	bool got_message = false;
-	while (true)
-	{
+	while (true) {
 		// is there enough data for the shortest message?
-		if (this->position < offset + sizeof(PROTO_HEADER) + sizeof(uint16_t))
+		if (this->position < sizeof(TX_PROTO_HEADER) + sizeof(uint16_t))
 			break; // nope - need more data
 		
 		// Header verification: address
-		const PROTO_HEADER* phdr = (const PROTO_HEADER*)this->data;
+		const TX_PROTO_HEADER* phdr = reinterpret_cast<const TX_PROTO_HEADER*>(this->queue.data());
 		
-		if ((phdr->address >= 0xF0 || phdr->address == 0x00) && phdr->address != ADDRESS_BROADCAST) // addresses are only 0x01 - 0xEF
-		{
+		if (phdr->magic != PROTO_MAGIC) {   // Is there any magic? :)
 			// remove one byte and loop
-			offset += 1;
+			std::shift_left(this->queue.begin(), this->queue.end(), 1);
 			continue;
 		}
 		
 		// Header verification: message type
-		if (!(static_cast<int>(phdr->type) & static_cast<int>(MessageType::__ResponseFlag)) ||
-			(static_cast<int>(phdr->type) & ~static_cast<int>(MessageType::__ResponseFlag)) < static_cast<int>(MessageType::__RequestMinCode) ||
-			(static_cast<int>(phdr->type) & ~static_cast<int>(MessageType::__ResponseFlag)) > static_cast<int>(MessageType::__RequestMaxCode))
+		MessageType mt = phdr->type;
+		if (mt != MessageType::DeviceIdentifierResponse &&
+		    mt != MessageType::SingleMeasurement8Response &&
+		    mt != MessageType::SingleMeasurement10Response &&
+		    mt != MessageType::TriggeredMeasurementEnterResponse &&
+		    mt != MessageType::TriggeredMeasurementLeaveResponse &&
+		    mt != MessageType::PingResponse)
 		{
-			// remove one byte and loop
-			offset += 1;
+            // remove one byte and loop
+            std::shift_left(this->queue.begin(), this->queue.end(), 1);
 			continue;
 		}
 		
-		// is there enough data in buffer?
-		if (this->position < offset + sizeof(PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t))
+		// is there enough data in the queue?
+		if (this->position < sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t))
 			break; // nope - need more data
 		
 		// ok, there is; now verify the checksum
-		uint16_t calculated = CRC16::Calc(this->data, sizeof(PROTO_HEADER) + phdr->payload_length);
-		uint16_t received = this->data[sizeof(PROTO_HEADER) + phdr->payload_length + 0];
-		received |= (uint16_t)(this->data[sizeof(PROTO_HEADER) + phdr->payload_length + 1] << 8);
+		checksum_t calculated = Crc16::Calc(this->queue.data(), sizeof(TX_PROTO_HEADER) + phdr->payload_length);
+        checksum_t  received = this->queue[sizeof(TX_PROTO_HEADER) + phdr->payload_length + 0];
+		received |= (uint16_t)(this->queue[sizeof(TX_PROTO_HEADER) + phdr->payload_length + 1] << 8);
 		
 		if (calculated != received)
 		{
 			// remove one byte and loop
-			offset += 1;
-			continue;
+            std::shift_left(this->queue.begin(), this->queue.end(), 1);
+            continue;
 		}
 		
 		// The Checksum is OK!
-		output_message = Message(data + offset, sizeof(PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t));
-		offset += sizeof(PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t);
-		
+		receivedMessage = InputMessage(this->queue.data(), sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t));
+		int offset = sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t);
+        std::shift_left(this->queue.begin(), this->queue.end(), offset);
+
 		got_message = true;
 		break;
 	}
 
-	if (offset > 0)
-	{
-		// move the receive buffer back by offset bytes
-		memmove(this->data, this->data + offset, this->position - offset);
-		this->position -= offset;
-	}
-	
 	return got_message;
 	
 }

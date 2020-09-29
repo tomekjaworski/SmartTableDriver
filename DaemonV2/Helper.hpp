@@ -7,7 +7,8 @@
 
 
 class Helper {
-
+public:
+    static void HexDump(const void* ptr, int count);
 };
 
 
