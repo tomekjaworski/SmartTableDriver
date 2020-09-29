@@ -111,7 +111,7 @@ void im_initialize10(void)
 			IM_CLOCK_PIN(false);	\
 			} while(0);
 
-union im_raw_measurement_t im_data;
+im_raw_measurement_t im_data;
 
 
 /*
@@ -132,7 +132,7 @@ void im_measure10(void)
 	IM_DATA_PIN(true);
 	IM_CLOCK_PULSE;
 	
-	uint16_t* ptr = im_data.raw16;
+	uint16_t* ptr = im_data.primary.raw16;
 	
 	// 7 rows with 7 sensors
 	for(int i = 0; i < 7; i++)
@@ -185,7 +185,7 @@ void im_measure8(void)
 	IM_DATA_PIN(true);
 	IM_CLOCK_PULSE;
 		
-	uint8_t* ptr = im_data.raw8;
+	uint8_t* ptr = im_data.primary.raw8;
 
 	/*
 	for(int i = 0; i < 15; i++)

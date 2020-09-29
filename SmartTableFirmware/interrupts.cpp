@@ -11,7 +11,6 @@
 #include <string.h>
 
 #include "hardware.h"
-#include "eeprom_config.h"
 #include "comm.h"
 #include "dbg_putchar.h"
 #include "intensity_measurements.h"

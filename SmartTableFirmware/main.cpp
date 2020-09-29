@@ -16,7 +16,6 @@
 #include "dbg_putchar.h"
 #include "checksum.h"
 #include "hardware.h"
-#include "eeprom_config.h"
 #include "comm.h"
 #include "config.h"
 #include "intensity_measurements.h"
@@ -72,11 +71,11 @@ int main(void)
 			LED1_TOGGLE;
 			if (trigger_data_size == 8) {
 				im_measure8();
-				send(MessageType::SingleMeasurement8Response, im_data.raw8, 10 * 10 * sizeof(uint8_t));
+				send(MessageType::SingleMeasurement8Response, im_data.primary.raw8, 10 * 10 * sizeof(uint8_t));
 			}
 			if (trigger_data_size == 10) {
 				im_measure10();
-				send(MessageType::SingleMeasurement10Response, im_data.raw16, 10 * 10 * sizeof(uint16_t));
+				send(MessageType::SingleMeasurement10Response, im_data.primary.raw16, 10 * 10 * sizeof(uint16_t));
 			}
 		}
 		
@@ -117,13 +116,13 @@ int main(void)
 		if (rx.buffer.header.type == MessageType::SingleMeasurement8Request) {
 			//im_full_resolution_synchronized();
 			im_measure8();
-			send(MessageType::SingleMeasurement8Response, im_data.raw8, 10*10*sizeof(uint8_t));
+			send(MessageType::SingleMeasurement8Response, im_data.primary.raw8, 10*10*sizeof(uint8_t));
 		}
 
 		if (rx.buffer.header.type == MessageType::SingleMeasurement10Request) {
 			//im_full_resolution_synchronized();
 			im_measure10();
-			send(MessageType::SingleMeasurement10Response, im_data.raw16, 10*10*sizeof(uint16_t));
+			send(MessageType::SingleMeasurement10Response, im_data.primary.raw16, 10*10*sizeof(uint16_t));
 		}
 
 		if (rx.buffer.header.type == MessageType::TriggeredMeasurementEnterRequest) {
