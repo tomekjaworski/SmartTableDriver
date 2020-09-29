@@ -48,8 +48,8 @@ int main(void)
 {
 	cpu_init();
 	RX_RESET;
-	
 	im_initialize8();
+
 #if DEBUG	
 	send_string("%%TEST%%");
 #endif
@@ -128,7 +128,7 @@ int main(void)
 
 		if (rx.buffer.header.type == MessageType::TriggeredMeasurementEnterRequest) {
 			bool ok = true;
-			int8_t new_data_size = -1;
+			int8_t new_trigger_data_size = -1;
 
 			// 1
 			if (rx.buffer.header.payload_length != 1)
@@ -136,14 +136,20 @@ int main(void)
 			
 			// 2
 			if (ok) {
-				new_data_size = *(const int8_t*)rx.buffer.payload;
-				if (new_data_size < 1 || new_data_size > 10)
+				new_trigger_data_size = *(const int8_t*)rx.buffer.payload;
+				if (new_trigger_data_size < 1 || new_trigger_data_size > 10)
 					ok = false;
 			}
 			
 			// 3
 			if (ok) {
-				trigger_data_size = new_data_size;
+				if (trigger_data_size != new_trigger_data_size) {
+					if (new_trigger_data_size == 8)
+						im_initialize8();
+					if (new_trigger_data_size == 10)
+						im_initialize10();
+				}
+				trigger_data_size = new_trigger_data_size;
 				send(MessageType::TriggeredMeasurementEnterResponse, &trigger_data_size, 1);
 			} else {
 				int8_t response = -1;
