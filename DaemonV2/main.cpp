@@ -71,7 +71,6 @@ int App::Main(const std::vector<std::string>& arguments) {
     // Open all serial ports
     std::list<SerialPort::Ptr> ports = this->OpenAllSerialPorts();
 
-
     //
     // Initialize table description
     TableDevice tdev;
