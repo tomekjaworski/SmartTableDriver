@@ -54,7 +54,7 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 
 */
 #include "PhotoModule.hpp"
-
+#include "InputMessageBuilder.hpp"
 int App::Main(const std::vector<std::string>& arguments) {
 
     //
@@ -76,6 +76,32 @@ int App::Main(const std::vector<std::string>& arguments) {
     TableDevice tdev;
     tdev.ShowTopology();
 
+
+    SerialPort::Ptr sp = ports.front();
+    sp->DiscardAllData();
+
+    std::array<uint8_t, 5>  buffer1 = {0xAB, 0x04, 0x00, 0x00, 0x00};
+    std::array<uint8_t, 5>  buffer2  = {0xAB, 0x02, 0x00, 0x00, 0x00};
+    sp->Send(buffer1);
+    sp->Send(buffer2);
+    sp->Send(buffer1);
+    sp->Send(buffer2);
+
+    std::array<uint8_t, 100> b{};
+    InputMessageBuilder mr;
+
+    int ret;
+    ret = sp->Receive(b);
+    mr.AddCollectedData(b, 0, ret);
+    ret = sp->Receive(b);
+    mr.AddCollectedData(b, 0, ret);
+
+    InputMessage msg;
+    bool status;
+    status = mr.getMessage(msg);
+    status = mr.getMessage(msg);
+    status = mr.getMessage(msg);
+    status = mr.getMessage(msg);
 
     return 0;
 }

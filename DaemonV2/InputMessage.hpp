@@ -14,6 +14,10 @@ class InputMessage {
     std::vector<uint8_t> data;
 
 public:
+    InputMessage()
+        : data() {
+        //
+    }
     InputMessage(const void* buffer, int32_t count)
         : data(static_cast<const uint8_t*>(buffer),
                static_cast<const uint8_t*>(buffer) + count)

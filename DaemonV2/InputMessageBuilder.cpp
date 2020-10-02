@@ -1,15 +1,15 @@
 #include <unistd.h>
-#include "MessageReceiver.hpp"
+#include "InputMessageBuilder.hpp"
 #include "Crc16.hpp"
 #include <cassert>
 #include "Helper.hpp"
 #include "../SmartTableFirmware/protocol.h"
 #include <algorithm>
-MessageReceiver::MessageReceiver(void) {
+InputMessageBuilder::InputMessageBuilder(void) {
 	this->position = 0;
 }
 
-MessageReceiver::~MessageReceiver()
+InputMessageBuilder::~InputMessageBuilder()
 {
 //	if (this->data != nullptr)
 //	{
@@ -18,26 +18,21 @@ MessageReceiver::~MessageReceiver()
 //	}
 }
 
-void MessageReceiver::PurgeAllData(void)
+void InputMessageBuilder::PurgeAllData(void)
 {
 	this->position = 0;
 }
-
-ssize_t MessageReceiver::Receive(SerialPort::Ptr psource)
+#include <cstring>
+void InputMessageBuilder::InternalAddCollectedData(const void* ptr, uint32_t count)
 {
-//	uint32_t space_left = this->queue.size() - this->position;
+    if (this->position + count >= this->queue.size())
+        throw std::runtime_error("Out of memory in MessageReceive buffer");
 
-	ssize_t bytes_read = psource->Receive(this->queue.data() + position, this->queue.size() - position);
-	if (bytes_read > 0)
-	    throw std::runtime_error("Out of memory in MessageReceive buffer");
-
-	this->position += bytes_read;
-	Helper::HexDump(this->queue.data(), position);
-	return bytes_read;
+    std::memcpy(this->queue.data() + this->position, ptr, count);
+    this->position += count;
 }
 
-
-bool MessageReceiver::getMessage(InputMessage& receivedMessage)
+bool InputMessageBuilder::getMessage(InputMessage& receivedMessage)
 {
     /*
      * This code tries to parse the stream of incoming bytes as an input message.
@@ -58,6 +53,7 @@ bool MessageReceiver::getMessage(InputMessage& receivedMessage)
 		if (phdr->magic != PROTO_MAGIC) {   // Is there any magic? :)
 			// remove one byte and loop
 			std::shift_left(this->queue.begin(), this->queue.end(), 1);
+			this->position--;
 			continue;
 		}
 		
@@ -72,7 +68,8 @@ bool MessageReceiver::getMessage(InputMessage& receivedMessage)
 		{
             // remove one byte and loop
             std::shift_left(this->queue.begin(), this->queue.end(), 1);
-			continue;
+            this->position--;
+            continue;
 		}
 		
 		// is there enough data in the queue?
@@ -88,6 +85,7 @@ bool MessageReceiver::getMessage(InputMessage& receivedMessage)
 		{
 			// remove one byte and loop
             std::shift_left(this->queue.begin(), this->queue.end(), 1);
+            this->position--;
             continue;
 		}
 		
@@ -95,6 +93,7 @@ bool MessageReceiver::getMessage(InputMessage& receivedMessage)
 		receivedMessage = InputMessage(this->queue.data(), sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t));
 		int offset = sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t);
         std::shift_left(this->queue.begin(), this->queue.end(), offset);
+        this->position -= offset;
 
 		got_message = true;
 		break;

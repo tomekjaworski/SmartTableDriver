@@ -36,7 +36,7 @@ namespace fs = std::filesystem;
 using namespace std::string_literals;
 
 SerialPort::SerialPort(const std::string& deviceName, int baudRate)
-    : fd(-1)
+    : fd(-1), bytes_sent(0), bytes_received(0)
 {
     if (deviceName.empty())
         throw std::invalid_argument("deviceName");
@@ -185,18 +185,31 @@ void SerialPort::Close(void)
     this->fd = -1;
 }
 
-int SerialPort::Send(const void* data, size_t length)
+
+ssize_t SerialPort::Send(const void* data, size_t length) {
+    return this->impl_Send(data, length);
+}
+
+ssize_t SerialPort::Receive(void* buffer, size_t capacity) {
+    return this->impl_Receive(buffer, capacity);
+}
+
+
+/////////////////////////////////////////////////////////
+
+
+ssize_t SerialPort::impl_Send(const void* data, size_t length)
 {
-    int sent = ::write(this->fd, data, length);
+    ssize_t sent = ::write(this->fd, data, length);
     if (sent == -1)
         throw std::system_error(errno, std::system_category(), "write");
     bytes_sent += sent;
     return sent;
 }
 
-int SerialPort::Receive(void* data, size_t capacity)
+ssize_t SerialPort::impl_Receive(void* data, size_t capacity)
 {
-    int recvd = ::read(this->fd, data, capacity);
+    ssize_t recvd = ::read(this->fd, data, capacity);
     if (recvd == -1)
         throw std::system_error(errno, std::system_category(), "read");
 
@@ -207,6 +220,8 @@ int SerialPort::Receive(void* data, size_t capacity)
 
 
 
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
 std::vector<std::string> SerialPort::GetSerialDevices(void)

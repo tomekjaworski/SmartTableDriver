@@ -25,7 +25,7 @@ add_executable(
         OutputMessage.cpp OutputMessage.hpp
 
         InputMessage.cpp InputMessage.hpp
-        MessageReceiver.cpp MessageReceiver.hpp
+        InputMessageBuilder.cpp InputMessageBuilder.hpp
         Helper.cpp Helper.hpp)
 
 
