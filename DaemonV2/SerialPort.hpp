@@ -24,7 +24,7 @@ public:
 
 
 public:
-    SerialPort(const std::string& deviceName);
+    SerialPort(const std::string& deviceName, int baudRate);
     SerialPort(const SerialPort& sp);
     SerialPort(SerialPort&& sp);
     ~SerialPort(void);

@@ -3,7 +3,7 @@
 //
 
 #include "SerialPort.hpp"
-
+#include <cassert>
 
 #ifndef __CYGWIN__
 #include <sys/ioctl.h>
@@ -35,7 +35,7 @@ namespace fs = std::filesystem;
 
 using namespace std::string_literals;
 
-SerialPort::SerialPort(const std::string& deviceName)
+SerialPort::SerialPort(const std::string& deviceName, int baudRate)
     : fd(-1)
 {
     if (deviceName.empty())
@@ -64,7 +64,7 @@ SerialPort::SerialPort(const std::string& deviceName)
 
         tio.c_cflag &= ~(CBAUD | CBAUDEX);
 		tio.c_cflag |= BOTHER;
-		tio.c_ispeed = tio.c_ospeed = 200000;
+		tio.c_ispeed = tio.c_ospeed = baudRate;
 
 		ret = ioctl(fd, TCSETS2, &tio);
 		if (ret != 0)
@@ -78,7 +78,17 @@ SerialPort::SerialPort(const std::string& deviceName)
         throw std::system_error(errno, std::system_category(), "tcgetattr");
 
 #ifdef __CYGWIN__
-    speed_t speed = B19200;
+    speed_t speed = B0;
+
+    if (baudRate == 9600)
+        speed = B9600;
+    else if (baudRate == 19200)
+        speed = B19200;
+    else if (baudRate == 57600)
+        speed = B57600;
+    else
+        assert(false && "This baud rate was ignored during implementation");
+
     ret = cfsetospeed(&ser, speed);
     if (ret != 0)
         throw std::system_error(errno, std::system_category(), "cfsetospeed");
