@@ -55,6 +55,68 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 */
 #include "PhotoModule.hpp"
 #include "InputMessageBuilder.hpp"
+
+#include "OutputMessage.hpp"
+#include "TimeoutError.h"
+bool SendAndWaitForResponse(SerialPort::Ptr serial, const OutputMessage& query, InputMessage& response, int timeout) {
+    InputMessageBuilder mr;
+
+
+    serial->DiscardAllData();
+    serial->Send(query.GetDataPointer(), query.GetDataCount());
+    //dump(query.getDataPointer(), query.getDataCount());
+
+    std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
+
+    // now wait for response
+    int loops = 0;
+    ssize_t ss;
+    do {
+        fd_set rfd;
+        FD_ZERO(&rfd);
+        FD_SET(serial->GetHandle(), &rfd);
+
+        loops++;
+        timeval tv = {.tv_sec = 0, .tv_usec = 50 * 1000};
+        int sret = ::select(serial->GetHandle() + 1, &rfd, nullptr, nullptr, &tv);
+
+        if (sret == -1) {
+            perror(__func__);
+            throw std::runtime_error("select");
+        }
+
+        if (sret > 0) {
+
+            std::array<uint8_t, 3> recv_buffer;
+            ssize_t recv_bytes = serial->Receive(recv_buffer);
+            mr.AddCollectedData(recv_buffer, 0, recv_bytes);
+//		printf("mr.receive=%d\n", ss);
+            //ssize_t bytes_read = ::read(serial.getHandle(), buffer + position, sizeof(buffer) - position);
+            //assert(bytes_read > 0);
+            //position += bytes_read;
+
+            if (mr.GetMessage(response))
+                return true;
+
+        }
+
+        // check for timeout
+        _check_timeout:;
+        std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count() > timeout) {
+            char buffer[256];
+            //   sprintf(buffer, "Timeout (SendAndWaitForResponse): addr=%02X; command=%d; recvd=%d; loops=%d",
+            //           query.getAddress(), static_cast<int>(query.getType()),
+            //           mr.getDataCount(), loops);
+            throw TimeoutError(std::string(buffer));
+        }
+
+    } while (true);
+
+    return false;
+}
+
+
 int App::Main(const std::vector<std::string>& arguments) {
 
     //
@@ -98,11 +160,21 @@ int App::Main(const std::vector<std::string>& arguments) {
 
     InputMessage msg;
     bool status;
-    status = mr.getMessage(msg);
-    status = mr.getMessage(msg);
-    status = mr.getMessage(msg);
-    status = mr.getMessage(msg);
+    status = mr.GetMessage(msg);
+    status = mr.GetMessage(msg);
+    status = mr.GetMessage(msg);
+    status = mr.GetMessage(msg);
 
+    OutputMessage q(MessageType::DeviceIdentifierRequest);
+    while(1) {
+        bool result;
+        try {
+            result = SendAndWaitForResponse(sp, q, msg, 500);
+            printf("%s", result ? "+" : ".");
+        } catch(const TimeoutError& te) {
+            printf("t");
+        }
+    }
     return 0;
 }
 

@@ -32,7 +32,7 @@ void InputMessageBuilder::InternalAddCollectedData(const void* ptr, uint32_t cou
     this->position += count;
 }
 
-bool InputMessageBuilder::getMessage(InputMessage& receivedMessage)
+bool InputMessageBuilder::GetMessage(InputMessage& message)
 {
     /*
      * This code tries to parse the stream of incoming bytes as an input message.
@@ -90,7 +90,7 @@ bool InputMessageBuilder::getMessage(InputMessage& receivedMessage)
 		}
 		
 		// The Checksum is OK!
-		receivedMessage = InputMessage(this->queue.data(), sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t));
+		message = InputMessage(this->queue.data(), sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t));
 		int offset = sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t);
         std::shift_left(this->queue.begin(), this->queue.end(), offset);
         this->position -= offset;

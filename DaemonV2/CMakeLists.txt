@@ -26,7 +26,7 @@ add_executable(
 
         InputMessage.cpp InputMessage.hpp
         InputMessageBuilder.cpp InputMessageBuilder.hpp
-        Helper.cpp Helper.hpp)
+        Helper.cpp Helper.hpp TimeoutError.h)
 
 
 target_link_libraries(${PROJECT_NAME} stdc++fs)

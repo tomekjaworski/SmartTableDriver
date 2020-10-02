@@ -20,18 +20,15 @@ private:
 public:
 
     OutputMessage()
-		: OutputMessage(MessageType::Invalid)
-	{		
+		: OutputMessage(MessageType::Invalid) {
 	}
 
-    OutputMessage(const OutputMessage& msg)
-	{
+    OutputMessage(const OutputMessage& msg)	{
 	    this->data = msg.data;
 	}
 
     OutputMessage(OutputMessage&& m)
-	    : data(std::move(m.data))
-	{
+	    : data(std::move(m.data)) {
 	}
 
     OutputMessage& operator = (OutputMessage&& m) {
@@ -42,8 +39,7 @@ public:
 
     OutputMessage(MessageType type, const void* payload = nullptr, size_t payload_length = 0);
 
-	~OutputMessage()
-	{
+	~OutputMessage() {
 	}
 	
 public:
@@ -52,8 +48,13 @@ public:
 //	device_address_t getAddress(void) const { return this->getHeader().address; }
 //	MessageType getType(void) const { return this->getHeader().type; }
 //
-//	const void* getDataPointer(void) const { return this->data; }
-//	size_t getDataCount(void) const { return sizeof(PROTO_HEADER) + getHeader().payload_length + sizeof(uint16_t); }
+	const void* GetDataPointer(void) const {
+	    return reinterpret_cast<const void*>(this->data.data());
+	}
+
+	size_t GetDataCount(void) const {
+	    return this->data.size();
+	}
 //
 //	const void* getPayload(void) const { return this->data + sizeof(PROTO_HEADER); }
 //	size_t getPayloadLength(void) const { return getHeader().payload_length; }

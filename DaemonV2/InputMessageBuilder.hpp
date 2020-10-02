@@ -30,7 +30,7 @@ public:
 	    this->InternalAddCollectedData(ptr, count);
 	}
 	
-	bool getMessage(InputMessage& message);
+	bool GetMessage(InputMessage& message);
 	void PurgeAllData(void);
 
 private:
