@@ -25,21 +25,8 @@ void MessageReceiver::PurgeAllData(void)
 
 ssize_t MessageReceiver::Receive(SerialPort::Ptr psource)
 {
-	uint32_t space_left = this->queue.size() - this->position;
-//	if (space_left < 1024)
-//	{
-//		// make some room
-//		uint32_t new_cap = this->capacity * 1.5;
-//		uint8_t* new_ptr = new uint8_t[new_cap];
-//
-//		memcpy(new_ptr, this->data, this->position);
-//
-//		std::swap(new_ptr, this->data);
-//		std::swap(new_cap, this->capacity);
-//
-//		delete[] new_ptr;
-//	}
-	
+//	uint32_t space_left = this->queue.size() - this->position;
+
 	ssize_t bytes_read = psource->Receive(this->queue.data() + position, this->queue.size() - position);
 	if (bytes_read > 0)
 	    throw std::runtime_error("Out of memory in MessageReceive buffer");

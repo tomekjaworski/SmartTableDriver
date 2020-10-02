@@ -30,7 +30,7 @@ void App::ShowAvailableSerialPorts(void) {
         else
             s += pname;
 
-    printf("Available serial ports (%d): %s\n", port_name_list.size(), s.c_str());
+    printf("Available serial ports (%zu): %s\n", port_name_list.size(), s.c_str());
 }
 
 std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
@@ -38,7 +38,7 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
     for (const auto& pname : SerialPort::GetSerialDevices()) {
         try {
             printf("Opening port %s... ", pname.c_str());
-            SerialPort::Ptr sp(new SerialPort(pname));
+            SerialPort::Ptr sp(new SerialPort(pname, 19200));
             ports.push_back(sp);
 
             printf(AGREEN "Done.\n" ARESET);
@@ -60,7 +60,7 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     // Intro
     printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
-    printf("Built on %s @ %s %d\n\n", __DATE__, __TIME__, sizeof(void*));
+    printf("Built on %s @ %s %lu\n\n", __DATE__, __TIME__, sizeof(void*));
     setbuf(stdout, NULL);
 
     //
@@ -75,6 +75,8 @@ int App::Main(const std::vector<std::string>& arguments) {
     // Initialize table description
     TableDevice tdev;
     tdev.ShowTopology();
+
+
     return 0;
 }
 

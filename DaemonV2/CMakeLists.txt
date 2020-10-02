@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 #add_library(stdc++fs STATIC IMPORTED)
 
+add_compile_options("-Wall" "-Wextra" "-pedantic" "-Wno-unused-parameter")
+
+
 add_executable(
         untitled
         AnsiCodes.h
@@ -24,5 +27,6 @@ add_executable(
         InputMessage.cpp InputMessage.hpp
         MessageReceiver.cpp MessageReceiver.hpp
         Helper.cpp Helper.hpp)
+
 
 target_link_libraries(${PROJECT_NAME} stdc++fs)
