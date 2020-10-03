@@ -186,55 +186,62 @@ int App::Main(const std::vector<std::string>& arguments) {
 
     //
     // Initialize communication on each searial port and detect device id
+    while(1)
     for (SerialPort::Ptr serial_port : ports) {
 
         OutputMessage message_ping = OutputMessage(MessageType::PingRequest);
-        InputMessage response;
-
         int successes = 0;
         bool last_was_ok;
+        printf("Serial %s: ", serial_port->GetPortName().c_str());
+
         for (int i = 0; i < 5; i++) {
             usleep(50 * 1000);
             serial_port->DiscardAllData();
 
+            InputMessage response;
             try {
                 last_was_ok = false;
+                printf(".");
                 Communication::Transcive(serial_port, message_ping, response, 250);
             } catch(const TimeoutError& te) {
+                printf("t");
                 continue;
             }
 
-            if (response.GetMessageType() != MessageType::PingResponse || response.GetPayloadSize() != 0)
+            if (response.GetMessageType() != MessageType::PingResponse || response.GetPayloadSize() != 0) {
+                printf("e");
                 continue;
+            }
 
             successes++;
             last_was_ok = true;
         }
-
+        printf("\n");
         //
         // assess the communication
         if (successes == 0) {
             // The port is dead; there is probably no interesting equipment
-            printf(AYELLOW "Serial port %s has NO compatible devices attached.\n", serial_port->GetPortName().c_str());
+            printf(AYELLOW "Serial port %s has NO compatible devices attached.\n" ARESET, serial_port->GetPortName().c_str());
             continue;
         }
 
         if (successes < 3 || !last_was_ok) {
             // There were some successful communications, however not enough and what is more - last one has failed.
-            printf(ARED "Serial port %s communication problems; intervention required.\n", serial_port->GetPortName().c_str());
+            printf(ARED "Serial port %s communication problems; intervention required.\n" ARESET, serial_port->GetPortName().c_str());
             continue;
         }
 
         //
         // Ok, looks like we have a working photo device there.
         // Lets get its data
-        message_ping = OutputMessage(MessageType::DeviceIdentifierRequest);
+        InputMessage response;
+        OutputMessage message_device_query = OutputMessage(MessageType::DeviceIdentifierRequest);
 
         try {
             last_was_ok = false;
-            Communication::Transcive(serial_port, message_ping, response, 250);
+            Communication::Transcive(serial_port, message_device_query, response, 250);
         } catch(const TimeoutError& te) {
-            printf(ARED "Timeout in %s during DeviceIdentifierRequest", serial_port->GetPortName().c_str());
+            printf(ARED "Timeout in %s during DeviceIdentifierRequest\n" ARESET, serial_port->GetPortName().c_str());
             continue;
         }
 
@@ -254,7 +261,7 @@ int App::Main(const std::vector<std::string>& arguments) {
             }
         }
 
-        printf(AYELLOW "Port %s, device %s: version=%s, date=%s, time%s\n",
+        printf(AYELLOW "   Port %s, device %s: version=[%s], date=[%s], time=[%s]\n" ARESET,
             serial_port->GetPortName().c_str(),
             info["device"].c_str(),
             info["version"].c_str(),
@@ -262,7 +269,6 @@ int App::Main(const std::vector<std::string>& arguments) {
             info["time"].c_str()
         );
 
-        printf("...");
 
     }
     SerialPort::Ptr sp = ports.front();

@@ -68,4 +68,5 @@ void TableDevice::ShowTopology(void) {
                pdevice->GetLocation().GetColumn(),
                pdevice->GetLocation().GetRow());
     }
+    printf("\n");
 }
