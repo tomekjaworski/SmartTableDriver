@@ -28,6 +28,7 @@ public:
 
     MessageType GetMessageType(void) const;
     int GetPayloadSize(void) const;
+    const void* GetPayloadPointer(void) const;
     int GetSequence(void) const;
 };
 

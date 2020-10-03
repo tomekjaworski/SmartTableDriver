@@ -20,4 +20,8 @@ int InputMessage::GetSequence(void) const {
     return pheader->sequence_counter;
 }
 
+const void* InputMessage::GetPayloadPointer(void) const {
+    const TX_PROTO_HEADER* pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->data.data());
+    return reinterpret_cast<const void*>(pheader + 1);
+}
 

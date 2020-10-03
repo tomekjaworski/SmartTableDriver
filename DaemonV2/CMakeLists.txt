@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 #add_library(stdc++fs STATIC IMPORTED)
 
-add_compile_options("-Wall" "-Wextra" "-pedantic" "-Wno-unused-parameter")
+add_compile_options("-Wall" "-Wextra" "-pedantic" "-Wno-unused-parameter" "-fno-diagnostics-color")
 
 
 add_executable(
