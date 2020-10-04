@@ -102,7 +102,7 @@ void Communication::Transcive(SerialPort::Ptr serial, const OutputMessage& query
         }
 
         // check for timeout
-        _check_timeout:;
+        //_check_timeout:;
         std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count() > timeout) {
             throw TimeoutError(serial->GetPortName());
@@ -269,8 +269,13 @@ int App::Main(const std::vector<std::string>& arguments) {
             info["time"].c_str()
         );
 
+        device_identifier_t devid = static_cast<device_identifier_t>(std::stoi(info["device"]));
 
+        //try {
+            PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByID(devid);
+        //} catch
     }
+
     SerialPort::Ptr sp = ports.front();
     sp->DiscardAllData();
 

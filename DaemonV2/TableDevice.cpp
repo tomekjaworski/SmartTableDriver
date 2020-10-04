@@ -50,13 +50,20 @@ TableDevice::~TableDevice() {
 
 }
 
-Location TableDevice::GetLocationByID(device_identifier_t id) const
-{
+Location TableDevice::GetLocationByID(device_identifier_t id) const {
     for(PhotoModule::Ptr pdevice : this->geometry)
         if (pdevice->GetID() == id)
             return pdevice->GetLocation();
 
-    throw std::invalid_argument("id");
+    throw std::invalid_argument("ID not found");
+}
+
+PhotoModule::Ptr TableDevice::GetPhotoModuleByID(device_identifier_t id) {
+    for(PhotoModule::Ptr pdevice : this->geometry)
+        if (pdevice->GetID() == id)
+            return pdevice;
+
+    throw std::invalid_argument("ID not found"); // or null - into consideration...
 }
 
 
