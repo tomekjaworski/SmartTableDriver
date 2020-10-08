@@ -204,6 +204,12 @@
     <Compile Include="dbg_putchar.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="eeprom_config.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="eeprom_config.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="fuses.cpp">
       <SubType>compile</SubType>
     </Compile>
