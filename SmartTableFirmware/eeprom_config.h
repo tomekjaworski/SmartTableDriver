@@ -9,21 +9,17 @@
  #define EEPROM_CONFIG_H_
 
 
- struct __EEPROM_CONFIGURATION
- {
-	 uint16_t checksum;
-	 char magic[12];
+ extern struct EEPROM_CONFIGURATION {
+	 uint8_t address; // adres modu?u pomiarowego
+	 uint8_t address_copy1; // j/w do weryfikacji
+	 uint8_t address_copy2; // j/w do weryfikacji
 
-	 uint8_t address; // adres modu�u pomiarowego
-
- };
+ } configuration;
  
- typedef struct __EEPROM_CONFIGURATION EEPROM_CONFIGURATION;
- extern EEPROM_CONFIGURATION configuration;
 
- void configuration_load_default_values(void);
- void configuration_store(void);
- uint8_t configuration_load(void);
+ //void configuration_load_default_values(void);
+ //void configuration_store(void);
+ void configuration_load(void);
 
 
  #endif /* EEPROM_CONFIG_H_ */

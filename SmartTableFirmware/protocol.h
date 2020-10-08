@@ -16,8 +16,6 @@
 #define RX_PAYLOAD_CAPACITY	32
 #define TX_PAYLOAD_CAPACITY	128
 
-typedef unsigned char device_identifier_t;
-
 enum class ADCBlockType : uint8_t {
 	Invalid = 0,	// none
 	_1Bits = 1,		// 8 measurements on 1 byte

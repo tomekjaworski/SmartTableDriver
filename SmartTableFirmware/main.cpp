@@ -19,6 +19,7 @@
 #include "comm.h"
 #include "config.h"
 #include "intensity_measurements.h"
+#include "eeprom_config.h"
 
 void cpu_init(void);
 void send(MessageType type, const void* payload, uint8_t payload_length);
@@ -46,6 +47,7 @@ void send_string(const char* s) {
 int main(void)
 {
 	cpu_init();
+	configuration_load();
 	RX_RESET;
 	im_initialize8();
 
@@ -100,7 +102,7 @@ int main(void)
 
 		if (rx.buffer.header.type == MessageType::DeviceIdentifierRequest) {
 			char* ptr = (char*)tx.payload;
-			sprintf(ptr, "id=%d;version=%s;date=%s;time=%s", DEVICE_IDENTIFIER, FIRMWARE_VERSION, FIRMWARE_BUILD_DATE, FIRMWARE_BUILD_TIME);
+			sprintf(ptr, "id=%d;version=%s;date=%s;time=%s", device_identifier, FIRMWARE_VERSION, FIRMWARE_BUILD_DATE, FIRMWARE_BUILD_TIME);
 			send(MessageType::DeviceIdentifierResponse, (const uint8_t*)ptr, strlen((const char*)ptr));
 		}
 
