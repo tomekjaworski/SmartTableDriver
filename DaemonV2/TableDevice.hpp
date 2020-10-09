@@ -17,6 +17,7 @@ public:
     ~TableDevice();
 public:
     Location GetLocationByID(device_identifier_t id) const;
+    PhotoModule::Ptr GetPhotoModuleByID(device_identifier_t id);
     void ShowTopology(void);
 };
 
