@@ -1,0 +1,5 @@
+/.vs
+/Debug
+/atmega328p_bootloader.map
+/atmega328p_bootloader.componentinfo.xml
+/Release
