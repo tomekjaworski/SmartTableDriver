@@ -1,4 +1,5 @@
 ﻿using IntelHEX;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,11 +13,46 @@ using System.Threading.Tasks;
 namespace CnC
 {
 
+    public class ModuleEntry
+    {
+        [JsonProperty("bootloader_id")]
+        public int BootloaderID { get; set; }
+
+        [JsonProperty("flash")]
+        public string FlashSourceFileName { get; set; }
+
+        [JsonProperty("eeprom")]
+        public string EepromSourceFileName { get; set; }
+    }
+
+    public class Configuration
+    {
+        [JsonProperty("modules")]
+        public ModuleEntry[] Modules { get; set; }
+    }
+
     class Program
     {
         static Random random;
         static void Main(string[] args)
         {
+
+            string content = File.ReadAllText("configuration.json");
+            var x = JsonConvert.DeserializeObject< Configuration>(content);
+
+            string f1 = @"C:\Users\Tomek\Documents\SmartTableDriver\SmartTableFirmware\Debug\SmartTableFirmware.hex";
+            string f2 = @"C:\Users\Tomek\Documents\SmartTableDriver\SmartTableFirmware\Eeprom\13.hex";
+
+            IntelHEX16Storage loader;
+            MemoryMap memory_flash = new MemoryMap(32 * 1024 - 2 * 1024);
+            MemoryMap memory_eeprom = new MemoryMap(0x400);
+            loader = new IntelHEX16Storage(memory_flash);
+            loader.Load(f1);
+
+            loader = new IntelHEX16Storage(memory_eeprom);
+            loader.Load(f2);
+
+
             Console.WriteLine("SmartTable bootloader C&C software by Tomasz Jaworski");
             random = new Random();
 
