@@ -9,6 +9,7 @@
 #define COMM_H_
 
 #define MAX_PAYLOAD_SIZE	(128+4)
+#include "config.h"
 
 enum class MessageType : uint8_t
 {
@@ -23,9 +24,14 @@ enum class MessageType : uint8_t
 	ReadEepromPage = 'E',
 	WriteEepromPage = 'F',
 
+#if defined(PROTOCOL_READ_SIGNATURE)
 	ReadSignature = 'S',
+#endif
 
+#if defined(PROTOCOL_READ_BOOTLOADER_VERSION)
 	ReadBootloaderVersion = 'V'
+#endif
+
 };
 
 struct RX {

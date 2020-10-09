@@ -23,9 +23,11 @@
  #define UBR0_VALUE (F_CPU/(16UL*SERIAL_BAUD))-1
  #endif
 
-#define RS485_DIR_RECEIVE	do { PORTD &= ~_BV(PORTD2); } while(0);//0
-#define RS485_DIR_SEND		do { PORTD |= _BV(PORTD2); } while(0); //1
-
+//#define RS485_DIR_RECEIVE	do { PORTD &= ~_BV(PORTD2); } while(0);//0
+//#define RS485_DIR_SEND		do { PORTD |= _BV(PORTD2); } while(0); //1
+#define LEGACY_RS485_DIR_OUTPUT()	do { PORTD |= _BV(PORTD2); } while(0); //1
+#define LEGACY_RS485_DIR_INPUT()	do { PORTD &= ~_BV(PORTD2); } while(0);//0
+	
 RX rx;
 
 
@@ -65,7 +67,7 @@ void uartInitialize(void)
 	UCSR0B = _BV(RXEN0) | _BV(TXEN0);	// trun on RX and TX part of the serial controller
 	//UCSR0B |= (1 << RXCIE0);
 
-	RS485_DIR_RECEIVE;
+	LEGACY_RS485_DIR_OUTPUT();
 
  }
 
@@ -73,7 +75,7 @@ void uartInitialize(void)
  {
 	uint16_t checksum = addr + (uint16_t)msg_type + count;
 
-	RS485_DIR_SEND;
+	//RS485_DIR_SEND;
 
 	// send header
 	uartSend(addr); // protocol: address
@@ -91,5 +93,5 @@ void uartInitialize(void)
 	uartSend(checksum >> 8); // protocol: checksum's msb
 	uartSend(checksum & 0x00FF); // protocol: checksum's lsb
 
-	RS485_DIR_RECEIVE;
+	//RS485_DIR_RECEIVE;
  }

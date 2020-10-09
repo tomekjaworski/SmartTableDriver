@@ -9,6 +9,6 @@
 #include <avr/io.h>
 #include <stddef.h>
 #include "config.h"
-
- const unsigned char __signature[3] __attribute__((__used__, __section__(".signature"))) =
-	{ 'T', 'J', BOOTLOADER_HARDWARE_ADDRESS };
+//
+ //const unsigned char __signature[3] __attribute__((__used__, __section__(".signature"))) =
+	//{ 'T', 'J', BOOTLOADER_HARDWARE_ADDRESS };

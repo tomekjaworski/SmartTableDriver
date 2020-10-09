@@ -144,12 +144,15 @@ int main(void)
 			send_response(msg_type, addr, NULL, 0);
 		}
 
+#if defined(PROTOCOL_READ_SIGNATURE)
 		if (msg_type == MessageType::ReadSignature) {
 			for (uint8_t addr = 0x00; addr < 0x20; addr++)
 				rx.data[addr] = boot_signature_byte_get(addr);
 			send_response(msg_type, addr, rx.data, 0x20);
 		}
-
+#endif
+		
+#if defined(PROTOCOL_READ_BOOTLOADER_VERSION)
 		if (msg_type == MessageType::ReadBootloaderVersion) {
 
 			#define STR_HELPER(x) #x
@@ -160,7 +163,7 @@ int main(void)
 			#undef STR_HELPER
 			#undef STR
 		}
-
+#endif
 	}
 
 	
