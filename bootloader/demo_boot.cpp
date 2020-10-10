@@ -24,7 +24,7 @@ void ___boot_demo(void)
 	asm volatile("nop\n");
 	asm volatile("nop\n");
 	asm volatile("nop\n");
-	RS485_DIR_SEND;
+	//RS485_DIR_SEND;
 
 	while(1)
 	for (uint8_t i = 0; i < 3; i++) {

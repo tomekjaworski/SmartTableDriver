@@ -48,7 +48,8 @@ void uartInitialize(void)
 	DDRD = 0b00000110; // 0:RX, 1:TX, 3:DIR
 	DDRB |= _BV(PORTB5) | _BV(PORTB2) | _BV(PORTB1);
 
-
+	DDRD |= _BV(PORTD2); // DIR
+	DDRD |= _BV(PORTD1); // TX
 
 	// init serial port
 	uint16_t br = UBR0_VALUE;
