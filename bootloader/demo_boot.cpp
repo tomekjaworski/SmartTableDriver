@@ -19,6 +19,7 @@
 	
 
 void ___boot_demo(void) __attribute__ ((__used__, section (".BL")));
+
 void ___boot_demo(void)
 {
 	uint8_t arr[3];
@@ -34,6 +35,7 @@ void ___boot_demo(void)
 	while(1)
 	{
 		LED_ON;
+#if defined(DEBUG)		
 		for (uint32_t j = 0; j < 5000; j++) asm volatile("nop");
 		LED_OFF;
 		for (uint32_t j = 0; j < 50000; j++) asm volatile("nop");
@@ -41,6 +43,15 @@ void ___boot_demo(void)
 		for (uint32_t j = 0; j < 5000; j++) asm volatile("nop");
 		LED_OFF;
 		for (uint32_t j = 0; j < 100000; j++) asm volatile("nop");
+#else // Release
+		for (uint32_t j = 0; j < 5*5000; j++) asm volatile("nop");
+		LED_OFF;
+		for (uint32_t j = 0; j < 5*50000; j++) asm volatile("nop");
+		LED_ON;
+		for (uint32_t j = 0; j < 5*5000; j++) asm volatile("nop");
+		LED_OFF;
+		for (uint32_t j = 0; j < 5*100000; j++) asm volatile("nop");
+#endif 
 	}
 
 	asm volatile("nop\n");

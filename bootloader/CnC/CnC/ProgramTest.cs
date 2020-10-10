@@ -301,6 +301,7 @@ namespace CnC
             foreach (Device dev in cnc.Devices)
                 cnc.Reset(dev);
 
+            Console.ReadKey();
 
         }
 
