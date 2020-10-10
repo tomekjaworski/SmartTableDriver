@@ -1,4 +1,5 @@
-﻿using IntelHEX;
+﻿using CnC.Jobs;
+using IntelHEX;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
@@ -17,20 +18,17 @@ namespace Newtonsoft.Json.Converters
     {
         public override bool CanConvert(Type objectType) => typeof(int).Equals(objectType);
 
-        //public override bool CanRead => true;
-        //public override bool CanWrite => false;
+        public override bool CanRead => true;
+        public override bool CanWrite => false;
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            throw new NotImplementedException();
-        }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) => throw new NotImplementedException();
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             string str = reader.Value as string;
             if (string.IsNullOrEmpty(str) || !str.StartsWith("0x"))
                 throw new JsonSerializationException($"Unable to convert string to integer");
-            return Convert.ToUInt32(str, 16);
+            return Convert.ToInt32(str, 16);
         }
     }
 }
@@ -41,6 +39,11 @@ namespace CnC.Jobs
     {
         ProgramFlashMemory,
         ProgramEepromMemory,
+    }
+
+    public enum CPUType
+    {
+        ATMega328P,
     }
 
     public class TaskEntry
@@ -55,12 +58,25 @@ namespace CnC.Jobs
 
         [JsonProperty("FileName")]
         public string FileName { get; set; }
+
+        [JsonProperty("CPU")]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public CPUType CPU { get; set; }
+
+        [JsonProperty("ProgrammableMemorySize")]
+        //[JsonConverter(typeof(Newtonsoft.Json.Converters.HexStringJsonConverter))]
+        public uint ProgrammableMemorySize { get; set; }
     }
 
     public class TaskContainer
     {
         [JsonProperty("Tasks")]
         public TaskEntry[] Tasks { get; set; }
+
+        public TaskContainer()
+        {
+            this.Tasks = new TaskEntry[0];
+        }
     }
 
 }
@@ -71,20 +87,26 @@ namespace CnC
 
 
 
-    public class MultibootController
+    public class BootloaderTaskProvider
     {
-        public MultibootController()
+        private TaskEntry[] tasks;
+        public TaskEntry[] Tasks => this.tasks;
+
+        public int Count => this.tasks.Length;
+
+        public BootloaderTaskProvider()
         {
 
         }
 
-        public void ReadTasks(string taskDescriptionFile)
+        public void LoadTasks(string taskDescriptionFile)
         {
+            // Read tasks
+            Jobs.TaskContainer task_container = null;
             try
             {
                 string content = File.ReadAllText(taskDescriptionFile);
-                Jobs.TaskContainer task_container = JsonConvert.DeserializeObject<Jobs.TaskContainer>(content);
-
+                task_container = JsonConvert.DeserializeObject<Jobs.TaskContainer>(content);
             }
             catch (IOException ioex)
             {
@@ -94,6 +116,38 @@ namespace CnC
             {
                 throw new BootloaderException("Configuration parsing error", jex);
             }
+
+            // Verify tasks
+            for(int i = 0; i < task_container.Tasks.Length; i++)
+            {
+                TaskEntry task = task_container.Tasks[i];
+                try
+                {
+                    //todo: refactorize
+                    if (task.TaskType == TaskType.ProgramEepromMemory)
+                    {
+                        //TODO: replace fake load into fake memory with a clear verification procedure
+                        MemoryMap mm = new MemoryMap(65536);
+                        IntelHEX16Storage s = new IntelHEX16Storage(mm);
+                        s.Load(task.FileName);
+                    }
+
+                    if (task.TaskType == TaskType.ProgramFlashMemory)
+                    {
+                        //TODO: replace fake load into fake memory with a clear verification procedure
+                        MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
+                        IntelHEX16Storage s = new IntelHEX16Storage(mm);
+                        s.Load(task.FileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new BootloaderException($"Task verification failed ({task.TaskType}, task #{i}): {ex.Message}", ex);
+                }
+            }
+
+            // Seems ok
+            this.tasks = task_container.Tasks;
         }
     }
 
@@ -115,41 +169,62 @@ namespace CnC
         static void Main(string[] args)
         {
 
-            Console.WriteLine("SmartTable bootloader C&C software by Tomasz Jaworski");
+            Console.WriteLine("SmartTable bootloader C&C software by Tomasz Jaworski\n");
             random = new Random();
 
-            MultibootController mbc = new MultibootController();
-            mbc.ReadTasks("bootloader_tasks.json");
+            BootloaderTaskProvider btp = new BootloaderTaskProvider();
+            Console.WriteLine($"Reading task file...");
+            try
+            {
+                btp.LoadTasks("bootloader_tasks.json");
+            }catch(Exception ex)
+            {
+                ColorConsole.WriteLine(ConsoleColor.Red, "Error druing reading: " + ex.Message);
+            }
 
 
+            // Find highest bootloader id
+            int last_bootloader_id = btp.Tasks.Select(x => x.BootloaderID).Max();
 
+            // Show some summary            
+            Console.WriteLine($"Task summary:");
+            Console.WriteLine($"   Found {btp.Count} task(s).");
+            Console.WriteLine($"   Highest bootloader ID:  {last_bootloader_id}");
+            Console.WriteLine($"   Unique bootloaders (by ID): {btp.Tasks.Select(x => x.BootloaderID).Distinct().Count()}");
+            Console.WriteLine($"   Unique bootloaders): {string.Join(",", btp.Tasks.Select(x => x.BootloaderID.ToString("X2")).Distinct())}");
 
-            IntelHEX16Storage loader;
-            MemoryMap memory_flash = new MemoryMap(32 * 1024 - 2 * 1024);
-            MemoryMap memory_eeprom = new MemoryMap(0x400);
-            loader = new IntelHEX16Storage(memory_flash);
-            //loader.Load(f1);
-
-            loader = new IntelHEX16Storage(memory_eeprom);
-            //loader.Load(f2);
-
-
-
-            MemoryMap fw = new MemoryMap(32*1024-2*1024);
-            IntelHEX16Storage st = new IntelHEX16Storage(fw);
-            st.Load(@"d:\SystemDocuments\SmartTableDriver\SmartTableFirmware\Debug\SmartTableFirmware.hex");
-
-            int pos1 = fw.FindSequence(new byte[] { 0xaa, 0x11, 0x0d, 0x4d });
-            int pos2 = fw.FindSequence(new byte[] { 0x75, 0x87, 0x60, 0x64 });
-            Debug.Assert(pos2 == pos1 + 5);
-
-            fw.Dump("test.txt");
-
-
-
+            //
+            // Wait for all serial ports to be connected and identified
             AVRBootloaderCnC cnc = new AVRBootloaderCnC();
             cnc.SendAdvertisementToEveryDetectedPort();
-            cnc.AcquireBootloaderDevices(0x20);
+
+            // Scan all available serial ports for bootloaders
+            cnc.AcquireBootloaderDevices((byte)last_bootloader_id);
+
+
+            //IntelHEX16Storage loader;
+            //MemoryMap memory_flash = new MemoryMap(32 * 1024 - 2 * 1024);
+            //MemoryMap memory_eeprom = new MemoryMap(0x400);
+            //loader = new IntelHEX16Storage(memory_flash);
+            ////loader.Load(f1);
+
+            //loader = new IntelHEX16Storage(memory_eeprom);
+            ////loader.Load(f2);
+
+
+
+            //MemoryMap fw = new MemoryMap(32*1024-2*1024);
+            //IntelHEX16Storage st = new IntelHEX16Storage(fw);
+            //st.Load(@"d:\SystemDocuments\SmartTableDriver\SmartTableFirmware\Debug\SmartTableFirmware.hex");
+
+            //int pos1 = fw.FindSequence(new byte[] { 0xaa, 0x11, 0x0d, 0x4d });
+            //int pos2 = fw.FindSequence(new byte[] { 0x75, 0x87, 0x60, 0x64 });
+            //Debug.Assert(pos2 == pos1 + 5);
+
+            //fw.Dump("test.txt");
+
+
+
 
             // show found devices
             cnc.ShowDevices();
@@ -172,10 +247,10 @@ namespace CnC
             foreach (Device dev in cnc.Devices) {
 
                 // preapre modified firmare
-                fw.Write((uint)pos1 + 4, (byte)dev.address);
+                //fw.Write((uint)pos1 + 4, (byte)dev.address);
 
-                cnc.WriteFLASH(dev, fw);
-                cnc.VerifyFLASH(dev, fw);
+                //cnc.WriteFLASH(dev, fw);
+                //cnc.VerifyFLASH(dev, fw);
             }
 
 

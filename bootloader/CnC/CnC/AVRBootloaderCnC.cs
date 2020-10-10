@@ -118,7 +118,7 @@ namespace CnC
 
         public void SendAdvertisementToEveryDetectedPort()
         {
-            Console.WriteLine("*** TURN ON all devices and press any key to processed...\n");
+            ColorConsole.WriteLine(ConsoleColor.Black, ConsoleColor.Yellow, "*** TURN ON all devices and press any key to processed...");
             char[] anim = { '/', '-', '\\', '|' };
             int anim_counter = 0;
             int cx = 0;
@@ -134,9 +134,7 @@ namespace CnC
                 Thread.Sleep(100);
 
                 Console.CursorLeft = cx;
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.Write("Sending C&C Advertisement to {0} serial ports: ", this.available_ports.Count);
-                Console.ForegroundColor = ConsoleColor.Gray;
+                ColorConsole.Write(ConsoleColor.Yellow, "Sending C&C Advertisement to {0} serial ports: ", this.available_ports.Count);
                 Console.Write(anim[anim_counter++ % 4]);
 
                 // send advertisement to ports on list

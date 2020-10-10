@@ -3,35 +3,47 @@
     {
       "TaskType": "ProgramFlashMemory",
       "BootloaderID": "0x01",
-      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex"
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
     },
     {
       "TaskType": "ProgramEepromMemory",
       "BootloaderID": "0x01",
-      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\11.hex"
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\11.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024 /* onchip EEPROM */
     },
 
     {
       "TaskType": "ProgramFlashMemory",
       "BootloaderID": "0x02",
-      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex"
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
     },
     {
       "TaskType": "ProgramEepromMemory",
       "BootloaderID": "0x02",
-      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\12.hex"
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\12.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024 /* onchip EEPROM */
     },
 
 
     {
       "TaskType": "ProgramFlashMemory",
       "BootloaderID": "0x03",
-      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex"
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
     },
     {
       "TaskType": "ProgramEepromMemory",
       "BootloaderID": "0x03",
-      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\13.hex"
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\13.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024 /* onchip EEPROM */
     }
 
   ]
