@@ -51,11 +51,7 @@ int main(void)
 
 		//_delay_ms(1);
 		if (wait_counter++ > ADVERTISEMENT_WAIT_TIME) { // wait some time for bootloader activation byte
-___boot_demo();
-//#if defined (NDEBUG)
-		//	___boot_demo();
-//#endif
-
+			___boot_demo();
 			asm volatile("jmp 0000");
 		}
 	}
