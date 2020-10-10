@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,8 +38,12 @@ namespace CnC.Jobs
 {
     public enum TaskType
     {
-        ProgramFlashMemory,
-        ProgramEepromMemory,
+        WriteFlashMemory,
+        WriteEepromMemory,
+
+        ReadFlashMemory,
+        ReadEepromMemory,
+
     }
 
     public enum CPUType
@@ -124,7 +129,7 @@ namespace CnC
                 try
                 {
                     //todo: refactorize
-                    if (task.TaskType == TaskType.ProgramEepromMemory)
+                    if (task.TaskType == TaskType.WriteEepromMemory)
                     {
                         //TODO: replace fake load into fake memory with a clear verification procedure
                         MemoryMap mm = new MemoryMap(65536);
@@ -132,12 +137,19 @@ namespace CnC
                         s.Load(task.FileName);
                     }
 
-                    if (task.TaskType == TaskType.ProgramFlashMemory)
+                    if (task.TaskType == TaskType.WriteFlashMemory)
                     {
                         //TODO: replace fake load into fake memory with a clear verification procedure
                         MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
                         IntelHEX16Storage s = new IntelHEX16Storage(mm);
                         s.Load(task.FileName);
+                    }
+                    if (task.TaskType == TaskType.ReadFlashMemory || task.TaskType == TaskType.ReadEepromMemory)
+                    {
+                        //TODO: replace fake load into fake memory with a clear verification procedure
+                      //  MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
+                       // IntelHEX16Storage s = new IntelHEX16Storage(mm);
+                        //s.Load(task.FileName);
                     }
                 }
                 catch (Exception ex)
@@ -191,7 +203,7 @@ namespace CnC
             Console.WriteLine($"   Found {btp.Count} task(s).");
             Console.WriteLine($"   Highest bootloader ID:  {last_bootloader_id}");
             Console.WriteLine($"   Unique bootloaders (by ID): {btp.Tasks.Select(x => x.BootloaderID).Distinct().Count()}");
-            Console.WriteLine($"   Unique bootloaders): {string.Join(",", btp.Tasks.Select(x => x.BootloaderID.ToString("X2")).Distinct())}");
+            Console.WriteLine($"   Unique bootloaders: {string.Join(",", btp.Tasks.Select(x => x.BootloaderID.ToString("X2")).Distinct())}");
 
             //
             // Wait for all serial ports to be connected and identified
@@ -230,6 +242,37 @@ namespace CnC
             cnc.ShowDevices();
 
 
+            for (int task_index = 0; task_index< btp.Count; task_index++)
+            {
+                TaskEntry task_entry = btp.Tasks[task_index];
+                Console.WriteLine($"Running task {task_index}: {task_entry.TaskType} for device {task_entry.CPU} ID={task_entry.BootloaderID:X2}...");
+
+                // Get the device
+                Device device = cnc.Devices.Where(x => x.address == task_entry.BootloaderID).FirstOrDefault();
+                if (device == null)
+                {
+                    ColorConsole.WriteLine(ConsoleColor.Yellow, "   No proper device found.");
+                    continue;
+                }
+
+                if (task_entry.TaskType == TaskType.ReadEepromMemory)
+                {
+                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                    cnc.ReadEEPROM(device, mm);
+                    IntelHEX16Storage storage = new IntelHEX16Storage(mm);
+                    storage.Save(task_entry.FileName);
+                }
+
+                if (task_entry.TaskType == TaskType.ReadFlashMemory)
+                {
+                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                    cnc.ReadFLASH(device, mm);
+                    IntelHEX16Storage storage = new IntelHEX16Storage(mm);
+                    storage.Save(task_entry.FileName);
+                }
+
+            }
+
             Console.WriteLine("Reading bootloader version and signature");
             foreach (Device dev in cnc.Devices)
             {
@@ -240,6 +283,7 @@ namespace CnC
                 // read CPU signature
                 byte[] bsig = null;
                 cnc.ReadSignature(dev, out bsig);
+
             }
 
             Console.WriteLine("Writing firmare...");
