@@ -22,6 +22,13 @@
 // If the time given in ADVERTISEMENT_WAIT_TIME passes, bootloader jumps into user space code - addr 0x0000
 #define ADVERTISEMENT_WAIT_TIME	15000
 
+//
+// Compiled functionality: allows to read CPUs vendor signature
+#define PROTOCOL_READ_SIGNATURE
+
+// Compiled functionality: allows to read bootloader's version
+#define PROTOCOL_READ_BOOTLOADER_VERSION
+
 
 //
 // Bootloader Protocol Version
