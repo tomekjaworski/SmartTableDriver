@@ -1,0 +1,38 @@
+﻿{
+  "Tasks": [
+    {
+      "TaskType": "ProgramFlashMemory",
+      "BootloaderID": "0x01",
+      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex"
+    },
+    {
+      "TaskType": "ProgramEepromMemory",
+      "BootloaderID": "0x01",
+      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\11.hex"
+    },
+
+    {
+      "TaskType": "ProgramFlashMemory",
+      "BootloaderID": "0x02",
+      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex"
+    },
+    {
+      "TaskType": "ProgramEepromMemory",
+      "BootloaderID": "0x02",
+      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\12.hex"
+    },
+
+
+    {
+      "TaskType": "ProgramFlashMemory",
+      "BootloaderID": "0x03",
+      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex"
+    },
+    {
+      "TaskType": "ProgramEepromMemory",
+      "BootloaderID": "0x03",
+      "FileName": "..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\13.hex"
+    }
+
+  ]
+}

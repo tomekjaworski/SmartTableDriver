@@ -1,5 +1,6 @@
 ﻿using IntelHEX;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,25 +11,102 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+namespace Newtonsoft.Json.Converters
+{
+    public sealed class HexStringJsonConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType) => typeof(int).Equals(objectType);
+
+        //public override bool CanRead => true;
+        //public override bool CanWrite => false;
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            string str = reader.Value as string;
+            if (string.IsNullOrEmpty(str) || !str.StartsWith("0x"))
+                throw new JsonSerializationException($"Unable to convert string to integer");
+            return Convert.ToUInt32(str, 16);
+        }
+    }
+}
+
+namespace CnC.Jobs
+{
+    public enum TaskType
+    {
+        ProgramFlashMemory,
+        ProgramEepromMemory,
+    }
+
+    public class TaskEntry
+    {
+        [JsonProperty("BootloaderID")]
+        [JsonConverter(typeof(Newtonsoft.Json.Converters.HexStringJsonConverter))]
+        public int BootloaderID { get; set; }
+
+        [JsonProperty("TaskType")]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public TaskType TaskType { get; set; }
+
+        [JsonProperty("FileName")]
+        public string FileName { get; set; }
+    }
+
+    public class TaskContainer
+    {
+        [JsonProperty("Tasks")]
+        public TaskEntry[] Tasks { get; set; }
+    }
+
+}
+
 namespace CnC
 {
 
-    public class ModuleEntry
+
+
+
+    public class MultibootController
     {
-        [JsonProperty("bootloader_id")]
-        public int BootloaderID { get; set; }
+        public MultibootController()
+        {
 
-        [JsonProperty("flash")]
-        public string FlashSourceFileName { get; set; }
+        }
 
-        [JsonProperty("eeprom")]
-        public string EepromSourceFileName { get; set; }
+        public void ReadTasks(string taskDescriptionFile)
+        {
+            try
+            {
+                string content = File.ReadAllText(taskDescriptionFile);
+                Jobs.TaskContainer task_container = JsonConvert.DeserializeObject<Jobs.TaskContainer>(content);
+
+            }
+            catch (IOException ioex)
+            {
+                throw new BootloaderException("Configuration load error", ioex);
+            }
+            catch (JsonException jex)
+            {
+                throw new BootloaderException("Configuration parsing error", jex);
+            }
+        }
     }
 
-    public class Configuration
+
+    [Serializable]
+    public class BootloaderException : ApplicationException
     {
-        [JsonProperty("modules")]
-        public ModuleEntry[] Modules { get; set; }
+        public BootloaderException() { }
+        public BootloaderException(string message) : base(message) { }
+        public BootloaderException(string message, Exception inner) : base(message, inner) { }
+        protected BootloaderException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
     class Program
@@ -37,24 +115,25 @@ namespace CnC
         static void Main(string[] args)
         {
 
-            string content = File.ReadAllText("configuration.json");
-            var x = JsonConvert.DeserializeObject< Configuration>(content);
+            Console.WriteLine("SmartTable bootloader C&C software by Tomasz Jaworski");
+            random = new Random();
 
-            string f1 = @"C:\Users\Tomek\Documents\SmartTableDriver\SmartTableFirmware\Debug\SmartTableFirmware.hex";
-            string f2 = @"C:\Users\Tomek\Documents\SmartTableDriver\SmartTableFirmware\Eeprom\13.hex";
+            MultibootController mbc = new MultibootController();
+            mbc.ReadTasks("bootloader_tasks.json");
+
+
+
 
             IntelHEX16Storage loader;
             MemoryMap memory_flash = new MemoryMap(32 * 1024 - 2 * 1024);
             MemoryMap memory_eeprom = new MemoryMap(0x400);
             loader = new IntelHEX16Storage(memory_flash);
-            loader.Load(f1);
+            //loader.Load(f1);
 
             loader = new IntelHEX16Storage(memory_eeprom);
-            loader.Load(f2);
+            //loader.Load(f2);
 
 
-            Console.WriteLine("SmartTable bootloader C&C software by Tomasz Jaworski");
-            random = new Random();
 
             MemoryMap fw = new MemoryMap(32*1024-2*1024);
             IntelHEX16Storage st = new IntelHEX16Storage(fw);
