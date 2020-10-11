@@ -120,9 +120,19 @@
       "FileName": "eeprom_1k_03_READ.hex",
       "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x14",
+      "FileName": "..\\..\\..\\..\\..\\DemoProject1\\Release\\DemoProject1.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 32768
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x14",
+      "CPU": "ATMega328P"
     }
-
-
 
 
 

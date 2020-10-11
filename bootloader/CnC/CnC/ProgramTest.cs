@@ -39,11 +39,11 @@ namespace CnC.Jobs
     public enum TaskType
     {
         WriteFlashMemory,
-        WriteEepromMemory,
+        Reboot,
 
         ReadFlashMemory,
         ReadEepromMemory,
-
+        WriteEepromMemory,
     }
 
     public enum CPUType
@@ -115,11 +115,11 @@ namespace CnC
             }
             catch (IOException ioex)
             {
-                throw new BootloaderException("Configuration load error", ioex);
+                throw new BootloaderException($"Configuration load error: {ioex.Message}", ioex);
             }
             catch (JsonException jex)
             {
-                throw new BootloaderException("Configuration parsing error", jex);
+                throw new BootloaderException($"Configuration parsing error: {jex.Message}", jex);
             }
 
             // Verify tasks
@@ -129,10 +129,10 @@ namespace CnC
                 try
                 {
                     //todo: refactorize
-                    if (task.TaskType == TaskType.WriteEepromMemory)
+                    if (task.TaskType == TaskType.WriteFlashMemory)
                     {
                         //TODO: replace fake load into fake memory with a clear verification procedure
-                        MemoryMap mm = new MemoryMap(65536);
+                        MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
                         IntelHEX16Storage s = new IntelHEX16Storage(mm);
                         s.Load(task.FileName);
                     }
@@ -150,6 +150,10 @@ namespace CnC
                       //  MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
                        // IntelHEX16Storage s = new IntelHEX16Storage(mm);
                         //s.Load(task.FileName);
+                    }
+                    if (task.TaskType == TaskType.Reboot)
+                    {
+                        //?
                     }
                 }
                 catch (Exception ex)
@@ -280,6 +284,23 @@ namespace CnC
                     cnc.WriteEEPROM(device, mm);
                 }
 
+
+                if (task_entry.TaskType == TaskType.WriteFlashMemory)
+                {
+                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                    IntelHEX16Storage storage = new IntelHEX16Storage(mm);
+                    storage.Load(task_entry.FileName);
+                    cnc.WriteFLASH(device, mm);
+                }
+
+                if (task_entry.TaskType == TaskType.Reboot)
+                {
+                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                    IntelHEX16Storage storage = new IntelHEX16Storage(mm);
+                    storage.Load(task_entry.FileName);
+                    cnc.Reboot(device);
+                }
+
                 //if (task_entry.TaskType == TaskType.ReadFlashMemory)
                 //{
                 //    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
@@ -290,34 +311,34 @@ namespace CnC
 
             }
 
-            Console.WriteLine("Reading bootloader version and signature");
-            foreach (Device dev in cnc.Devices)
-            {
-                // read bootloader version and timestamp
-                string ver = "";
-                cnc.ReadVersion(dev, ref ver);
+            //Console.WriteLine("Reading bootloader version and signature");
+            //foreach (Device dev in cnc.Devices)
+            //{
+            //    // read bootloader version and timestamp
+            //    string ver = "";
+            //    cnc.ReadVersion(dev, ref ver);
 
-                // read CPU signature
-                byte[] bsig = null;
-                cnc.ReadSignature(dev, out bsig);
+            //    // read CPU signature
+            //    byte[] bsig = null;
+            //    cnc.ReadSignature(dev, out bsig);
 
-            }
+            //}
 
-            Console.WriteLine("Writing firmare...");
+            //Console.WriteLine("Writing firmare...");
 
-            foreach (Device dev in cnc.Devices)
-            {
+            //foreach (Device dev in cnc.Devices)
+            //{
 
-                // preapre modified firmare
-                //fw.Write((uint)pos1 + 4, (byte)dev.address);
+            //    // preapre modified firmare
+            //    //fw.Write((uint)pos1 + 4, (byte)dev.address);
 
-                //cnc.WriteFLASH(dev, fw);
-                //cnc.VerifyFLASH(dev, fw);
-            }
+            //    //cnc.WriteFLASH(dev, fw);
+            //    //cnc.VerifyFLASH(dev, fw);
+            //}
 
 
-            foreach (Device dev in cnc.Devices)
-                cnc.Reset(dev);
+            //foreach (Device dev in cnc.Devices)
+            //    cnc.Reboot(dev);
 
 
             ColorConsole.PressAnyKey();

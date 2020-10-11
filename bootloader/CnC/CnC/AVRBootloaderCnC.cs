@@ -79,7 +79,7 @@ namespace CnC
             }
         }
 
-        public bool Reset(Device dev)
+        public bool Reboot(Device dev)
         {
             Console.Write("Rebooting {0:X2}... ", dev.address);
             Message reboot_message = new Message((byte)dev.address, MessageType.Reboot);
