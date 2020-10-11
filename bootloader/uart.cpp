@@ -10,11 +10,6 @@
  #include "uart.h"
  #include "config.h"
 
-
- #define SERIAL_UX2
-
- //////////////////////////////////////////////////////////////////////////
-
  #if defined(SERIAL_UX2)
  // UX2 = 1
  #define UBR0_VALUE (F_CPU/(8UL*SERIAL_BAUD))-1
@@ -23,10 +18,8 @@
  #define UBR0_VALUE (F_CPU/(16UL*SERIAL_BAUD))-1
  #endif
 
-//#define RS485_DIR_RECEIVE	do { PORTD &= ~_BV(PORTD2); } while(0);//0
-//#define RS485_DIR_SEND		do { PORTD |= _BV(PORTD2); } while(0); //1
-#define LEGACY_RS485_DIR_OUTPUT()	do { PORTD |= _BV(PORTD2); } while(0); //1
-#define LEGACY_RS485_DIR_INPUT()	do { PORTD &= ~_BV(PORTD2); } while(0);//0
+#define RS485_DIR_SEND()	do { PORTD |= _BV(PORTD2); } while(0); //1
+#define RS485_DIR_RECEIVE()	do { PORTD &= ~_BV(PORTD2); } while(0);//0
 	
 RX rx;
 
@@ -68,15 +61,26 @@ void uartInitialize(void)
 	UCSR0B = _BV(RXEN0) | _BV(TXEN0);	// trun on RX and TX part of the serial controller
 	//UCSR0B |= (1 << RXCIE0);
 
-	LEGACY_RS485_DIR_OUTPUT();
+	// 
+	// 1. If a RS485 line interface is connected to RX/TX pins and the DIR ping is connected to RD2
+	//    then it should be configure to RECEIVE data from c&c controller.
+	// 2. If a RS485 interface is connected but it is ignored and the bootloader is used in RS232 mode
+	//    then it should be configured to RECEIVE not to interfere with the additional RS232 source;
+	//    WARNING: Not all line drivers will work with that; it is suggested to remove the RS485 driver or
+	//    not to solder it in the first place.
 
+#if defined(USE_RS485) || !defined(USE_RS485) // always true; for informational purposes only
+	RS485_DIR_RECEIVE();
+#endif
  }
 
  void send_response(MessageType msg_type, uint8_t addr, const uint8_t* buffer, uint8_t count)
  {
 	uint16_t checksum = addr + (uint16_t)msg_type + count;
 
-	//RS485_DIR_SEND;
+#if defined(USE_RS485)
+	RS485_DIR_SEND();
+#endif
 
 	// send header
 	uartSend(addr); // protocol: address
@@ -94,5 +98,7 @@ void uartInitialize(void)
 	uartSend(checksum >> 8); // protocol: checksum's msb
 	uartSend(checksum & 0x00FF); // protocol: checksum's lsb
 
-	//RS485_DIR_RECEIVE;
+#if defined(USE_RS485)
+	RS485_DIR_RECEIVE()
+#endif
  }

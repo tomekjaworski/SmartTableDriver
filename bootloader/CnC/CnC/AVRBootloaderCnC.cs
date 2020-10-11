@@ -216,6 +216,7 @@ namespace CnC
 
                 //break;
             }
+            Console.WriteLine();
 
             Console.SetCursorPosition(0, cy);
             Console.WriteLine(" Done. Found {0} devices on serial port {1}.", counter, sp.PortName);

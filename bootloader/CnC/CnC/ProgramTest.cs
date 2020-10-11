@@ -129,7 +129,7 @@ namespace CnC
                 try
                 {
                     //todo: refactorize
-                    if (task.TaskType == TaskType.WriteFlashMemory)
+                    if (task.TaskType == TaskType.WriteEepromMemory)
                     {
                         //TODO: replace fake load into fake memory with a clear verification procedure
                         MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
@@ -295,9 +295,6 @@ namespace CnC
 
                 if (task_entry.TaskType == TaskType.Reboot)
                 {
-                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
-                    IntelHEX16Storage storage = new IntelHEX16Storage(mm);
-                    storage.Load(task_entry.FileName);
                     cnc.Reboot(device);
                 }
 

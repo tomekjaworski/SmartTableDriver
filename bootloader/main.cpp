@@ -69,7 +69,7 @@ int main(void)
 		uint8_t addr = uartReceive();
 		if (rx.timeout) continue;
 
-#if !defined (DEBUG)
+#if defined (DEBUG)
 		// in debug mode: respond to requests on multiple addresses
 		if (addr != BOOTLOADER_HARDWARE_ADDRESS && addr != 0x40&& addr != 0x50&& addr != 0x52&& addr != 0xB0)
 #else

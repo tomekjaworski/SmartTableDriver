@@ -50,7 +50,7 @@
     // ###########################################################################################
     //
     //
-    /*
+    
     {
       "TaskType": "ReadEepromMemory",
       "BootloaderID": "0x14",
@@ -72,7 +72,7 @@
       "CPU": "ATMega328P",
       "ProgrammableMemorySize": 32768 // 32x1024 (full capacity) - 2x1024 (bootloader size)
     },
-  */
+  
     //
     //
     // ############################################################################################
@@ -83,55 +83,48 @@
       "TaskType": "WriteEepromMemory",
       "BootloaderID": "0x14",
       "FileName": "TestData\\eeprom_1k_01.hex",
-      "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
     },
     {
       "TaskType": "ReadEepromMemory",
       "BootloaderID": "0x14",
       "FileName": "eeprom_1k_01_READ.hex",
-      "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
     },
     {
       "TaskType": "WriteEepromMemory",
       "BootloaderID": "0x14",
       "FileName": "TestData\\eeprom_1k_02.hex",
-      "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
     },
     {
       "TaskType": "ReadEepromMemory",
       "BootloaderID": "0x14",
       "FileName": "eeprom_1k_02_READ.hex",
-      "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
     },
     {
       "TaskType": "WriteEepromMemory",
       "BootloaderID": "0x14",
       "FileName": "TestData\\eeprom_1k_03.hex",
-      "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
     },
     {
       "TaskType": "ReadEepromMemory",
       "BootloaderID": "0x14",
       "FileName": "eeprom_1k_03_READ.hex",
-      "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
     },
     {
       "TaskType": "WriteFlashMemory",
       "BootloaderID": "0x14",
-      "FileName": "..\\..\\..\\..\\..\\DemoProject1\\Release\\DemoProject1.hex",
-      "CPU": "ATMega328P",
+      //"FileName": "..\\..\\..\\..\\..\\DemoProject1\\Release\\DemoProject1.hex",
+      "FileName": "..\\..\\..\\..\\..\\DemoProject2\\Release\\DemoProject2.hex",
       "ProgrammableMemorySize": 32768
     },
     {
       "TaskType": "Reboot",
       "BootloaderID": "0x14",
-      "CPU": "ATMega328P"
     }
 
 
