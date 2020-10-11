@@ -1,77 +1,147 @@
 ﻿{
   "Tasks": [
-    {
-      "TaskType": "WriteFlashMemory",
-      "BootloaderID": "0x01",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
-      "CPU": "ATMega328P",
-      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
-    },
-    {
-      "TaskType": "WriteEepromMemory",
-      "BootloaderID": "0x01",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\11.hex",
-      "CPU": "ATMega328P",
-      "ProgrammableMemorySize": 1024 /* onchip EEPROM */
-    },
+    //{
+    //  "TaskType": "WriteFlashMemory",
+    //  "BootloaderID": "0x01",
+    //  "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+    //  "CPU": "ATMega328P",
+    //  "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    //},
+    //{
+    //  "TaskType": "WriteEepromMemory",
+    //  "BootloaderID": "0x01",
+    //  "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\11.hex",
+    //  "CPU": "ATMega328P",
+    //  "ProgrammableMemorySize": 1024 /* onchip EEPROM */
+    //},
 
-    {
-      "TaskType": "WriteFlashMemory",
-      "BootloaderID": "0x02",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
-      "CPU": "ATMega328P",
-      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
-    },
-    {
-      "TaskType": "WriteEepromMemory",
-      "BootloaderID": "0x02",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\12.hex",
-      "CPU": "ATMega328P",
-      "ProgrammableMemorySize": 1024 /* onchip EEPROM */
-    },
+    //{
+    //  "TaskType": "WriteFlashMemory",
+    //  "BootloaderID": "0x02",
+    //  "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+    //  "CPU": "ATMega328P",
+    //  "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    //},
+    //{
+    //  "TaskType": "WriteEepromMemory",
+    //  "BootloaderID": "0x02",
+    //  "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\12.hex",
+    //  "CPU": "ATMega328P",
+    //  "ProgrammableMemorySize": 1024 /* onchip EEPROM */
+    //},
 
 
-    {
-      "TaskType": "WriteFlashMemory",
-      "BootloaderID": "0x03",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
-      "CPU": "ATMega328P",
-      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
-    },
-    {
-      "TaskType": "WriteEepromMemory",
-      "BootloaderID": "0x03",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\13.hex",
-      "CPU": "ATMega328P",
-      "ProgrammableMemorySize": 1024 /* onchip EEPROM */
-    },
+    //{
+    //  "TaskType": "WriteFlashMemory",
+    //  "BootloaderID": "0x03",
+    //  "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+    //  "CPU": "ATMega328P",
+    //  "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    //},
+    //{
+    //  "TaskType": "WriteEepromMemory",
+    //  "BootloaderID": "0x03",
+    //  "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\13.hex",
+    //  "CPU": "ATMega328P",
+    //  "ProgrammableMemorySize": 1024 /* onchip EEPROM */
+    //},
     //
     //
     // ###########################################################################################
     //
     //
-
+    /*
     {
       "TaskType": "ReadEepromMemory",
       "BootloaderID": "0x14",
       "FileName": "flash_14.hex",
       "CPU": "ATMega328P",
-      "ProgrammableMemorySize": 1024 /* onchip EEPROM */
+      "ProgrammableMemorySize": 1024 // onchip EEPROM
     },
     {
       "TaskType": "ReadFlashMemory",
       "BootloaderID": "0x40",
       "FileName": "flash_40.hex",
       "CPU": "ATMega328P",
-      "ProgrammableMemorySize": 32768 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+      "ProgrammableMemorySize": 32768 // 32x1024 (full capacity) - 2x1024 (bootloader size)
     },
     {
       "TaskType": "ReadFlashMemory",
       "BootloaderID": "0x50",
       "FileName": "flash_50.hex",
       "CPU": "ATMega328P",
-      "ProgrammableMemorySize": 32768 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+      "ProgrammableMemorySize": 32768 // 32x1024 (full capacity) - 2x1024 (bootloader size)
+    },
+  */
+    //
+    //
+    // ############################################################################################
+    //
+    //
+
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x14",
+      "FileName": "TestData\\eeprom_1k_01.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "ReadEepromMemory",
+      "BootloaderID": "0x14",
+      "FileName": "eeprom_1k_01_READ.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x14",
+      "FileName": "TestData\\eeprom_1k_02.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "ReadEepromMemory",
+      "BootloaderID": "0x14",
+      "FileName": "eeprom_1k_02_READ.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x14",
+      "FileName": "TestData\\eeprom_1k_03.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "ReadEepromMemory",
+      "BootloaderID": "0x14",
+      "FileName": "eeprom_1k_03_READ.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
     }
+
+
+
+
+
+    //{
+    //  "TaskType": "ReadEepromMemory",
+    //  "BootloaderID": "0x14",
+    //  "FileName": "flash_14_B.hex",
+    //  "CPU": "ATMega328P",
+    //  "ProgrammableMemorySize": 1024
+    //},
+
+    //{
+    //  "TaskType": "WriteEepromMemory",
+    //  "BootloaderID": "0x14",
+    //  "FileName": "flash_14_REF.hex",
+    //  "CPU": "ATMega328P",
+    //  "ProgrammableMemorySize": 1024
+    //}
+
 
   ]
 }

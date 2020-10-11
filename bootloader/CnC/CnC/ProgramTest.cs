@@ -189,7 +189,8 @@ namespace CnC
             try
             {
                 btp.LoadTasks("bootloader_tasks.json");
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 ColorConsole.WriteLine(ConsoleColor.Red, "Error druing reading: " + ex.Message);
             }
@@ -211,7 +212,7 @@ namespace CnC
             cnc.SendAdvertisementToEveryDetectedPort();
 
             // Scan all available serial ports for bootloaders
-            cnc.AcquireBootloaderDevices((byte)last_bootloader_id);
+            cnc.AcquireBootloaderDevices((byte)(1 + last_bootloader_id));
 
 
             //IntelHEX16Storage loader;
@@ -242,7 +243,7 @@ namespace CnC
             cnc.ShowDevices();
 
 
-            for (int task_index = 0; task_index< btp.Count; task_index++)
+            for (int task_index = 0; task_index < btp.Count; task_index++)
             {
                 TaskEntry task_entry = btp.Tasks[task_index];
                 Console.WriteLine($"Running task {task_index}: {task_entry.TaskType} for device {task_entry.CPU} ID={task_entry.BootloaderID:X2}...");
@@ -271,6 +272,22 @@ namespace CnC
                     storage.Save(task_entry.FileName);
                 }
 
+                if (task_entry.TaskType == TaskType.WriteEepromMemory)
+                {
+                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                    IntelHEX16Storage storage = new IntelHEX16Storage(mm);
+                    storage.Load(task_entry.FileName);
+                    cnc.WriteEEPROM(device, mm);
+                }
+
+                //if (task_entry.TaskType == TaskType.ReadFlashMemory)
+                //{
+                //    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                //    cnc.ReadFLASH(device, mm);
+                //    IntelHEX16Storage storage = new IntelHEX16Storage(mm);
+                //    storage.Save(task_entry.FileName);
+                //}
+
             }
 
             Console.WriteLine("Reading bootloader version and signature");
@@ -288,7 +305,8 @@ namespace CnC
 
             Console.WriteLine("Writing firmare...");
 
-            foreach (Device dev in cnc.Devices) {
+            foreach (Device dev in cnc.Devices)
+            {
 
                 // preapre modified firmare
                 //fw.Write((uint)pos1 + 4, (byte)dev.address);
@@ -301,7 +319,8 @@ namespace CnC
             foreach (Device dev in cnc.Devices)
                 cnc.Reset(dev);
 
-            Console.ReadKey();
+
+            ColorConsole.PressAnyKey();
 
         }
 

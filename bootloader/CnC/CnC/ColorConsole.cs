@@ -11,6 +11,7 @@ namespace CnC
             ColorConsole.sync = new object();
         }
 
+        #region Write/WriteLine
         public static void WriteLine(string value)
         {
             lock (sync)
@@ -81,6 +82,18 @@ namespace CnC
                 Console.BackgroundColor = old_back_color;
 
             }
+        }
+
+        #endregion
+
+        public static void PressAnyKey(string messge = "Press any key...", bool clearInput = true)
+        {
+            while (clearInput && Console.KeyAvailable)
+                Console.ReadKey(false);
+
+            if (!string.IsNullOrEmpty(messge))
+                Console.Write(messge);
+            Console.ReadKey();
         }
     }
 }

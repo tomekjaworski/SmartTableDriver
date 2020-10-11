@@ -44,7 +44,7 @@ namespace IntelHEX
                     sw.Write(":");
                     sw.Write($"{row_length:X2}{address:X4}{00:X2}");
                     sw.Write(string.Join("", row.Select(x => x.ToString("X2"))));
-                    sw.Write($"{checksum:X2}\n");
+                    sw.WriteLine($"{checksum:X2}");
                     bytes_left -= row_length;
                     address += row_length;
                 }
