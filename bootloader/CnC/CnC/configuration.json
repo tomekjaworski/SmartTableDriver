@@ -1,9 +1,0 @@
-﻿{
-  "modules": [
-    {
-      "bootloader_id": 0x01,
-      "flash": "..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
-      "eeprom": "..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\11.hex"
-    }
-  ]
-}

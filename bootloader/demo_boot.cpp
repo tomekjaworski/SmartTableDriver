@@ -13,37 +13,47 @@
 //
 // For Arduino Pro Mini 328 the LED_TOGGLE toggles on-board LED diode.
 // If this bootloader is used on other boards, change this line or remove it completely
+#define LED_ON do { PORTB |= _BV(PORTB5); } while (0);
+#define LED_OFF do { PORTB &= ~_BV(PORTB5); } while (0);
 #define LED_TOGGLE do { PORTB ^= _BV(PORTB5); } while (0);
-
+	
 
 void ___boot_demo(void) __attribute__ ((__used__, section (".BL")));
+
 void ___boot_demo(void)
 {
 	uint8_t arr[3];
 	arr[0] = 'A'; arr[1] = 'B'; arr[2] = 'C';
+	
+	DDRB = 0x00;
+	DDRB |= _BV(PORTB5); //	SCK
+	
 	asm volatile("nop\n");
 	asm volatile("nop\n");
 	asm volatile("nop\n");
-	RS485_DIR_SEND;
 
 	while(1)
-	for (uint8_t i = 0; i < 3; i++) {
-
-		// send a byte
-		UCSR0A |= _BV(TXC0);
-		UDR0 = arr[i];
-		while (!(UCSR0A & _BV(TXC0)));
-
-		// toggle some led
-		LED_TOGGLE;
-
-#if defined (DEBUG)
-		_delay_ms(100);
-#else
-		for (uint32_t j = 0; j < 1000000; j++)
-			asm volatile("nop");
-#endif
+	{
+		LED_ON;
+#if defined(DEBUG)		
+		for (uint32_t j = 0; j < 5000; j++) asm volatile("nop");
+		LED_OFF;
+		for (uint32_t j = 0; j < 50000; j++) asm volatile("nop");
+		LED_ON;
+		for (uint32_t j = 0; j < 5000; j++) asm volatile("nop");
+		LED_OFF;
+		for (uint32_t j = 0; j < 100000; j++) asm volatile("nop");
+#else // Release
+		for (uint32_t j = 0; j < 5*5000; j++) asm volatile("nop");
+		LED_OFF;
+		for (uint32_t j = 0; j < 5*50000; j++) asm volatile("nop");
+		LED_ON;
+		for (uint32_t j = 0; j < 5*5000; j++) asm volatile("nop");
+		LED_OFF;
+		for (uint32_t j = 0; j < 5*100000; j++) asm volatile("nop");
+#endif 
 	}
+
 	asm volatile("nop\n");
 	asm volatile("nop\n");
 	asm volatile("nop\n");

@@ -13,10 +13,10 @@ namespace CnC
         private bool[] dirty;
         private ByteOrder order;
 
-        public Int32 Size => this.mem.Length;
+        public UInt32 Size => (UInt32)this.mem.Length;
         public ByteOrder DefaultByteOrder => this.order;
 
-        public MemoryMap(int size, ByteOrder order = ByteOrder.LittleEndian)
+        public MemoryMap(uint size, ByteOrder order = ByteOrder.LittleEndian)
         {
             this.mem = new byte[size];
             this.dirty = new bool[size];

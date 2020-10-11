@@ -55,18 +55,21 @@ namespace CnC
                         port_names_to_open.Add(port_name);
                     }
 
-                while (port_names_to_open.Count > 0) {
+                while (port_names_to_open.Count > 0)
+                {
                     String port_name = port_names_to_open[0];
-                    try {
+                    port_names_to_open.Remove(port_name);
+                    try
+                    {
                         SerialPort sp = new SerialPort(port_name, 19200, Parity.Even, 8, StopBits.One);
 
                         sp.ReadTimeout = 200;
                         sp.Open();
-                        port_names_to_open.Remove(port_name);
                         lock (this.available_ports)
                             this.available_ports.Add(sp);
                     }
-                    catch (Exception ex) {
+                    catch (Exception ex)
+                    {
                         // Console.WriteLine("Failed");
                     }
 
@@ -118,7 +121,7 @@ namespace CnC
 
         public void SendAdvertisementToEveryDetectedPort()
         {
-            Console.WriteLine("*** TURN ON all devices and press any key to processed...\n");
+            ColorConsole.WriteLine(ConsoleColor.Black, ConsoleColor.Yellow, "*** TURN ON all devices and press any key to processed...");
             char[] anim = { '/', '-', '\\', '|' };
             int anim_counter = 0;
             int cx = 0;
@@ -134,9 +137,7 @@ namespace CnC
                 Thread.Sleep(100);
 
                 Console.CursorLeft = cx;
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.Write("Sending C&C Advertisement to {0} serial ports: ", this.available_ports.Count);
-                Console.ForegroundColor = ConsoleColor.Gray;
+                ColorConsole.Write(ConsoleColor.Yellow, "Sending C&C Advertisement to {0} serial ports: ", this.available_ports.Count);
                 Console.Write(anim[anim_counter++ % 4]);
 
                 // send advertisement to ports on list
@@ -195,9 +196,7 @@ namespace CnC
                 }
 
                 Console.SetCursorPosition(cx, cy);
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write("0x{0:X2}", i);
-                Console.ForegroundColor = ConsoleColor.Gray;
+                ColorConsole.Write(ConsoleColor.Green, "0x{0:X2}", i);
 
 
                 // send ping do selected device
@@ -470,11 +469,12 @@ namespace CnC
                 // setup serial port
                 ep.sp.DiscardInBuffer();
                 ep.sp.DiscardOutBuffer();
-                ep.sp.ReadTimeout = 20;
+                ep.sp.ReadTimeout = 200;
 
                 // send data
                 ep.sp.Write(request.Binary, 0, request.BinarySize);
-                Debug.WriteLine("sent " + request.BinarySize.ToString());
+                Thread.Sleep(0);
+                //Debug.WriteLine("sent " + request.BinarySize.ToString());
 
                 // and wait for response
                 DateTime start = DateTime.Now;
@@ -492,7 +492,6 @@ namespace CnC
                         break; // shit happens
                     }
 
-                    Debug.WriteLine("R " + read.ToString());
                     me.AddData(buffer, read);
                     if (me.TryExtract(ref msg, request.Address, request.Type))
                         break; // ok, got message!

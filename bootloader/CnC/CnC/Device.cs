@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CnC
 {
-    public struct Device
+    public class Device
     {
         public int address;
         public SerialPort sp;

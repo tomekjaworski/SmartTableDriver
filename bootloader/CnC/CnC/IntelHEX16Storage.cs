@@ -18,16 +18,38 @@ namespace IntelHEX
 
         public void Save(string file_name)
         {
-            throw new NotImplementedException("Save");
 
             using (FileStream fs = File.Create(file_name))
             using (StreamWriter sw = new StreamWriter(fs, Encoding.ASCII))
             {
-                for (int address = 0; address < this.mm.Size; address++) {
+                int address = 0;
+                int bytes_left = (int)this.mm.Size;
+                byte[] row = new byte[16];
+                while (bytes_left > 0)
+                {
+                    int checksum =  0;
+                    int row_length = bytes_left > 16 ? 16 : bytes_left;
+                    for (int i = 0; i < row_length; i++)
+                    {
+                        row[i] = this.mm.ReadByte((uint)(address + i));
+                        checksum += row[i];
+                    }
 
+                    checksum += row_length;
+                    checksum += (address & 0xFF);
+                    checksum += ((address >> 8) & 0xFF);
+                    checksum = -checksum;
+                    checksum = checksum & 0x000000ff;
+
+                    sw.Write(":");
+                    sw.Write($"{row_length:X2}{address:X4}{00:X2}");
+                    sw.Write(string.Join("", row.Select(x => x.ToString("X2"))));
+                    sw.Write($"{checksum:X2}\n");
+                    bytes_left -= row_length;
+                    address += row_length;
                 }
                 // EOF for hex
-                sw.WriteLine(":00000001FF");
+                sw.WriteLine($":{0:X2}{0:X4}{01:X2}{255:X2}");
             } // 2xusing
 
         }

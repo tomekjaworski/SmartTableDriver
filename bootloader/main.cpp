@@ -35,7 +35,6 @@ int main(void)
 {
 	uartInitialize();
 	bootInitialize();
-
 	uint16_t wait_counter = 0;
 	while(1) {
 
@@ -49,11 +48,14 @@ int main(void)
 		for (int i = 0; i < 1660; i++)
 			asm volatile("nop");
 
+
 		//_delay_ms(1);
-		if (wait_counter++ > ADVERTISEMENT_WAIT_TIME) { // wait some time for bootloader activation byte
-#if defined (NDEBUG)
+		if (wait_counter++ > ADVERTISEMENT_WAIT_TIME
+#if !defined(DEBUG)
+			* 5
+#endif 
+			) { // wait some time for bootloader activation byte
 			___boot_demo();
-#endif
 			asm volatile("jmp 0000");
 		}
 	}
@@ -67,7 +69,7 @@ int main(void)
 		uint8_t addr = uartReceive();
 		if (rx.timeout) continue;
 
-#if defined (DEBUG)
+#if !defined (DEBUG)
 		// in debug mode: respond to requests on multiple addresses
 		if (addr != BOOTLOADER_HARDWARE_ADDRESS && addr != 0x40&& addr != 0x50&& addr != 0x52&& addr != 0xB0)
 #else
