@@ -20,8 +20,8 @@
 #include "config.h"
 #include "intensity_measurements.h"
 #include "eeprom_config.h"
+#include "cpu.h"
 
-void cpu_init(void);
 void send(MessageType type, const void* payload, uint8_t payload_length);
 bool check_rx(void);
 
@@ -106,13 +106,12 @@ int main(void)
 			send(MessageType::DeviceIdentifierResponse, (const uint8_t*)ptr, strlen((const char*)ptr));
 		}
 
-		//if (rx.buffer.header.type == MessageType::GetFullResolutionSyncMeasurementRequest)
-		//{
-			////im_full_resolution_synchronized();
-			//im_execute_sync();
-			//send(rx.buffer.header.address, MessageType::GetFullResolutionSyncMeasurementResponse, (const uint8_t*)otable, 10*10*sizeof(uint16_t));
-		//}
-
+	
+		if (rx.buffer.header.type == MessageType::RebootRequest) {
+			send(MessageType::RebootResponse, im_data.primary.raw8, 10*10*sizeof(uint8_t));
+			cpu_reboot();
+		}
+		
 
 
 		if (rx.buffer.header.type == MessageType::SingleMeasurement8Request) {

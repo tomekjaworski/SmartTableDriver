@@ -197,6 +197,9 @@
     <Compile Include="config.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="cpu.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="dbg_putchar.cpp">
       <SubType>compile</SubType>
     </Compile>

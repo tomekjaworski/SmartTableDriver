@@ -8,11 +8,12 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <avr/pgmspace.h>
+#include <avr/wdt.h>
 
 #include "hardware.h"
 #include "comm.h"
 #include "config.h"
-
+#include "cpu.h"
 #define BAUD_UX2
 
 //////////////////////////////////////////////////////////////////////////
@@ -85,6 +86,11 @@ void cpu_init(void)
 	TIMSK0 |= (1 << OCIE0A);
 	TCCR0B |= (1 << CS01) | (0 << CS00); // clk / 8
 
+	// Turn off watchdog
+	MCUSR = 0x00;
+	WDTCSR = 0x00;
+	wdt_disable();
+
 	// reset photodiodes selectors
 	RESET1_LOW;
 	RESET2_LOW;
@@ -110,4 +116,10 @@ void cpu_init(void)
 
 	// start przerwan
 	sei();
+}
+
+void cpu_reboot(void) {
+	// start watchdog and lock so we can reboot
+	wdt_enable(WDTO_15MS);
+	while(1);
 }

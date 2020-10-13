@@ -156,6 +156,9 @@ enum class MessageType : uint8_t
 	
 	DeviceIdentifierRequest = 0x04,
 	DeviceIdentifierResponse = 0x05,
+
+	RebootRequest = 0x06,
+	RebootResponse = 0x07,
 	
 	SingleMeasurement8Request = 0x10,
 	SingleMeasurement8Response = 0x11,
