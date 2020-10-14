@@ -50,15 +50,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AVRBootloaderCnC.cs" />
+    <Compile Include="BootloaderException.cs" />
+    <Compile Include="Jobs\BootloaderTaskProvider.cs" />
     <Compile Include="CnCException.cs" />
     <Compile Include="ColorConsole.cs" />
     <Compile Include="ConsoleProgressBar.cs" />
     <Compile Include="ByteOrder.cs" />
+    <Compile Include="Newtonsoft\Json\Converters\HexStringJsonConverter.cs" />
+    <Compile Include="Jobs\CPUType.cs" />
     <Compile Include="Device.cs" />
     <Compile Include="DumpMode.cs" />
     <Compile Include="FifoBuffer.cs" />
     <Compile Include="IntelHEXFormatException.cs" />
     <Compile Include="IntelHEX16Storage.cs" />
+    <Compile Include="Jobs\TaskType.cs" />
     <Compile Include="MemoryMap.cs" />
     <Compile Include="MemoryMapException.cs" />
     <Compile Include="MemoryVerificationException.cs" />
@@ -67,6 +72,8 @@
     <Compile Include="ProgramTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Jobs\TaskEntry.cs" />
+    <Compile Include="Jobs\TaskContainer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

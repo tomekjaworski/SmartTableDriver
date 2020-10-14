@@ -1,11 +1,8 @@
 ﻿using CnC.Jobs;
 using IntelHEX;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -13,171 +10,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Newtonsoft.Json.Converters
-{
-    public sealed class HexStringJsonConverter : JsonConverter
-    {
-        public override bool CanConvert(Type objectType) => typeof(int).Equals(objectType);
-
-        public override bool CanRead => true;
-        public override bool CanWrite => false;
-
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) => throw new NotImplementedException();
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            string str = reader.Value as string;
-            if (string.IsNullOrEmpty(str) || !str.StartsWith("0x"))
-                throw new JsonSerializationException($"Unable to convert string to integer");
-            return Convert.ToInt32(str, 16);
-        }
-    }
-}
-
-namespace CnC.Jobs
-{
-    public enum TaskType
-    {
-        WriteFlashMemory,
-        Reboot,
-
-        ReadFlashMemory,
-        ReadEepromMemory,
-        WriteEepromMemory,
-    }
-
-    public enum CPUType
-    {
-        ATMega328P,
-    }
-
-    public class TaskEntry
-    {
-        [JsonProperty("BootloaderID")]
-        [JsonConverter(typeof(Newtonsoft.Json.Converters.HexStringJsonConverter))]
-        public int BootloaderID { get; set; }
-
-        [JsonProperty("TaskType")]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public TaskType TaskType { get; set; }
-
-        [JsonProperty("FileName")]
-        public string FileName { get; set; }
-
-        [JsonProperty("CPU")]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public CPUType CPU { get; set; }
-
-        [JsonProperty("ProgrammableMemorySize")]
-        //[JsonConverter(typeof(Newtonsoft.Json.Converters.HexStringJsonConverter))]
-        public uint ProgrammableMemorySize { get; set; }
-    }
-
-    public class TaskContainer
-    {
-        [JsonProperty("Tasks")]
-        public TaskEntry[] Tasks { get; set; }
-
-        public TaskContainer()
-        {
-            this.Tasks = new TaskEntry[0];
-        }
-    }
-
-}
 
 namespace CnC
 {
-
-
-
-
-    public class BootloaderTaskProvider
-    {
-        private TaskEntry[] tasks;
-        public TaskEntry[] Tasks => this.tasks;
-
-        public int Count => this.tasks.Length;
-
-        public BootloaderTaskProvider()
-        {
-
-        }
-
-        public void LoadTasks(string taskDescriptionFile)
-        {
-            // Read tasks
-            Jobs.TaskContainer task_container = null;
-            try
-            {
-                string content = File.ReadAllText(taskDescriptionFile);
-                task_container = JsonConvert.DeserializeObject<Jobs.TaskContainer>(content);
-            }
-            catch (IOException ioex)
-            {
-                throw new BootloaderException($"Configuration load error: {ioex.Message}", ioex);
-            }
-            catch (JsonException jex)
-            {
-                throw new BootloaderException($"Configuration parsing error: {jex.Message}", jex);
-            }
-
-            // Verify tasks
-            for(int i = 0; i < task_container.Tasks.Length; i++)
-            {
-                TaskEntry task = task_container.Tasks[i];
-                try
-                {
-                    //todo: refactorize
-                    if (task.TaskType == TaskType.WriteEepromMemory)
-                    {
-                        //TODO: replace fake load into fake memory with a clear verification procedure
-                        MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
-                        IntelHEX16Storage s = new IntelHEX16Storage(mm);
-                        s.Load(task.FileName);
-                    }
-
-                    if (task.TaskType == TaskType.WriteFlashMemory)
-                    {
-                        //TODO: replace fake load into fake memory with a clear verification procedure
-                        MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
-                        IntelHEX16Storage s = new IntelHEX16Storage(mm);
-                        s.Load(task.FileName);
-                    }
-                    if (task.TaskType == TaskType.ReadFlashMemory || task.TaskType == TaskType.ReadEepromMemory)
-                    {
-                        //TODO: replace fake load into fake memory with a clear verification procedure
-                      //  MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
-                       // IntelHEX16Storage s = new IntelHEX16Storage(mm);
-                        //s.Load(task.FileName);
-                    }
-                    if (task.TaskType == TaskType.Reboot)
-                    {
-                        //?
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new BootloaderException($"Task verification failed ({task.TaskType}, task #{i}): {ex.Message}", ex);
-                }
-            }
-
-            // Seems ok
-            this.tasks = task_container.Tasks;
-        }
-    }
-
-
-    [Serializable]
-    public class BootloaderException : ApplicationException
-    {
-        public BootloaderException() { }
-        public BootloaderException(string message) : base(message) { }
-        public BootloaderException(string message, Exception inner) : base(message, inner) { }
-        protected BootloaderException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
-    }
 
     class Program
     {
