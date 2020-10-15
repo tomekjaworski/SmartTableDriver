@@ -1,0 +1,474 @@
+﻿{
+  "Tasks": [
+
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x11"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x12"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x13"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x14"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x15"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x16"
+    },
+    // -------------------------------------
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x21"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x22"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x23"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x24"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x25"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x26"
+    },
+    // -------------------------------------
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x31"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x32"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x33"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x34"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x35"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x36"
+    },
+    // ------------------------------------- 
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x41"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x42"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x43"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x44"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x45"
+    },
+    {
+      "TaskType": "ReadBootloaderVersion",
+      "BootloaderID": "0x46"
+    },
+
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+
+
+
+    {
+      "TaskType": "WaitForKey"
+    },
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x11",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x12",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x13",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x14",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x15",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x16",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    // -----------------------------
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x21",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x22",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x23",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x24",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x25",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x26",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    // --------------------------
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x31",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x32",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x33",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x34",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x35",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x36",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    // -----------------------
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x41",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x42",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x43",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x44",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x45",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "TaskType": "WriteFlashMemory",
+      "BootloaderID": "0x46",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    // ####################################
+    // ####################################
+    // ####################################
+    // ####################################
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x11",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\11.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x12",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\12.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x13",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\13.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x14",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\14.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x15",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\15.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x16",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\16.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    // -------------------------------------
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x21",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\21.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x22",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\22.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x23",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\23.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x24",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\24.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x25",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\25.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x26",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\26.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    // -------------------------------------
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x31",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\31.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x32",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\32.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x33",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\33.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x34",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\34.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x35",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\35.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x36",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\36.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    // ------------------------------------- 
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x41",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\41.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x42",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\42.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x43",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\43.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x44",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\44.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x45",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\45.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+    {
+      "TaskType": "WriteEepromMemory",
+      "BootloaderID": "0x46",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\46.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    }
+    // -------------------------------------
+
+
+
+  ]
+}

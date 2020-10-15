@@ -41,13 +41,13 @@ namespace CnC
             cnc.ShowDevices();
 
             Console.WriteLine("Reading bootloader version and signature");
-            foreach (Device dev in cnc.Devices)
+            foreach (BootloaderClient dev in cnc.Devices)
             {
-                Console.WriteLine("Reading device {0:X2}... ", dev.address);
+                Console.WriteLine("Reading device {0:X2}... ", dev.BootloaderAddress);
 
                 // read bootloader version and timestamp
                 string ver = "";
-                cnc.ReadVersion(dev, ref ver);
+                cnc.ReadBootloaderVersion(dev, ref ver);
 
                 // read CPU signature
                 byte[] bsig = null;
@@ -59,15 +59,15 @@ namespace CnC
             
             Console.WriteLine("Reading EEPROM and Flash memories...");
             
-            foreach (Device dev in cnc.Devices)
+            foreach (BootloaderClient dev in cnc.Devices)
             {
-                Console.WriteLine("Reading device {0:X2}... ", dev.address);
+                Console.WriteLine("Reading device {0:X2}... ", dev.BootloaderAddress);
 
                 // read eeprom
                 MemoryMap mm = new MemoryMap(1024);
                 cnc.ReadEEPROM(dev, mm);
 
-                string fname = string.Format("eeprom_{0:X2}", dev.address);
+                string fname = string.Format("eeprom_{0:X2}", dev.BootloaderAddress);
                 mm.Dump(fname + ".txt", DumpMode.Text);
                 mm.Dump(fname + ".bin", DumpMode.Binary);
 
@@ -75,7 +75,7 @@ namespace CnC
                 mm = new MemoryMap(32 * 1024);
                 cnc.ReadFLASH(dev, mm);
 
-                fname = string.Format("flash_{0:X2}", dev.address);
+                fname = string.Format("flash_{0:X2}", dev.BootloaderAddress);
                 mm.Dump(fname + ".txt", DumpMode.Text);
                 mm.Dump(fname + ".bin", DumpMode.Binary);
             }

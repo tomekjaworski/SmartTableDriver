@@ -6,6 +6,8 @@ namespace CnC
     {
         private static object sync;
 
+        public static object Synchronization => sync;
+
         static ColorConsole()
         {
             ColorConsole.sync = new object();
@@ -94,6 +96,52 @@ namespace CnC
             if (!string.IsNullOrEmpty(messge))
                 Console.Write(messge);
             Console.ReadKey();
+        }
+
+        internal static void WriteXY(int left, int top, string str)
+        {
+            lock(ColorConsole.sync)
+            {
+                int old_left = Console.CursorLeft;
+                int old_top = Console.CursorTop;
+                Console.SetCursorPosition(left, top);
+
+
+                Console.Write(str);
+
+
+                Console.SetCursorPosition(old_left, old_top);
+
+            }
+        }
+
+        internal static void WriteXY(int left, int top, ConsoleColor textColor, string str)
+        {
+            lock (ColorConsole.sync)
+            {
+                int old_left = Console.CursorLeft;
+                int old_top = Console.CursorTop;
+                ConsoleColor old_text = Console.ForegroundColor;
+
+                Console.SetCursorPosition(left, top);
+                Console.ForegroundColor = textColor;
+                Console.Write(str);
+
+                Console.SetCursorPosition(old_left, old_top);
+                Console.ForegroundColor = old_text;
+            }
+        }
+
+        internal static void WriteXY(int left, int top, char ch)
+        {
+            lock (ColorConsole.sync)
+            {
+                int old_left = Console.CursorLeft;
+                int old_top = Console.CursorTop;
+                Console.SetCursorPosition(left, top);
+                Console.Write(ch);
+                Console.SetCursorPosition(old_left, old_top);
+            }
         }
     }
 }

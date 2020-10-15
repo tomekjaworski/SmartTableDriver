@@ -17,9 +17,9 @@ namespace CnC
         List<SerialPort> available_ports;
         List<string> excluded_port_names;
 
-        List<Device> discovered_devices;
+        List<BootloaderClient> discovered_devices;
 
-        public Device[] Devices => this.discovered_devices.ToArray();
+        public BootloaderClient[] Devices => this.discovered_devices.ToArray();
 
         Random random;
 
@@ -28,7 +28,7 @@ namespace CnC
         {
             this.available_ports = new List<SerialPort>();
             this.excluded_port_names = new List<string>();
-            this.discovered_devices = new List<Device>();
+            this.discovered_devices = new List<BootloaderClient>();
             this.random =  new Random();
         }
 
@@ -37,7 +37,7 @@ namespace CnC
             foreach (SerialPort sp in available_ports)
                 this.discovered_devices.AddRange(AcquireDevicesOnSerialPort(sp, max_addr));
 
-            this.discovered_devices.Sort((x, y) => x.address - y.address);
+            this.discovered_devices.Sort((x, y) => x.BootloaderAddress - y.BootloaderAddress);
         }
 
 
@@ -79,10 +79,10 @@ namespace CnC
             }
         }
 
-        public bool Reboot(Device dev)
+        public bool Reboot(BootloaderClient dev)
         {
-            Console.Write("Rebooting {0:X2}... ", dev.address);
-            Message reboot_message = new Message((byte)dev.address, MessageType.Reboot);
+            Console.Write("Rebooting {0:X2}... ", dev.BootloaderAddress);
+            Message reboot_message = new Message(dev.BootloaderAddress, MessageType.Reboot);
             Message msg = SendAndWaitForResponse(dev, reboot_message, 200, false);
 
             if (msg != null)
@@ -93,12 +93,12 @@ namespace CnC
             return msg != null;
         }
 
-        public bool Ping(Device dev, int timeout)
+        public bool Ping(BootloaderClient dev, int timeout)
         {
             int x = this.random.Next();
             byte[] payload = BitConverter.GetBytes(x);
 
-            Message ping_message = new Message((byte)dev.address, MessageType.Ping, payload);
+            Message ping_message = new Message(dev.BootloaderAddress, MessageType.Ping, payload);
             Message msg = SendAndWaitForResponse(dev, ping_message, timeout, false);
 
             // check if there was a response
@@ -167,7 +167,7 @@ namespace CnC
             Task.WaitAll(t);
         }
         
-        public Device[] AcquireDevicesOnSerialPort(SerialPort sp, byte max_addr)
+        public BootloaderClient[] AcquireDevicesOnSerialPort(SerialPort sp, byte max_addr)
         {
             Console.WriteLine("\nSending PING to serial port {0}... ", sp.PortName);
             Console.CursorVisible = false;
@@ -181,12 +181,12 @@ namespace CnC
             sp.ReadTimeout = 20;
             byte[] buffer = new byte[1024];
             MessageExtractor me = new MessageExtractor();
-            List<Device> endpoints = new List<Device>();
+            List<BootloaderClient> endpoints = new List<BootloaderClient>();
 
             // scan through 0x00 - 0xEF. Range 0xF0 - 0xFF is reserved
             max_addr = Math.Min(max_addr, (byte)0xF0);
 
-            for (int i = 0x00; i < max_addr; i++) {
+            for (byte naddress = 0x00; naddress <= max_addr; naddress++) {
               //i = 0x12;
                 if (intro) {
                     Console.Write(" Looking for device ");
@@ -196,7 +196,7 @@ namespace CnC
                 }
 
                 Console.SetCursorPosition(cx, cy);
-                ColorConsole.Write(ConsoleColor.Green, "0x{0:X2}", i);
+                ColorConsole.Write(ConsoleColor.Green, "0x{0:X2}", naddress);
 
 
                 // send ping do selected device
@@ -204,14 +204,14 @@ namespace CnC
                 sp.DiscardOutBuffer();
                 me.Discard();
 
-                Message ping_message = new Message((byte)i, MessageType.Ping);
-                Message msg = SendAndWaitForResponse(new Device(sp, i), ping_message, timeout, false, 0);
+                Message ping_message = new Message(naddress, MessageType.Ping);
+                Message msg = SendAndWaitForResponse(new BootloaderClient(sp, naddress), ping_message, timeout, false, 0);
 
                 if (msg != null) {
                     Console.WriteLine(" Found!");
                     counter++;
                     intro = true;
-                    endpoints.Add(new Device(sp, i));
+                    endpoints.Add(new BootloaderClient(sp, naddress));
                 }
 
                 //break;
@@ -224,51 +224,123 @@ namespace CnC
             return endpoints.ToArray();
         }
 
+        class __x
+        {
+            public int Row;
+
+            public Thread Thread { get; internal set; }
+            public byte MaxAddress { get; internal set; }
+            public SerialPort SerialPort { get; internal set; }
+            public List<BootloaderClient> EndpointsCollection { get; internal set; }
+        }
+
+        internal void AcquireBootloaderDevicesInParallel(byte max_addr)
+        {
+            Console.WriteLine();
+            __x[] r = new __x[available_ports.Count];
+            int top = Console.CursorTop;
+            List<BootloaderClient> endpoints = new List<BootloaderClient>();
+
+
+            for (int i = 0; i < available_ports.Count; i++)
+            {
+                r[i] = new __x()
+                {
+                    Row = top + i,
+                    Thread = new Thread(new ParameterizedThreadStart(Ack)),
+                    MaxAddress = max_addr,
+                    SerialPort = available_ports[i],
+                    EndpointsCollection = endpoints
+                };
+                r[i].Thread.Start(r[i]);
+            }
+
+            for (int i = 0; i < available_ports.Count; i++)
+                r[i].Thread.Join();
+
+            Console.CursorTop += available_ports.Count;
+
+            this.discovered_devices.AddRange(endpoints);
+            this.discovered_devices.Sort((x, y) => x.BootloaderAddress - y.BootloaderAddress);
+        }
+
+        private void Ack(object obj)
+        {
+
+            __x r = obj as __x;
+            int col = 0;
+            ColorConsole.WriteXY(0, r.Row, r.SerialPort.PortName);
+            col += 3 + 3 + 1;
+
+            var sp = r.SerialPort;
+            var me = new MessageExtractor();
+            int timeout = 100;
+            var endpoints = new List<BootloaderClient>();
+
+            for (byte scanned_address = 0x00; scanned_address <= r.MaxAddress; scanned_address++)
+            {
+
+                int ccol = col;
+                ColorConsole.WriteXY(ccol, r.Row, ConsoleColor.Green, $"0x{scanned_address:X2}");
+                ccol += 5;
+                ColorConsole.WriteXY(ccol, r.Row, ConsoleColor.Yellow, "[" + string.Join(",", endpoints.Select(x => x.BootloaderAddress.ToString("X2"))) + "]");
+
+                // send ping do selected device
+                sp.DiscardInBuffer();
+                sp.DiscardOutBuffer();
+                me.Discard();
+
+                Message ping_message = new Message(scanned_address, MessageType.Ping);
+                Message msg = SendAndWaitForResponse(new BootloaderClient(sp, scanned_address), ping_message, timeout, false, 0);
+
+                if (msg != null)
+                    endpoints.Add(new BootloaderClient(sp, scanned_address));
+            }
+
+            lock (r.EndpointsCollection)
+                r.EndpointsCollection.AddRange(endpoints);
+        }
 
         public void ShowDevices()
         {
             Console.WriteLine("\nListing {0} discovered device(s): ", discovered_devices.Count);
 
             // group them against serial port
-            Dictionary<string, List<Device>> devs = new Dictionary<string, List<Device>>();
-            foreach (Device dev in this.discovered_devices) {
-                if (!devs.ContainsKey(dev.sp.PortName))
-                    devs[dev.sp.PortName] = new List<Device>();
+            Dictionary<string, List<BootloaderClient>> devs = new Dictionary<string, List<BootloaderClient>>();
+            foreach (BootloaderClient dev in this.discovered_devices)
+            {
+                if (!devs.ContainsKey(dev.Port.PortName))
+                    devs[dev.Port.PortName] = new List<BootloaderClient>();
 
-                devs[dev.sp.PortName].Add(dev);
+                devs[dev.Port.PortName].Add(dev);
             }
 
             // sort them
-            foreach(List<Device> sp_devs in devs.Values) 
-                sp_devs.Sort((x, y) => x.address - y.address);
+            foreach (List<BootloaderClient> sp_devs in devs.Values)
+                sp_devs.Sort((x, y) => x.BootloaderAddress - y.BootloaderAddress);
 
             // and show them
-            foreach (string key in devs.Keys) {
-                List<Device> sp_devs = devs[key];
+            foreach (string key in devs.Keys)
+            {
+                List<BootloaderClient> sp_devs = devs[key];
                 Console.Write(" Port {0:010}: ", key.PadRight(5));
-
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine(string.Join(" ", sp_devs.Select(x => x.address.ToString("X2"))));
-                Console.ForegroundColor = ConsoleColor.Gray;
+                ColorConsole.WriteLine(ConsoleColor.Yellow, string.Join(" ", sp_devs.Select(x => x.BootloaderAddress.ToString("X2"))));
             }
 
             // and show them again, but together for better view in case of holes in addresses
 
-            discovered_devices.Sort((x, y) => x.address - y.address);
+            discovered_devices.Sort((x, y) => x.BootloaderAddress - y.BootloaderAddress);
             Console.Write(" Concatenated list: ");
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine( string.Join(" ", discovered_devices.Select(x => x.address.ToString("X2"))));
-            Console.ForegroundColor = ConsoleColor.Gray;
-
+            ColorConsole.WriteLine(ConsoleColor.Yellow, string.Join(" ", discovered_devices.Select(x => x.BootloaderAddress.ToString("X2"))));
         }
 
-        public void ReadVersion(Device dev, ref string ver)
+        public void ReadBootloaderVersion(BootloaderClient dev, ref string ver)
         {
             Console.CursorVisible = false;
 
             Console.Write("Reading bootloader fw version:   ");
 
-            Message msg_readfwver = new Message((byte)dev.address, MessageType.ReadBootloaderVersion);
+            Message msg_readfwver = new Message(dev.BootloaderAddress, MessageType.ReadBootloaderVersion);
             Message response = SendAndWaitForResponse(dev, msg_readfwver, 2000);
 
             ver = Encoding.ASCII.GetString(response.Payload, 0, response.Payload.Length - 1);
@@ -278,14 +350,14 @@ namespace CnC
         }
 
 
-        public void ReadSignature(Device endpoint, out byte[] signature)
+        public void ReadSignature(BootloaderClient endpoint, out byte[] signature)
         {
             Console.CursorVisible = false;
             signature = null;
 
             Console.Write("Reading AVR CPU signature (32b): ");
 
-            Message msg_readsig = new Message((byte)endpoint.address, MessageType.ReadSignature);
+            Message msg_readsig = new Message(endpoint.BootloaderAddress, MessageType.ReadSignature);
             Message response = SendAndWaitForResponse(endpoint, msg_readsig, 2000);
 
             signature = response.Payload;
@@ -294,7 +366,7 @@ namespace CnC
             Console.WriteLine("Done ({0:X2} {1:X2} {2:X2}).", signature[0], signature[2], signature[4]);
         }
 
-        public void ReadFLASH(Device endpoint, MemoryMap dest)
+        public void ReadFLASH(BootloaderClient endpoint, MemoryMap dest)
         {
             Console.CursorVisible = false;
 
@@ -302,7 +374,7 @@ namespace CnC
             ConsoleProgressBar cpb = new ConsoleProgressBar(0, dest.Size);
 
             for (uint addr = 0; addr < dest.Size; addr += 128, cpb.Progress = addr) {
-                Message msg_readpage = new Message((byte)endpoint.address, MessageType.ReadFlashPage, new byte[] { (byte)(addr & 0xFF), (byte)(addr >> 8), });
+                Message msg_readpage = new Message(endpoint.BootloaderAddress, MessageType.ReadFlashPage, new byte[] { (byte)(addr & 0xFF), (byte)(addr >> 8), });
 
                 Message response = SendAndWaitForResponse(endpoint, msg_readpage, 2000);
                 dest.Write(addr, response.Payload, 0, 128);
@@ -312,7 +384,7 @@ namespace CnC
             Console.WriteLine("Done.");
         }
 
-        public void WriteFLASH(Device endpoint, MemoryMap source)
+        public void WriteFLASH(BootloaderClient endpoint, MemoryMap source)
         {
             Console.CursorVisible = false;
 
@@ -326,7 +398,7 @@ namespace CnC
                 payload[1] = (byte)((addr >> 8) & 0xFF);
                 source.Read(addr, payload, 2, 128);
 
-                Message msg_write = new Message((byte)endpoint.address, MessageType.WriteFlashPage, payload);
+                Message msg_write = new Message(endpoint.BootloaderAddress, MessageType.WriteFlashPage, payload);
 
                 Message response = SendAndWaitForResponse(endpoint, msg_write, 2000);
             }
@@ -335,7 +407,7 @@ namespace CnC
             Console.WriteLine("Done.");
         }
 
-        public bool VerifyFLASH(Device endpoint, MemoryMap expected)
+        public bool VerifyFLASH(BootloaderClient endpoint, MemoryMap expected)
         {
             Console.CursorVisible = false;
 
@@ -344,7 +416,7 @@ namespace CnC
             MemoryMap mmread = new MemoryMap(expected.Size);
 
             for (uint addr = 0; addr < expected.Size; addr += 128, cpb.Progress = addr) {
-                Message msg_readpage = new Message((byte)endpoint.address, MessageType.ReadFlashPage, new byte[] { (byte)(addr & 0xFF), (byte)(addr >> 8), });
+                Message msg_readpage = new Message(endpoint.BootloaderAddress, MessageType.ReadFlashPage, new byte[] { (byte)(addr & 0xFF), (byte)(addr >> 8), });
 
                 Message response = SendAndWaitForResponse(endpoint, msg_readpage, 2000);
                 mmread.Write(addr, response.Payload, 0, 128);
@@ -369,7 +441,7 @@ namespace CnC
             return result;
         }
 
-        public void ReadEEPROM(Device endpoint, MemoryMap dest)
+        public void ReadEEPROM(BootloaderClient endpoint, MemoryMap dest)
         {
             Console.CursorVisible = false;
 
@@ -377,7 +449,7 @@ namespace CnC
             ConsoleProgressBar cpb = new ConsoleProgressBar(0, dest.Size);
 
             for (uint addr = 0; addr < dest.Size; addr += 128, cpb.Progress = addr) {
-                Message msg_readpage = new Message((byte)endpoint.address, MessageType.ReadEepromPage, new byte[] { (byte)(addr & 0xFF), (byte)(addr >> 8), });
+                Message msg_readpage = new Message(endpoint.BootloaderAddress, MessageType.ReadEepromPage, new byte[] { (byte)(addr & 0xFF), (byte)(addr >> 8), });
 
                 Message response = SendAndWaitForResponse(endpoint, msg_readpage, 2000);
                 dest.Write(addr, response.Payload, 0, 128);
@@ -387,7 +459,7 @@ namespace CnC
             Console.WriteLine("Done.");
         }
 
-        public bool VerifyEEPROM(Device endpoint, MemoryMap expected)
+        public bool VerifyEEPROM(BootloaderClient endpoint, MemoryMap expected)
         {
             Console.CursorVisible = false;
 
@@ -396,7 +468,7 @@ namespace CnC
             MemoryMap mmread = new MemoryMap(expected.Size);
 
             for (uint addr = 0; addr < expected.Size; addr += 128, cpb.Progress = addr) {
-                Message msg_readpage = new Message((byte)endpoint.address, MessageType.ReadEepromPage, new byte[] { (byte)(addr & 0xFF), (byte)(addr >> 8), });
+                Message msg_readpage = new Message(endpoint.BootloaderAddress, MessageType.ReadEepromPage, new byte[] { (byte)(addr & 0xFF), (byte)(addr >> 8), });
 
                 Message response = SendAndWaitForResponse(endpoint, msg_readpage, 2000);
                 mmread.Write(addr, response.Payload, 0, 128);
@@ -421,7 +493,7 @@ namespace CnC
             return result;
         }
 
-        public void WriteEEPROM(Device endpoint, MemoryMap source)
+        public void WriteEEPROM(BootloaderClient endpoint, MemoryMap source)
         {
             Console.CursorVisible = false;
 
@@ -435,7 +507,7 @@ namespace CnC
                 payload[1] = (byte)((addr >> 8) & 0xFF);
                 source.Read(addr, payload, 2, 128);
 
-                Message msg_write = new Message((byte)endpoint.address, MessageType.WriteEepromPage, payload);
+                Message msg_write = new Message(endpoint.BootloaderAddress, MessageType.WriteEepromPage, payload);
 
                 Message response = SendAndWaitForResponse(endpoint, msg_write, 2000);
                 if (response.Type != MessageType.WriteEepromPage)
@@ -455,9 +527,9 @@ namespace CnC
             }
         }
 
-        private Message SendAndWaitForResponse(Device ep, Message request, int timeout, bool throw_timeout_exception = true, int retries = 3)
+        private Message SendAndWaitForResponse(BootloaderClient ep, Message request, int timeout, bool throw_timeout_exception = true, int retries = 3)
         {
-            Debug.Assert(ep.address == request.Address);
+            Debug.Assert(ep.BootloaderAddress == request.Address);
 
             MessageExtractor me = new MessageExtractor();
             byte[] buffer = new byte[1024];
@@ -468,12 +540,12 @@ namespace CnC
             while (retries-- >= 0) {
 
                 // setup serial port
-                ep.sp.DiscardInBuffer();
-                ep.sp.DiscardOutBuffer();
-                ep.sp.ReadTimeout = 200;
+                ep.Port.DiscardInBuffer();
+                ep.Port.DiscardOutBuffer();
+                ep.Port.ReadTimeout = 200;
 
                 // send data
-                ep.sp.Write(request.Binary, 0, request.BinarySize);
+                ep.Port.Write(request.Binary, 0, request.BinarySize);
                 Thread.Sleep(0);
                 //Debug.WriteLine("sent " + request.BinarySize.ToString());
 
@@ -482,7 +554,7 @@ namespace CnC
                 do {
                     int read = -1;
                     try {
-                        read = ep.sp.Read(buffer, 0, buffer.Length);
+                        read = ep.Port.Read(buffer, 0, buffer.Length);
                     }
                     catch (TimeoutException tex) {
                         Debug.WriteLine("TO");
@@ -505,7 +577,7 @@ namespace CnC
                 Debug.WriteLine("RETRY");
             }
             if (msg == null && throw_timeout_exception)
-                throw new TimeoutException(string.Format("No response from bootloader device 0x{0:X2} on {1}", ep.address, ep.sp.PortName));
+                throw new TimeoutException(string.Format("No response from bootloader device 0x{0:X2} on {1}", ep.BootloaderAddress, ep.Port.PortName));
 
             return msg;
         }

@@ -27,7 +27,7 @@ namespace CnC
             Console.WriteLine($"Reading task file...");
             try
             {
-                btp.LoadTasks("bootloader_tasks.json");
+                btp.LoadTasks("bootloader_tasks_real.json");
             }
             catch (Exception ex)
             {
@@ -41,9 +41,9 @@ namespace CnC
             // Show some summary            
             Console.WriteLine($"Task summary:");
             Console.WriteLine($"   Found {btp.Count} task(s).");
-            Console.WriteLine($"   Highest bootloader ID:  {last_bootloader_id}");
+            Console.WriteLine($"   Highest bootloader ID: 0x{last_bootloader_id:X2}");
             Console.WriteLine($"   Unique bootloaders (by ID): {btp.Tasks.Select(x => x.BootloaderID).Distinct().Count()}");
-            Console.WriteLine($"   Unique bootloaders: {string.Join(",", btp.Tasks.Select(x => x.BootloaderID.ToString("X2")).Distinct())}");
+            Console.WriteLine($"   Unique bootloaders: {string.Join(",", btp.Tasks.Select(x => "0x"+x.BootloaderID.ToString("X2")).Distinct())}");
 
             //
             // Wait for all serial ports to be connected and identified
@@ -51,7 +51,8 @@ namespace CnC
             cnc.SendAdvertisementToEveryDetectedPort();
 
             // Scan all available serial ports for bootloaders
-            cnc.AcquireBootloaderDevices((byte)(1 + last_bootloader_id));
+            //cnc.AcquireBootloaderDevices((byte)(1 + last_bootloader_id));
+            cnc.AcquireBootloaderDevicesInParallel((byte)(1 + last_bootloader_id));
 
 
             //IntelHEX16Storage loader;
@@ -88,7 +89,7 @@ namespace CnC
                 Console.WriteLine($"Running task {task_index}: {task_entry.TaskType} for device {task_entry.CPU} ID={task_entry.BootloaderID:X2}...");
 
                 // Get the device
-                Device device = cnc.Devices.Where(x => x.address == task_entry.BootloaderID).FirstOrDefault();
+                BootloaderClient device = cnc.Devices.Where(x => x.BootloaderAddress == task_entry.BootloaderID).FirstOrDefault();
                 if (device == null)
                 {
                     ColorConsole.WriteLine(ConsoleColor.Yellow, "   No proper device found.");
@@ -131,6 +132,17 @@ namespace CnC
                 if (task_entry.TaskType == TaskType.Reboot)
                 {
                     cnc.Reboot(device);
+                }
+
+                if (task_entry.TaskType == TaskType.WaitForKey)
+                {
+                    ColorConsole.PressAnyKey();
+                }
+
+                if (task_entry.TaskType == TaskType.ReadBootloaderVersion)
+                {
+                    string ver = "";
+                    cnc.ReadBootloaderVersion(device, ref ver);
                 }
 
                 //if (task_entry.TaskType == TaskType.ReadFlashMemory)

@@ -8,6 +8,9 @@
         ReadFlashMemory,
         ReadEepromMemory,
         WriteEepromMemory,
+
+        ReadBootloaderVersion,
+        WaitForKey,
     }
 
 }

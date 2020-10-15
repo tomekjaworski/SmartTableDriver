@@ -58,7 +58,7 @@
     <Compile Include="ByteOrder.cs" />
     <Compile Include="Newtonsoft\Json\Converters\HexStringJsonConverter.cs" />
     <Compile Include="Jobs\CPUType.cs" />
-    <Compile Include="Device.cs" />
+    <Compile Include="BootloaderClient.cs" />
     <Compile Include="DumpMode.cs" />
     <Compile Include="FifoBuffer.cs" />
     <Compile Include="IntelHEXFormatException.cs" />
@@ -77,7 +77,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="bootloader_tasks.json">
+    <None Include="bootloader_tasks_real.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="bootloader_tasks_test.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />

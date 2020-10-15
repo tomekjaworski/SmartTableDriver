@@ -7,15 +7,18 @@ using System.Threading.Tasks;
 
 namespace CnC
 {
-    public class Device
+    public class BootloaderClient
     {
-        public int address;
-        public SerialPort sp;
+        public byte BootloaderAddress => this.address;
+        public SerialPort Port => this.sp;
 
-        public Device(SerialPort sp, int addr)
+        private byte address;
+        private SerialPort sp;
+
+        public BootloaderClient(SerialPort sp, byte bootloaderAdderess)
         {
             this.sp = sp;
-            this.address = addr;
+            this.address = bootloaderAdderess;
         }
 
         public override string ToString()
