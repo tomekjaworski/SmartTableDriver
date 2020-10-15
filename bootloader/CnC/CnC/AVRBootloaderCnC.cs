@@ -338,7 +338,6 @@ namespace CnC
         {
             Console.CursorVisible = false;
 
-            Console.Write("Reading bootloader fw version:   ");
 
             Message msg_readfwver = new Message(dev.BootloaderAddress, MessageType.ReadBootloaderVersion);
             Message response = SendAndWaitForResponse(dev, msg_readfwver, 2000);
@@ -346,7 +345,8 @@ namespace CnC
             ver = Encoding.ASCII.GetString(response.Payload, 0, response.Payload.Length - 1);
 
             Console.CursorVisible = true;
-            Console.WriteLine(ver);
+            Console.Write($"Reading bootloader fw version: [{ver}]");
+
         }
 
 

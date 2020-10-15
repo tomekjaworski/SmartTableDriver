@@ -15,7 +15,7 @@
 
 //
 // bootloader address
-#define BOOTLOADER_HARDWARE_ADDRESS	(uint8_t)0x14
+#define BOOTLOADER_HARDWARE_ADDRESS	(uint8_t)0x11
 
 //
 // advertisement wait time in 5 ms - time that bootloader spends waiting for C&C software to send the activation byte.
