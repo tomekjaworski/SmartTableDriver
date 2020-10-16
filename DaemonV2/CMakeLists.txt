@@ -12,6 +12,8 @@ add_executable(
         untitled
         Utility/AnsiCodes.h
 
+        Image.hpp
+
         main.cpp
         Hardware/Location.hpp Hardware/PhotoModule.hpp
 

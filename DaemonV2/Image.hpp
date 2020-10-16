@@ -1,28 +1,28 @@
 #if !defined(_IMAGE_HPP_)
 #define _IMAGE_HPP_
 
+#include <cstdint>
+#include <vector>
+
 class Image
 {
 private:
-	uint16_t *data;
+	std::vector<std::uint16_t> data;
 	int width, height;
-	
-	
+
 public:
 	Image(int width, int height)
-		: width(width), height(height)
-	{
-		this->data = (uint16_t*)malloc(height * width * sizeof(uint16_t));
-		clear();
+		: width(width), height(height) {
+		this->data.reserve(width * height);
+		this->Clear();
 	}
 	
-	void clear(void)
-	{
+	void Clear(void) {
 		for (int i = 0; i < width * height; i++)
 			data[i] = 0x0000;
 	}
 	
-	void processMeasurementPayload(const void* vpayload, int bits, const Location& ploc)
+	void ProcessMeasurementPayload(const void* vpayload, int bits, const Location& ploc)
 	{
 		assert(bits == 16); // other cases not implemented at the moment
 		
@@ -30,12 +30,13 @@ public:
 		for (int x = 0; x < 10; x++)
 			for (int y = 0; y < 10; y++)
 			{
-				data[ploc.getColumn() + x + width * (ploc.getRow() + y)] = upayload[x + y * 10];
+			    uint16_t value = upayload[x + y * 10];
+				data[ploc.GetColumn() + x + width * (ploc.GetRow() + y)] = value;
 			}
 		
 	}
 	
-	const uint16_t* getData(void) const { return this->data; }
+	const uint16_t* getData(void) const { return this->data.data(); }
 	
 };
 

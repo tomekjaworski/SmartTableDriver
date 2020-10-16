@@ -25,11 +25,17 @@ public:
         //
     }
 
+    const uint16_t* GetPayloadPointer(void) const {
+        return reinterpret_cast<const uint16_t*>(this->internal_GetPayloadPointer());
+    }
+
 
     MessageType GetMessageType(void) const;
     int GetPayloadSize(void) const;
-    const void* GetPayloadPointer(void) const;
-    int GetSequence(void) const;
+    int GetSequenceNumber(void) const;
+
+private:
+    const void* internal_GetPayloadPointer(void) const;
 };
 
 

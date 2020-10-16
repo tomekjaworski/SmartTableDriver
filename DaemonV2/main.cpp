@@ -7,6 +7,8 @@
 #include "Hardware/TableDevice.hpp"
 #include "Utility/AnsiCodes.h"
 
+#include "Image.hpp"
+
 class App : public ProgramBase {
 public:
     App(int argc, const char** argv, const char** env)
@@ -233,16 +235,19 @@ int App::Main(const std::vector<std::string>& arguments) {
 
     OutputMessage msg_do_single_measurement = OutputMessage(MessageType::SingleMeasurement8Request);
     Communication::SendToMultiple(tdev.GetSerialPortCollection(), msg_do_single_measurement);
-
+    Image img(60, 40);
     {
         std::map<int, InputMessageBuilder> fd2builder;
         std::map<int, Location> fd2location;
+        std::vector<SerialPort::Ptr> serial_ports;
+
         for(PhotoModule::Ptr pmodule : tdev.GetPhotomodulesCollection()) {
             SerialPort::Ptr pserial = pmodule->GetSerialPort();
             if (pserial == nullptr)
                 continue;
             fd2builder[pserial->GetHandle()] = InputMessageBuilder();
             fd2location[pserial->GetHandle()] = pmodule->GetLocation();
+            serial_ports.push_back(pmodule->GetSerialPort());
         }
 
         std::array<uint8_t, 256> recv_buffer;
@@ -252,7 +257,7 @@ int App::Main(const std::vector<std::string>& arguments) {
             FD_ZERO(&rfd);
 
             int max_handle = INT32_MIN;
-            for (SerialPort::Ptr pserial : tdev.GetSerialPortCollection()) {
+            for (SerialPort::Ptr pserial : serial_ports) {
                 FD_SET(pserial->GetHandle(), &rfd);
                 max_handle = std::max(max_handle, pserial->GetHandle());
             }
@@ -274,6 +279,11 @@ int App::Main(const std::vector<std::string>& arguments) {
 
                     if (builder.GetMessage(response)) {
                         const Location& location = fd2location[fd];
+
+                        int payload_length = response.GetPayloadSize();
+                        const uint16_t* ptr = response.GetPayloadPointer();
+
+                        img.ProcessMeasurementPayload(ptr, 16, location);
                     };
                 }
             }
