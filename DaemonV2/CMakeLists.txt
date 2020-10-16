@@ -10,25 +10,25 @@ add_compile_options("-Wall" "-Wextra" "-pedantic" "-Wno-unused-parameter" "-fno-
 
 add_executable(
         untitled
-        AnsiCodes.h
+        Utility/AnsiCodes.h
 
         main.cpp
-        Location.hpp PhotoModule.hpp
+        Hardware/Location.hpp Hardware/PhotoModule.hpp
 
         ProgramBase.cpp ProgramBase.hpp
 
-        SerialPort.cpp SerialPort.hpp
-        SerialPortReactor.cpp SerialPortReactor.hpp
-        TableDevice.cpp TableDevice.hpp
+        SerialPort/SerialPort.cpp SerialPort/SerialPort.hpp
+        SerialPort/SerialPortReactor.cpp SerialPort/SerialPortReactor.hpp
+        Hardware/TableDevice.cpp Hardware/TableDevice.hpp
 
-        Crc16.hpp
-        OutputMessage.cpp OutputMessage.hpp
+        Utility/Crc16.hpp
+        Protocol/OutputMessage.cpp Protocol/OutputMessage.hpp
 
-        InputMessage.cpp InputMessage.hpp
-        InputMessageBuilder.cpp InputMessageBuilder.hpp
-        Helper.cpp Helper.hpp TimeoutError.h
+        Protocol/InputMessage.cpp Protocol/InputMessage.hpp
+        Protocol/InputMessageBuilder.cpp Protocol/InputMessageBuilder.hpp
+        Utility/Helper.cpp Utility/Helper.hpp Protocol/TimeoutError.h
 
-        Communication.cpp Communication.hpp
+        Protocol/Communication.cpp Protocol/Communication.hpp
 
 )
 

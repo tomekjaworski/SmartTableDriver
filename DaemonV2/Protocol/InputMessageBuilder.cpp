@@ -1,9 +1,9 @@
 #include <unistd.h>
 #include "InputMessageBuilder.hpp"
-#include "Crc16.hpp"
+#include "../Utility/Crc16.hpp"
 #include <cassert>
-#include "Helper.hpp"
-#include "../SmartTableFirmware/protocol.h"
+#include "../Utility/Helper.hpp"
+#include "../../SmartTableFirmware/protocol.h"
 #include <algorithm>
 InputMessageBuilder::InputMessageBuilder(void) {
 	this->position = 0;

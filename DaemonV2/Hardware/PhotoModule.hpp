@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "Location.hpp"
-#include "SerialPort.hpp"
+#include "../SerialPort/SerialPort.hpp"
 
 
 typedef unsigned char device_identifier_t; // Firmware: protocol_h

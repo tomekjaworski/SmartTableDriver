@@ -6,9 +6,9 @@
 #include <string.h>
 #include <vector>
 
-#include "Crc16.hpp"
+#include "../Utility/Crc16.hpp"
 #include <cstdint>
-#include "../SmartTableFirmware/protocol.h"
+#include "../../SmartTableFirmware/protocol.h"
 
 /// @brief Klasa reprezentująca komunikat przesyłany przez serwer (komputer) do modułu światłoczułego.
 class OutputMessage

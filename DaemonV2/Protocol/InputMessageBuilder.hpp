@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "SerialPort.hpp"
+#include "../SerialPort/SerialPort.hpp"
 #include "InputMessage.hpp"
 
 #include <array>

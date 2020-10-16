@@ -2,10 +2,10 @@
 #include <cassert>
 
 #include "ProgramBase.hpp"
-#include "SerialPort.hpp"
+#include "SerialPort/SerialPort.hpp"
 #include <list>
-#include "TableDevice.hpp"
-#include "AnsiCodes.h"
+#include "Hardware/TableDevice.hpp"
+#include "Utility/AnsiCodes.h"
 
 class App : public ProgramBase {
 public:
@@ -53,13 +53,13 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 
 
 */
-#include "PhotoModule.hpp"
-#include "InputMessageBuilder.hpp"
+#include "Hardware/PhotoModule.hpp"
+#include "Protocol/InputMessageBuilder.hpp"
 
-#include "OutputMessage.hpp"
-#include "TimeoutError.h"
+#include "Protocol/OutputMessage.hpp"
+#include "Protocol/TimeoutError.h"
 
-#include "Communication.hpp"
+#include "Protocol/Communication.hpp"
 
 
 //

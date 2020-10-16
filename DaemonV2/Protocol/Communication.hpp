@@ -6,7 +6,7 @@
 #define UNTITLED_COMMUNICATION_HPP
 
 #include <vector>
-#include "SerialPort.hpp"
+#include "../SerialPort/SerialPort.hpp"
 #include "OutputMessage.hpp"
 #include "InputMessage.hpp"
 
