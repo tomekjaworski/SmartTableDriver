@@ -19,29 +19,29 @@ TableDevice::TableDevice(void) {
  */
     this->geometry = {
             std::make_shared<PhotoModule>(0x11, Location(1, 1)),
-            std::make_shared<PhotoModule>(0x12, Location(2, 1)),
-            std::make_shared<PhotoModule>(0x13, Location(3, 1)),
-            std::make_shared<PhotoModule>(0x14, Location(4, 1)),
-            std::make_shared<PhotoModule>(0x15, Location(5, 1)),
-            std::make_shared<PhotoModule>(0x16, Location(6, 1)),
-            std::make_shared<PhotoModule>(0x21, Location(1, 2)),
+            std::make_shared<PhotoModule>(0x12, Location(1, 2)),
+            std::make_shared<PhotoModule>(0x13, Location(1, 3)),
+            std::make_shared<PhotoModule>(0x14, Location(1, 4)),
+            std::make_shared<PhotoModule>(0x15, Location(1, 5)),
+            std::make_shared<PhotoModule>(0x16, Location(1, 6)),
+            std::make_shared<PhotoModule>(0x21, Location(2, 1)),
             std::make_shared<PhotoModule>(0x22, Location(2, 2)),
-            std::make_shared<PhotoModule>(0x23, Location(3, 2)),
-            std::make_shared<PhotoModule>(0x24, Location(4, 2)),
-            std::make_shared<PhotoModule>(0x25, Location(5, 2)),
-            std::make_shared<PhotoModule>(0x26, Location(6, 2)),
-            std::make_shared<PhotoModule>(0x31, Location(1, 3)),
-            std::make_shared<PhotoModule>(0x32, Location(2, 3)),
+            std::make_shared<PhotoModule>(0x23, Location(2, 3)),
+            std::make_shared<PhotoModule>(0x24, Location(2, 4)),
+            std::make_shared<PhotoModule>(0x25, Location(2, 5)),
+            std::make_shared<PhotoModule>(0x26, Location(2, 6)),
+            std::make_shared<PhotoModule>(0x31, Location(3, 1)),
+            std::make_shared<PhotoModule>(0x32, Location(3, 2)),
             std::make_shared<PhotoModule>(0x33, Location(3, 3)),
-            std::make_shared<PhotoModule>(0x34, Location(4, 3)),
-            std::make_shared<PhotoModule>(0x35, Location(5, 3)),
-            std::make_shared<PhotoModule>(0x36, Location(6, 3)),
-            std::make_shared<PhotoModule>(0x41, Location(1, 4)),
-            std::make_shared<PhotoModule>(0x42, Location(2, 4)),
-            std::make_shared<PhotoModule>(0x43, Location(3, 4)),
+            std::make_shared<PhotoModule>(0x34, Location(3, 4)),
+            std::make_shared<PhotoModule>(0x35, Location(3, 5)),
+            std::make_shared<PhotoModule>(0x36, Location(3, 6)),
+            std::make_shared<PhotoModule>(0x41, Location(4, 1)),
+            std::make_shared<PhotoModule>(0x42, Location(4, 2)),
+            std::make_shared<PhotoModule>(0x43, Location(4, 3)),
             std::make_shared<PhotoModule>(0x44, Location(4, 4)),
-            std::make_shared<PhotoModule>(0x45, Location(5, 4)),
-            std::make_shared<PhotoModule>(0x46, Location(6, 4)),
+            std::make_shared<PhotoModule>(0x45, Location(4, 5)),
+            std::make_shared<PhotoModule>(0x46, Location(4, 6)),
     };
 
 }
@@ -76,4 +76,21 @@ void TableDevice::ShowTopology(void) {
                pdevice->GetLocation().GetRow());
     }
     printf("\n");
+}
+
+void TableDevice::SetSerialPort(PhotoModule::Ptr pmodule, SerialPort::Ptr pserial) {
+    if (pmodule == nullptr || pserial == nullptr)
+        throw std::invalid_argument("pmodule/pserial");
+
+    pmodule->SetSerialPort(pserial);
+    this->ports.push_back(pserial);
+}
+
+std::vector<SerialPort::Ptr>& TableDevice::GetSerialPortCollection(void) {
+    return this->ports;
+}
+
+std::vector<PhotoModule::Ptr>& TableDevice::GetPhotomodulesCollection(void) {
+    return this->geometry;
+
 }

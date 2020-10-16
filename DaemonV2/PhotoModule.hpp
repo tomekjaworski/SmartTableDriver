@@ -36,7 +36,7 @@ public:
 	    return this->sp;
 	}
 	
-	void SetSerialPort(SerialPort::Ptr& pserial) {
+	void SetSerialPort(SerialPort::Ptr pserial) {
 		this->sp = pserial;
 	}
 	

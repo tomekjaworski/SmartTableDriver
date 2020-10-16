@@ -12,13 +12,19 @@
 
 class TableDevice {
     std::vector<PhotoModule::Ptr> geometry;
+    std::vector<SerialPort::Ptr> ports;
 public:
     TableDevice(void);
     ~TableDevice();
 public:
     Location GetLocationByID(device_identifier_t id) const;
-    PhotoModule::Ptr GetPhotoModuleByID(device_identifier_t id);
     void ShowTopology(void);
+
+    PhotoModule::Ptr GetPhotoModuleByID(device_identifier_t id);
+    void SetSerialPort(PhotoModule::Ptr pmodule, SerialPort::Ptr pserial);
+
+    std::vector<SerialPort::Ptr>& GetSerialPortCollection(void);
+    std::vector<PhotoModule::Ptr>& GetPhotomodulesCollection(void);
 };
 
 

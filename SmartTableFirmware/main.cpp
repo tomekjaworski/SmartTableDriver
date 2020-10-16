@@ -108,7 +108,7 @@ int main(void)
 
 	
 		if (rx.buffer.header.type == MessageType::RebootRequest) {
-			send(MessageType::RebootResponse, im_data.primary.raw8, 10*10*sizeof(uint8_t));
+			send(MessageType::RebootResponse, (const uint8_t*)tx.payload, 0);
 			cpu_reboot();
 		}
 		
