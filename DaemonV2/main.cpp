@@ -119,6 +119,11 @@ void sigpipe_handler(int unused)
     // ignoruj
 }
 
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+
 int App::Main(const std::vector<std::string>& arguments) {
 
     //
@@ -127,6 +132,26 @@ int App::Main(const std::vector<std::string>& arguments) {
     printf("Built on %s @ %s %lu\n\n", __DATE__, __TIME__, sizeof(void*));
     setbuf(stdout, NULL);
     struct sigaction handler;
+
+
+    uint16_t buffer[32*32];
+    buffer [16*8+8] = 40000;
+
+    while(1) {
+
+        buffer[16*8 + 10] += 1000;
+        cv::Mat obr(32, 32, CV_16UC1, buffer);
+        cv::Mat dest;
+        cv::resize(obr, dest, cv::Size(), 4, 4, CV_INTER_NN);
+        cv::imshow("Test", dest);
+        cv::waitKey(100);
+
+
+    }
+
+
+    return 0;
+
     handler.sa_handler = sigpipe_handler;
     int result = sigaction(SIGPIPE, &handler, NULL);
     //

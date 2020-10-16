@@ -9,7 +9,7 @@ add_compile_options("-Wall" "-Wextra" "-pedantic" "-Wno-unused-parameter" "-fno-
 
 
 add_executable(
-        untitled
+        ${PROJECT_NAME}
         Utility/AnsiCodes.h
 
         Image.hpp
@@ -36,4 +36,4 @@ add_executable(
         Image.cpp)
 
 
-target_link_libraries(${PROJECT_NAME} stdc++fs)
+target_link_libraries(${PROJECT_NAME} stdc++fs opencv_core opencv_highgui opencv_imgproc)
