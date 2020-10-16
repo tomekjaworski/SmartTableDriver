@@ -34,7 +34,7 @@
         <documentation help="" />
         <offline-documentation help="" />
         <dependencies>
-          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.37" />
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.39.0" />
         </dependencies>
       </framework-data>
     </AsfFrameworkConfig>
@@ -45,8 +45,7 @@
       <ToolOptions>
         <InterfaceProperties>
         </InterfaceProperties>
-        <InterfaceName>
-        </InterfaceName>
+        <InterfaceName>ISP</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.simulator</ToolType>
       <ToolNumber>
@@ -176,7 +175,7 @@
         <avrgcccpp.compiler.optimization.DebugLevel>Default (-g2)</avrgcccpp.compiler.optimization.DebugLevel>
         <avrgcccpp.compiler.warnings.AllWarnings>True</avrgcccpp.compiler.warnings.AllWarnings>
         <avrgcccpp.compiler.warnings.Pedantic>True</avrgcccpp.compiler.warnings.Pedantic>
-        <avrgcccpp.compiler.miscellaneous.OtherFlags>-std=c++14</avrgcccpp.compiler.miscellaneous.OtherFlags>
+        <avrgcccpp.compiler.miscellaneous.OtherFlags>-std=c++17</avrgcccpp.compiler.miscellaneous.OtherFlags>
         <avrgcccpp.linker.libraries.Libraries>
           <ListValues>
             <Value>libm</Value>
@@ -198,10 +197,19 @@
     <Compile Include="config.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="cpu.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="dbg_putchar.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="dbg_putchar.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="eeprom_config.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="eeprom_config.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="fuses.cpp">
@@ -219,10 +227,10 @@
     <Compile Include="cpu.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="crc16.cpp">
+    <Compile Include="checksum.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="crc16.h">
+    <Compile Include="checksum.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="hardware.h">
@@ -240,6 +248,11 @@
     <Compile Include="protocol.h">
       <SubType>compile</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="tester.py">
+      <SubType>compile</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

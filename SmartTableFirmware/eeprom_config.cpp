@@ -11,51 +11,30 @@
  #include <string.h>
 
  #include "eeprom_config.h"
- #include "crc16.h"
- #include "dbg_putchar.h"
+ #include "config.h"
 
  EEPROM_CONFIGURATION configuration;
 
- uint8_t configuration_load(void)
- {
-	// wczytaj blok z pamiêci EEPROM
+ void configuration_load(void) {
+
+	// wczytaj blok z pami?ci EEPROM
 	eeprom_read_block(&configuration, 0, sizeof(EEPROM_CONFIGURATION));
-	uint16_t current_checksum = configuration.checksum;
 
-	// oblicz now¹ sumê kontroln¹ konfiguracji
-	configuration.checksum = 0x0000;
-	configuration.checksum = calc_crc16(&configuration, sizeof(EEPROM_CONFIGURATION));
+	// 1
+	if (configuration.address == configuration.address_copy1)
+		device_identifier = configuration.address;
 
-	if (configuration.checksum == current_checksum)
-		return 1; // jest OK!
+	// 2
+	if (configuration.address == configuration.address_copy2)
+		device_identifier = configuration.address;
 
-	configuration_load_default_values();
-	configuration_store(); // zapisz od razu nowe, domyœlne
-
-	return 0;
+	// 3
+	if (configuration.address_copy1 == configuration.address_copy2)
+		device_identifier = configuration.address_copy1;
  }
 
  void configuration_store(void)
  {
-	// dodaj sumê kontroln¹ do bloku pamiêci
-	configuration.checksum = 0x0000;
-	configuration.checksum = calc_crc16(&configuration, sizeof(EEPROM_CONFIGURATION));
-
-	// zapisz blok pamiêci konfiguracji do EEPROMu
+	// zapisz blok pami?ci konfiguracji do EEPROMu
 	eeprom_write_block (&configuration, 0, sizeof(EEPROM_CONFIGURATION));
-
-	// no i spoko luzik.
-
- }
-
- void configuration_load_default_values(void)
- {
-	// ustaw domyœlne wartoœci w bloku konfiguracyjnym EEPROM
-
-	memset(&configuration, 0, sizeof(EEPROM_CONFIGURATION));
-
-	// sygnaturka
-	const uint8_t magic[] = {116,117,32,98,121,108,101,109,32,84,74};
-	memcpy(configuration.magic, magic, sizeof(magic));
-
  }

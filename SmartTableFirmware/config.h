@@ -9,12 +9,16 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define SERIAL_BAUD			500000ULL	// 8E1 (!!!)
-#define SERIAL_IDLE_LIMIT	10			// [0.5ms]
+#define SERIAL_BAUD				19200ULL	// 8E1 (!!!)
+#define SERIAL_IDLE_LIMIT		10			// [0.5ms]
 
-#define __DEVICE_ADDRESS		(device_address_t)0x14
+//#define DEVICE_IDENTIFIER		(device_identifier_t)0x14
+#define FIRMWARE_VERSION		"2.0"
+#define FIRMWARE_BUILD_DATE		__DATE__
+#define FIRMWARE_BUILD_TIME		__TIME__
 
-extern const device_address_t device_address_block[] PROGMEM;
-extern device_address_t device_address;
+
+typedef unsigned char device_identifier_t;
+extern device_identifier_t device_identifier;
 
 #endif /* CONFIG_H_ */

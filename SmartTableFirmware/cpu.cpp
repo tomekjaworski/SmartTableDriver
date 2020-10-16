@@ -8,11 +8,12 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <avr/pgmspace.h>
+#include <avr/wdt.h>
 
 #include "hardware.h"
 #include "comm.h"
 #include "config.h"
-
+#include "cpu.h"
 #define BAUD_UX2
 
 //////////////////////////////////////////////////////////////////////////
@@ -52,9 +53,12 @@ void cpu_init(void)
 	DDRD |= _BV(PORTD7); // CLOCK
 	DDRD |= _BV(PORTD5); // RESET1
 	DDRD |= _BV(PORTD4); // RESET2
+	
 
 	DDRD |= _BV(PORTD2); // DIR
 	DDRD |= _BV(PORTD1); // TX
+	
+	PORTD |= _BV(PORTD3); // pull-up dla wej?cia synchronizuj?cego
 
 	// port szergowy
 	uint16_t br = UBR0_VALUE;
@@ -76,11 +80,16 @@ void cpu_init(void)
 	tx.state = TransmitterState::IDLE;
 
 
-	// Set timer to 1ms
+	// Set timer to 250us
 	TCCR0A |= (1 << WGM01); // CTC mode
-	OCR0A = (8000000UL / 64UL) / 2000UL - 1;
+	OCR0A = (8000000UL / 8UL) / 4000UL - 1;
 	TIMSK0 |= (1 << OCIE0A);
-	TCCR0B |= (1 << CS00) | (1 << CS01); // clk / 64
+	TCCR0B |= (1 << CS01) | (0 << CS00); // clk / 8
+
+	// Turn off watchdog
+	MCUSR = 0x00;
+	WDTCSR = 0x00;
+	wdt_disable();
 
 	// reset photodiodes selectors
 	RESET1_LOW;
@@ -91,13 +100,15 @@ void cpu_init(void)
 	{
 		LED0_TOGGLE;
 		LED1_TOGGLE;
-		LED_TOGGLE;
+		//LED_TOGGLE;
 		_delay_ms(20);
 
 	}
 
-	RS485_DIR_RECEIVE;
-	LED0_OFF; LED1_OFF; LED_OFF;
+	// RS485 to pozosta?o?c po pierwszej wersji; aby nie modyfikoaw? p?ytki (wylutowywac kostki) 
+	// wystarczy prze??czy? j? w tryb nadawania.
+	LEGACY_RS485_DIR_OUTPUT();
+	LED0_OFF; LED1_OFF;
 	_delay_ms(1000);
 
 	RESET1_HIGH;
@@ -105,4 +116,10 @@ void cpu_init(void)
 
 	// start przerwan
 	sei();
+}
+
+void cpu_reboot(void) {
+	// start watchdog and lock so we can reboot
+	wdt_enable(WDTO_15MS);
+	while(1);
 }

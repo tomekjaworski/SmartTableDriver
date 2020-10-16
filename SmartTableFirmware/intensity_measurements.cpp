@@ -13,8 +13,6 @@
 #include "hardware.h"
 #include "dbg_putchar.h"
 
-struct BURST burst = {};
-
 #define NOP asm volatile("nop");
 
 
@@ -68,8 +66,15 @@ void im_initialize8(void)
 	DIDR0 = 0xFF;
 
 	// dummy read
-	for (uint8_t i = 0; i < 10; i++)
+	for (uint8_t i = 0; i < 10; i++) {
+		asm("nop");
+		asm("nop");
+		asm("nop");
 		im_measure8();
+		asm("nop");
+		asm("nop");
+		asm("nop");
+	}
 }
 
 
@@ -92,7 +97,6 @@ void im_initialize10(void)
 	// dummy read
 	for (uint8_t i = 0; i < 10; i++)
 		im_measure10();
-
 }
 
 #define IM_DATA_PIN(__state)	do { if (__state) PORTB |= _BV(PORTB0); else PORTB &= ~_BV(PORTB0); } while(0);	//	
@@ -107,43 +111,7 @@ void im_initialize10(void)
 			IM_CLOCK_PIN(false);	\
 			} while(0);
 
-//zamiana 10 i 14
-const int readToNumbers[15][7] = {
-	{43,44,45,46,47,48,49},
-	{36,37,38,39,40,41,42},
-	{29,30,31,32,33,34,35},
-	{22,23,24,25,26,27,28},
-	{15,16,17,18,19,20,21},
-	{ 8, 9,10,11,12,13,14},
-	{ 1, 2, 3, 4, 5, 6, 7},
-	{ 0, 0, 0, 0, 0,99,100},
-	{92,93,94,95,96,97,98},//
-	{85,86,87,88,89,90,91},
-	{78,79,80,81,82,83,84},
-	{71,72,73,74,75,76,77},
-	{64,65,66,67,68,69,70},//
-	{57,58,59,60,61,62,63},
-	{50,51,52,53,54,55,56}
-};
-
- 
- int numbersToVisible[10][10] = {
-	{85,78, 71, 1, 2, 3, 4, 5, 6, 7},
-	{86,79, 72, 8, 9,10,11,12,13,14},
-	{87,80, 73,15,16,17,18,19,20,21},
-	{88,81, 74,22,23,24,25,26,27,28},
-	{89,82, 75,29,30,31,32,33,34,35},
-	{90,83, 76,36,37,38,39,40,41,42},
-	{91,84, 77,43,44,45,46,47,48,49},
-	{96,97,100,50,51,52,53,54,55,56},
-	{95,99, 98,57,58,59,60,61,62,63},
-	{94,93, 92,64,65,66,67,68,69,70}
-};
-
-int utable[15][7];
-int otable[10][10];
-
-union im_raw_measurement_t im_data;
+im_raw_measurement_t im_data;
 
 
 /*
@@ -164,7 +132,7 @@ void im_measure10(void)
 	IM_DATA_PIN(true);
 	IM_CLOCK_PULSE;
 	
-	uint16_t* ptr = im_data.raw16;
+	uint16_t* ptr = im_data.primary.raw16;
 	
 	// 7 rows with 7 sensors
 	for(int i = 0; i < 7; i++)
@@ -217,7 +185,7 @@ void im_measure8(void)
 	IM_DATA_PIN(true);
 	IM_CLOCK_PULSE;
 		
-	uint8_t* ptr = im_data.raw8;
+	uint8_t* ptr = im_data.primary.raw8;
 
 	/*
 	for(int i = 0; i < 15; i++)
@@ -279,7 +247,7 @@ void im_measure8(void)
  * void im_execute_sync(void)
  * A low-speed debug version of measurement routing
  */
-
+/*
 void im_execute_sync(void)
 {
 	
@@ -325,3 +293,4 @@ void im_execute_sync(void)
 }
 
 
+*/

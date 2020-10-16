@@ -8,9 +8,9 @@
 
 #include <stdint.h>
 #include <avr/pgmspace.h>
-#include "crc16.h"
+#include "checksum.h"
 
-uint16_t calc_crc16(const void *buf, uint8_t size)
+checksum_t calc_checksum(const void *buf, uint8_t size)
 {
 	uint16_t crc;
 	uint8_t i, j;
@@ -26,10 +26,10 @@ uint16_t calc_crc16(const void *buf, uint8_t size)
 			else
 				crc >>= 1;
 	}
-	return crc;
+	return (checksum_t)crc;
 }
 
-uint16_t calc_crc16(const void *buf1, uint8_t size1, const void* buf2, uint8_t size2)
+checksum_t calc_checksum(const void *buf1, uint8_t size1, const void* buf2, uint8_t size2)
 {
 	uint16_t crc;
 	uint8_t i, j;
@@ -58,5 +58,5 @@ uint16_t calc_crc16(const void *buf1, uint8_t size1, const void* buf2, uint8_t s
 		crc >>= 1;
 	}
 
-	return crc;
+	return (checksum_t)crc;
 }

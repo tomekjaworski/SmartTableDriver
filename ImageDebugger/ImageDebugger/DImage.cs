@@ -80,8 +80,6 @@ namespace ImageDebuggerServer
 
             fixed (void* src = this.recv_buffer)
             {
-                float* fsrc = (float*)src;
-                ushort* ussrc = (ushort*)src;
 
                 if (this.type == ImageType.Luminance)
                 {
@@ -91,10 +89,11 @@ namespace ImageDebuggerServer
                     if (this.channel_type == ChannelType.Float)
                     {
                         float min, max;
+                        float* fsrc = (float*)src;
                         CalculateRange(fsrc, this.size, out min, out max);
 
                         if (min == max)
-                        
+
                             for (int i = 0; i < w * h; i++)
                             {
                                 *dest = palette[0];
@@ -119,9 +118,13 @@ namespace ImageDebuggerServer
 
                     }
 
+                    // -----------------------------
+
+
                     if (this.channel_type == ChannelType.U16)
                     {
                         ushort umin, umax;
+                        ushort* ussrc = (ushort*)src;
                         CalculateRange(ussrc, this.size, out umin, out umax);
 
                         if (umin == umax)
@@ -146,6 +149,38 @@ namespace ImageDebuggerServer
 
                         bi.min = umin;
                         bi.max = umax;
+                    }
+
+                    // -----------------------------
+
+                    if (this.channel_type == ChannelType.U8)
+                    {
+                        byte bmin, bmax;
+                        byte* bsrc = (byte*)src;
+                        CalculateRange(bsrc, this.size, out bmin, out bmax);
+
+                        if (bmin == bmax)
+
+                            for (int i = 0; i < w * h; i++)
+                            {
+                                *dest = palette[0];
+                                dest++;
+                            }
+                        else
+                            for (int r = 0; r < h; r++)
+                            {
+                                for (int c = 0; c < w; c++)
+                                {
+                                    int value = (((int)*bsrc - bmin) * pmax) / (bmax - bmin);
+                                    if (value >= 0 && value <= pmax)
+                                        *dest = palette[value];
+                                    bsrc++;
+                                    dest++;
+                                }
+                            }
+
+                        bi.min = bmin;
+                        bi.max = bmax;
                     }
                 }
             }
@@ -191,6 +226,24 @@ namespace ImageDebuggerServer
                 src++;
             }
         }
+
+        public unsafe void CalculateRange(byte* src, Size size, out byte min, out byte max)
+        {
+            max = byte.MinValue;
+            min = byte.MaxValue;
+
+            int c = size.Height * size.Width;
+            while (c-- > 0)
+            {
+                if (*src > max)
+                    max = *src;
+                if (*src < min)
+                    min = *src;
+
+                src++;
+            }
+        }
+
     }
 
 }

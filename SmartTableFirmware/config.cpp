@@ -10,6 +10,4 @@
 #include "protocol.h"
 #include "config.h"
 
-const  device_address_t device_address_block[] PROGMEM = {0xaa, 0x11, 0x0d, 0x4d, __DEVICE_ADDRESS, 0x75, 0x87, 0x60, 0x64};
-device_address_t device_address;
-
+device_identifier_t device_identifier = (device_identifier_t)0xFF;

@@ -12,6 +12,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "protocol.h"
+#include "checksum.h"
 
 enum class TransmitterState : uint8_t {
 	IDLE,
@@ -24,8 +25,8 @@ struct TX
 {
 	TransmitterState state;
 
-	PROTO_HEADER header;
-	uint16_t crc;
+	TX_PROTO_HEADER header;
+	checksum_t crc;
 
 	const uint8_t* window_position;
 	const uint8_t* window_end;
@@ -33,6 +34,7 @@ struct TX
 	const uint8_t* ppayload;
 
 	uint8_t payload[TX_PAYLOAD_CAPACITY];
+	
 };
 
 
@@ -44,7 +46,7 @@ struct RX
 
 	// buffer - mind the order!
 	struct {
-		PROTO_HEADER header;
+		RX_PROTO_HEADER header;
 		uint8_t payload[RX_PAYLOAD_CAPACITY];
 	} __attribute__((packed)) buffer;
 };
