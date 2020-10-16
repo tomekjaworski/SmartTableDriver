@@ -25,8 +25,9 @@ public:
         //
     }
 
-    const uint16_t* GetPayloadPointer(void) const {
-        return reinterpret_cast<const uint16_t*>(this->internal_GetPayloadPointer());
+    template <typename T>
+    const T* GetPayloadPointer(void) const {
+        return reinterpret_cast<const T*>(this->internal_GetPayloadPointer());
     }
 
 

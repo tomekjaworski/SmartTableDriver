@@ -40,7 +40,7 @@ void Communication::Transcive(SerialPort::Ptr serial, const OutputMessage& query
             ssize_t recv_bytes = serial->Receive(recv_buffer);
             mr.AddCollectedData(recv_buffer, 0, recv_bytes);
 
-            if (mr.GetMessage(response))
+            if (mr.Extractmessage(response) == MessageExtractionResult::Ok)
                 break;
         }
 

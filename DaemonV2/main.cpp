@@ -6,7 +6,9 @@
 #include <list>
 #include "Hardware/TableDevice.hpp"
 #include "Utility/AnsiCodes.h"
-
+#include <unistd.h>
+#include <boost/algorithm/string.hpp>
+#include "ImageDebuggerClient/ImageDebuggerClient.h"
 #include "Image.hpp"
 
 class App : public ProgramBase {
@@ -97,7 +99,7 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 //            ssize_t recv_bytes = serial->Receive(recv_buffer);
 //            mr.AddCollectedData(recv_buffer, 0, recv_bytes);
 //
-//            if (mr.GetMessage(response))
+//            if (mr.Extractmessage(response))
 //                break;
 //        }
 //
@@ -111,9 +113,11 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 //    } while (true);
 //}
 
-#include <unistd.h>
-#include <boost/algorithm/string.hpp>
 
+void sigpipe_handler(int unused)
+{
+    // ignoruj
+}
 
 int App::Main(const std::vector<std::string>& arguments) {
 
@@ -122,7 +126,9 @@ int App::Main(const std::vector<std::string>& arguments) {
     printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
     printf("Built on %s @ %s %lu\n\n", __DATE__, __TIME__, sizeof(void*));
     setbuf(stdout, NULL);
-
+    struct sigaction handler;
+    handler.sa_handler = sigpipe_handler;
+    int result = sigaction(SIGPIPE, &handler, NULL);
     //
     // Show available serial ports
     this->ShowAvailableSerialPorts();
@@ -199,9 +205,8 @@ int App::Main(const std::vector<std::string>& arguments) {
             continue;
         }
 
-        std::string device_info(
-                reinterpret_cast<const char *>(response.GetPayloadPointer()),
-                reinterpret_cast<const char *>(response.GetPayloadPointer()) + response.GetPayloadSize());
+        std::string device_info(response.GetPayloadPointer<char>(),
+                response.GetPayloadPointer<char>() + response.GetPayloadSize());
 
 
         std::vector<std::string> entries;
@@ -232,64 +237,65 @@ int App::Main(const std::vector<std::string>& arguments) {
         //} catch
     }
 
-
     OutputMessage msg_do_single_measurement = OutputMessage(MessageType::SingleMeasurement8Request);
-    Communication::SendToMultiple(tdev.GetSerialPortCollection(), msg_do_single_measurement);
+
+
     Image img(60, 40);
-    {
-        std::map<int, InputMessageBuilder> fd2builder;
-        std::map<int, Location> fd2location;
-        std::vector<SerialPort::Ptr> serial_ports;
+    std::map<int, InputMessageBuilder> fd2builder;
+    std::map<int, Location> fd2location;
+    std::vector<SerialPort::Ptr> serial_ports;
+    for (PhotoModule::Ptr pmodule : tdev.GetPhotomodulesCollection()) {
+        SerialPort::Ptr pserial = pmodule->GetSerialPort();
+        if (pserial == nullptr)
+            continue;
+        fd2builder[pserial->GetHandle()] = InputMessageBuilder();
+        fd2location[pserial->GetHandle()] = pmodule->GetLocation();
+        serial_ports.push_back(pmodule->GetSerialPort());
+    }
+    InputMessage response;
+    std::array<uint8_t, 256> recv_buffer;
 
-        for(PhotoModule::Ptr pmodule : tdev.GetPhotomodulesCollection()) {
-            SerialPort::Ptr pserial = pmodule->GetSerialPort();
-            if (pserial == nullptr)
-                continue;
-            fd2builder[pserial->GetHandle()] = InputMessageBuilder();
-            fd2location[pserial->GetHandle()] = pmodule->GetLocation();
-            serial_ports.push_back(pmodule->GetSerialPort());
+    while(1) {
+        Communication::SendToMultiple(tdev.GetSerialPortCollection(), msg_do_single_measurement);
+
+
+        fd_set rfd;
+        FD_ZERO(&rfd);
+
+        int max_handle = INT32_MIN;
+        for (SerialPort::Ptr pserial : serial_ports) {
+            FD_SET(pserial->GetHandle(), &rfd);
+            max_handle = std::max(max_handle, pserial->GetHandle());
         }
 
-        std::array<uint8_t, 256> recv_buffer;
-        InputMessage response;
-        {
-            fd_set rfd;
-            FD_ZERO(&rfd);
+        //loops++;
+        timeval tv = {.tv_sec = 0, .tv_usec = 500 * 1000};
+        int sret = ::select(max_handle + 1, &rfd, nullptr, nullptr, &tv);
 
-            int max_handle = INT32_MIN;
-            for (SerialPort::Ptr pserial : serial_ports) {
-                FD_SET(pserial->GetHandle(), &rfd);
-                max_handle = std::max(max_handle, pserial->GetHandle());
+        if (sret == -1)
+            throw std::runtime_error("select");
+
+        for (SerialPort::Ptr pserial : tdev.GetSerialPortCollection()) {
+            int fd = pserial->GetHandle();
+            if (FD_ISSET(fd, &rfd)) {
+                ssize_t recv_bytes = pserial->Receive(recv_buffer);
+                auto &builder = fd2builder[fd];
+                builder.AddCollectedData(recv_buffer, 0, recv_bytes);
+
+                if (builder.Extractmessage(response) == MessageExtractionResult::Ok) {
+                    const Location &location = fd2location[fd];
+
+                    const uint8_t *ptr = response.GetPayloadPointer<std::uint8_t>();
+                    int payload_length = response.GetPayloadSize();
+                    img.ProcessMeasurementPayload(ptr, 8, location);
+
+                    IDBG_ShowImage("obrazek", img.GetHeight(), img.GetWidth(), img.GetData(), "U16");
+                };
             }
 
-            //loops++;
-            timeval tv = {.tv_sec = 0, .tv_usec = 50 * 1000};
-            int sret = ::select(max_handle + 1, &rfd, nullptr, nullptr, &tv);
-
-            if (sret == -1)
-                throw std::runtime_error("select");
-
-
-            for (SerialPort::Ptr pserial : tdev.GetSerialPortCollection()) {
-                int fd = pserial->GetHandle();
-                if (FD_ISSET(fd, &rfd)) {
-                    ssize_t recv_bytes = pserial->Receive(recv_buffer);
-                    auto& builder = fd2builder[fd];
-                    builder.AddCollectedData(recv_buffer, 0, recv_bytes);
-
-                    if (builder.GetMessage(response)) {
-                        const Location& location = fd2location[fd];
-
-                        int payload_length = response.GetPayloadSize();
-                        const uint16_t* ptr = response.GetPayloadPointer();
-
-                        img.ProcessMeasurementPayload(ptr, 16, location);
-                    };
-                }
-            }
 
         }
-
+        usleep(100 * 1000);
     }
 
 

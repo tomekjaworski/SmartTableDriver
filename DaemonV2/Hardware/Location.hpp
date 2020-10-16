@@ -20,6 +20,12 @@ public:
 		: row(loc.row), col(loc.col) {
 		//
 	}
+
+	Location& operator=(const Location& loc) {
+	    this->col = loc.col;
+	    this->row = loc.row;
+	    return *this;
+	}
 	
 	Location(int row, int col)
 		: row(row), col(col) {

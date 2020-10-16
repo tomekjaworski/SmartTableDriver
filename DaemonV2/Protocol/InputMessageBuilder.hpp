@@ -10,6 +10,12 @@
 
 class SerialPort;
 
+enum class MessageExtractionResult {
+    Ok, // There is a message
+    NeedMoreData, // There is not enough data in the buffer yet data seems to be ok
+    Error,
+};
+
 class InputMessageBuilder
 {
     std::array<uint8_t, 64 * 1024> queue;
@@ -29,8 +35,8 @@ public:
 	    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(array.data()) + offset;
 	    this->InternalAddCollectedData(ptr, count);
 	}
-	
-	bool GetMessage(InputMessage& message);
+
+    MessageExtractionResult Extractmessage(InputMessage& message);
 	void PurgeAllData(void);
 
 private:

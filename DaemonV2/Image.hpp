@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <vector>
+#include <stdexcept>
+#include "Hardware/Location.hpp"
 
 class Image
 {
@@ -17,27 +19,22 @@ public:
 		this->Clear();
 	}
 	
-	void Clear(void) {
-		for (int i = 0; i < width * height; i++)
-			data[i] = 0x0000;
+	void Clear(void) noexcept {
+		for (int i = 0; i < this->width * this->height; i++)
+			this->data[i] = 0x0000;
 	}
-	
-	void ProcessMeasurementPayload(const void* vpayload, int bits, const Location& ploc)
-	{
-		assert(bits == 16); // other cases not implemented at the moment
-		
-		uint16_t* upayload = (uint16_t*)vpayload;
-		for (int x = 0; x < 10; x++)
-			for (int y = 0; y < 10; y++)
-			{
-			    uint16_t value = upayload[x + y * 10];
-				data[ploc.GetColumn() + x + width * (ploc.GetRow() + y)] = value;
-			}
-		
+
+	int GetHeight(void) const noexcept {
+		return this->height;
 	}
-	
-	const uint16_t* getData(void) const { return this->data.data(); }
-	
+
+	int GetWidth(void) const noexcept {
+		return this->width;
+	}
+
+	const uint16_t* GetData(void) const noexcept { return this->data.data(); }
+	void ProcessMeasurementPayload(const void* vpayload, int bits, const Location& location);
+
 };
 
 #endif // _IMAGE_HPP_

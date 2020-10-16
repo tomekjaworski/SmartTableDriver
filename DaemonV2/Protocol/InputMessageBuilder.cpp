@@ -32,7 +32,7 @@ void InputMessageBuilder::InternalAddCollectedData(const void* ptr, uint32_t cou
     this->position += count;
 }
 
-bool InputMessageBuilder::GetMessage(InputMessage& message)
+MessageExtractionResult InputMessageBuilder::Extractmessage(InputMessage& message)
 {
     /*
      * This code tries to parse the stream of incoming bytes as an input message.
@@ -41,11 +41,10 @@ bool InputMessageBuilder::GetMessage(InputMessage& message)
      * is not crucial here.
      */
 
-	bool got_message = false;
 	while (true) {
 		// is there enough data for the shortest message?
 		if (this->position < sizeof(TX_PROTO_HEADER) + sizeof(uint16_t))
-			break; // nope - need more data
+			return MessageExtractionResult::NeedMoreData; // nope - need more data
 		
 		// Header verification: address
 		const TX_PROTO_HEADER* phdr = reinterpret_cast<const TX_PROTO_HEADER*>(this->queue.data());
@@ -64,7 +63,8 @@ bool InputMessageBuilder::GetMessage(InputMessage& message)
 		    mt != MessageType::SingleMeasurement10Response &&
 		    mt != MessageType::TriggeredMeasurementEnterResponse &&
 		    mt != MessageType::TriggeredMeasurementLeaveResponse &&
-		    mt != MessageType::PingResponse)
+		    mt != MessageType::PingResponse &&
+		    mt != MessageType::RebootResponse)
 		{
             // remove one byte and loop
             std::shift_left(this->queue.begin(), this->queue.end(), 1);
@@ -74,7 +74,7 @@ bool InputMessageBuilder::GetMessage(InputMessage& message)
 		
 		// is there enough data in the queue?
 		if (this->position < sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t))
-			break; // nope - need more data
+			return MessageExtractionResult::NeedMoreData; // nope - need more data
 		
 		// ok, there is; now verify the checksum
 		checksum_t calculated = Crc16::Calc(this->queue.data(), sizeof(TX_PROTO_HEADER) + phdr->payload_length);
@@ -95,10 +95,11 @@ bool InputMessageBuilder::GetMessage(InputMessage& message)
         std::shift_left(this->queue.begin(), this->queue.end(), offset);
         this->position -= offset;
 
-		got_message = true;
-		break;
+        return MessageExtractionResult::Ok;
 	}
 
-	return got_message;
+	printf("?");
+	assert(false);
+	return MessageExtractionResult::Error;
 	
 }

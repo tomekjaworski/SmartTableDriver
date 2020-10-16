@@ -31,8 +31,9 @@ add_executable(
         Utility/Helper.cpp Utility/Helper.hpp Protocol/TimeoutError.h
 
         Protocol/Communication.cpp Protocol/Communication.hpp
+        ImageDebuggerClient/ImageDebuggerClient.cpp ImageDebuggerClient/ImageDebuggerClient.h
 
-)
+        Image.cpp)
 
 
 target_link_libraries(${PROJECT_NAME} stdc++fs)
