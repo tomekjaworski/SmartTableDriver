@@ -1,0 +1,81 @@
+﻿{
+  "Jobs": [
+    {
+      "JobType": "ReadBootloaderVersion",
+      "BootloaderID": "0x11"
+    },
+
+    {
+      "JobType": "ReadBootloaderVersion",
+      "BootloaderID": "0x34"
+    },
+
+
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+
+
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+    // ################################################
+
+    {
+      "JobType": "WriteFlashMemory",
+      "BootloaderID": "0x11",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+    {
+      "JobType": "WriteFlashMemory",
+      "BootloaderID": "0x34",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+
+    // ####################################
+    // ####################################
+    // ####################################
+    // ####################################
+    {
+      "JobType": "WriteEepromMemory",
+      "BootloaderID": "0x11",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\11.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+
+    {
+      "JobType": "WriteEepromMemory",
+      "BootloaderID": "0x34",
+      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\34.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+
+    // -------------------------------------
+
+    {
+      "JobType": "WaitForKey",
+      "Message": "*** Naciśnij dowolny klawisz aby zrestartować urządzenie..."
+    },
+
+    {
+      "JobType": "Reboot",
+      "BootloaderID": "0x11"
+    },
+    {
+      "JobType": "Reboot",
+      "BootloaderID": "0x34"
+    }
+
+  ]
+}

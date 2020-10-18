@@ -51,11 +51,13 @@
   <ItemGroup>
     <Compile Include="AVRBootloaderCnC.cs" />
     <Compile Include="BootloaderException.cs" />
-    <Compile Include="Jobs\BootloaderTaskProvider.cs" />
+    <Compile Include="Jobs\BootloaderJobsLoader.cs" />
     <Compile Include="CnCException.cs" />
     <Compile Include="ColorConsole.cs" />
     <Compile Include="ConsoleProgressBar.cs" />
     <Compile Include="ByteOrder.cs" />
+    <Compile Include="Jobs\JobTypeDescriptorCollection.cs" />
+    <Compile Include="Jobs\JobTypeDescriptor.cs" />
     <Compile Include="Newtonsoft\Json\Converters\HexStringJsonConverter.cs" />
     <Compile Include="Jobs\CPUType.cs" />
     <Compile Include="BootloaderClient.cs" />
@@ -63,7 +65,7 @@
     <Compile Include="FifoBuffer.cs" />
     <Compile Include="IntelHEXFormatException.cs" />
     <Compile Include="IntelHEX16Storage.cs" />
-    <Compile Include="Jobs\TaskType.cs" />
+    <Compile Include="Jobs\JobType.cs" />
     <Compile Include="MemoryMap.cs" />
     <Compile Include="MemoryMapException.cs" />
     <Compile Include="MemoryVerificationException.cs" />
@@ -72,16 +74,19 @@
     <Compile Include="ProgramTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Jobs\TaskEntry.cs" />
-    <Compile Include="Jobs\TaskContainer.cs" />
+    <Compile Include="Jobs\JobEntry.cs" />
+    <Compile Include="Jobs\JobEntryCollection.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="bootloader_tasks_real-subset.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="bootloader_tasks_real.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="bootloader_tasks_test.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
     <None Include="TestData\eeprom_1k_01.hex">

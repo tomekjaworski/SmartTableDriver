@@ -16,7 +16,7 @@ namespace Newtonsoft.Json.Converters
             string str = reader.Value as string;
             if (string.IsNullOrEmpty(str) || !str.StartsWith("0x"))
                 throw new JsonSerializationException($"Unable to convert string to integer");
-            return Convert.ToInt32(str, 16);
+            return (byte?)Convert.ToInt32(str, 16);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace CnC.Jobs
 {
-    public enum TaskType
+    public enum JobType
     {
         WriteFlashMemory,
         Reboot,

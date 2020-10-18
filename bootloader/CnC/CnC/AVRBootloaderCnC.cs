@@ -224,39 +224,39 @@ namespace CnC
             return endpoints.ToArray();
         }
 
-        class __x
+        class ScanningTask
         {
             public int Row;
 
             public Thread Thread { get; internal set; }
-            public byte MaxAddress { get; internal set; }
+            public byte[] AddressList { get; internal set; }
             public SerialPort SerialPort { get; internal set; }
             public List<BootloaderClient> EndpointsCollection { get; internal set; }
         }
 
-        internal void AcquireBootloaderDevicesInParallel(byte max_addr)
+        internal void AcquireBootloaderDevicesInParallel(byte[] addresses)
         {
             Console.WriteLine();
-            __x[] r = new __x[available_ports.Count];
+            ScanningTask[] tasks = new ScanningTask[available_ports.Count];
             int top = Console.CursorTop;
             List<BootloaderClient> endpoints = new List<BootloaderClient>();
 
 
             for (int i = 0; i < available_ports.Count; i++)
             {
-                r[i] = new __x()
+                tasks[i] = new ScanningTask()
                 {
                     Row = top + i,
                     Thread = new Thread(new ParameterizedThreadStart(Ack)),
-                    MaxAddress = max_addr,
+                    AddressList = addresses,
                     SerialPort = available_ports[i],
                     EndpointsCollection = endpoints
                 };
-                r[i].Thread.Start(r[i]);
+                tasks[i].Thread.Start(tasks[i]);
             }
 
             for (int i = 0; i < available_ports.Count; i++)
-                r[i].Thread.Join();
+                tasks[i].Thread.Join();
 
             Console.CursorTop += available_ports.Count;
 
@@ -264,26 +264,29 @@ namespace CnC
             this.discovered_devices.Sort((x, y) => x.BootloaderAddress - y.BootloaderAddress);
         }
 
+        internal void AcquireBootloaderDevicesInParallel(byte max_addr)
+        {
+            var addresses = Enumerable.Range(0, (int)max_addr + 1).Select(x => (byte)x).ToArray();
+            AcquireBootloaderDevicesInParallel(addresses);
+        }
+
         private void Ack(object obj)
         {
-
-            __x r = obj as __x;
+            ScanningTask task = obj as ScanningTask;
             int col = 0;
-            ColorConsole.WriteXY(0, r.Row, r.SerialPort.PortName);
+            ColorConsole.WriteXY(0, task.Row, task.SerialPort.PortName);
             col += 3 + 3 + 1;
 
-            var sp = r.SerialPort;
+            var sp = task.SerialPort;
             var me = new MessageExtractor();
             int timeout = 100;
             var endpoints = new List<BootloaderClient>();
 
-            for (byte scanned_address = 0x00; scanned_address <= r.MaxAddress; scanned_address++)
+            foreach (byte scanned_address in task.AddressList)
             {
-
+                // Show scanned address
                 int ccol = col;
-                ColorConsole.WriteXY(ccol, r.Row, ConsoleColor.Green, $"0x{scanned_address:X2}");
-                ccol += 5;
-                ColorConsole.WriteXY(ccol, r.Row, ConsoleColor.Yellow, "[" + string.Join(",", endpoints.Select(x => x.BootloaderAddress.ToString("X2"))) + "]");
+                ColorConsole.WriteXY(ccol, task.Row, ConsoleColor.Green, $"0x{scanned_address:X2}");
 
                 // send ping do selected device
                 sp.DiscardInBuffer();
@@ -295,10 +298,15 @@ namespace CnC
 
                 if (msg != null)
                     endpoints.Add(new BootloaderClient(sp, scanned_address));
+
+
+                // Show list of found clients
+                ccol += 5;
+                ColorConsole.WriteXY(ccol, task.Row, ConsoleColor.Yellow, "[" + string.Join(",", endpoints.Select(x => x.BootloaderAddress.ToString("X2"))) + "]");
             }
 
-            lock (r.EndpointsCollection)
-                r.EndpointsCollection.AddRange(endpoints);
+            lock (task.EndpointsCollection)
+                task.EndpointsCollection.AddRange(endpoints);
         }
 
         public void ShowDevices()
@@ -345,7 +353,7 @@ namespace CnC
             ver = Encoding.ASCII.GetString(response.Payload, 0, response.Payload.Length - 1);
 
             Console.CursorVisible = true;
-            Console.Write($"Reading bootloader fw version: [{ver}]");
+            Console.WriteLine($"Reading bootloader fw version: [{ver}]");
 
         }
 

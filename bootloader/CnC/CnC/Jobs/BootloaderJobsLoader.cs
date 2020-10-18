@@ -7,14 +7,14 @@ using System.IO;
 
 namespace CnC
 {
-    public class BootloaderTaskProvider
+    public class BootloaderJobsLoader
     {
-        private TaskEntry[] tasks;
-        public TaskEntry[] Tasks => this.tasks;
+        private JobEntry[] jobs;
+        public JobEntry[] Jobs => this.jobs;
 
-        public int Count => this.tasks.Length;
+        public int Count => this.jobs.Length;
 
-        public BootloaderTaskProvider()
+        public BootloaderJobsLoader()
         {
 
         }
@@ -22,29 +22,29 @@ namespace CnC
         public void LoadTasks(string taskDescriptionFile)
         {
             // Read tasks
-            Jobs.TaskContainer task_container = null;
+            Jobs.JobEntryCollection collection = null;
             try
             {
                 string content = File.ReadAllText(taskDescriptionFile);
-                task_container = JsonConvert.DeserializeObject<Jobs.TaskContainer>(content);
+                collection = JsonConvert.DeserializeObject<Jobs.JobEntryCollection>(content);
             }
             catch (IOException ioex)
             {
-                throw new BootloaderException($"Configuration load error: {ioex.Message}", ioex);
+                throw new BootloaderException($"Job list load error: {ioex.Message}", ioex);
             }
             catch (JsonException jex)
             {
-                throw new BootloaderException($"Configuration parsing error: {jex.Message}", jex);
+                throw new BootloaderException($"Job list parsing error: {jex.Message}", jex);
             }
 
-            // Verify tasks
-            for(int i = 0; i < task_container.Tasks.Length; i++)
+            // Verify jobs
+            for(int i = 0; i < collection.Jobs.Length; i++)
             {
-                TaskEntry task = task_container.Tasks[i];
+                JobEntry task = collection.Jobs[i];
                 try
                 {
                     //todo: refactorize
-                    if (task.TaskType == TaskType.WriteEepromMemory)
+                    if (task.JobType == JobType.WriteEepromMemory)
                     {
                         //TODO: replace fake load into fake memory with a clear verification procedure
                         MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
@@ -52,33 +52,33 @@ namespace CnC
                         s.Load(task.FileName);
                     }
 
-                    if (task.TaskType == TaskType.WriteFlashMemory)
+                    if (task.JobType == JobType.WriteFlashMemory)
                     {
                         //TODO: replace fake load into fake memory with a clear verification procedure
                         MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
                         IntelHEX16Storage s = new IntelHEX16Storage(mm);
                         s.Load(task.FileName);
                     }
-                    if (task.TaskType == TaskType.ReadFlashMemory || task.TaskType == TaskType.ReadEepromMemory)
+                    if (task.JobType == JobType.ReadFlashMemory || task.JobType == JobType.ReadEepromMemory)
                     {
                         //TODO: replace fake load into fake memory with a clear verification procedure
                       //  MemoryMap mm = new MemoryMap(task.ProgrammableMemorySize);
                        // IntelHEX16Storage s = new IntelHEX16Storage(mm);
                         //s.Load(task.FileName);
                     }
-                    if (task.TaskType == TaskType.Reboot)
+                    if (task.JobType == JobType.Reboot)
                     {
                         //?
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new BootloaderException($"Task verification failed ({task.TaskType}, task #{i}): {ex.Message}", ex);
+                    throw new BootloaderException($"Job verification failed ({task.JobType}, task #{i}): {ex.Message}", ex);
                 }
             }
 
             // Seems ok
-            this.tasks = task_container.Tasks;
+            this.jobs = collection.Jobs;
         }
     }
 
