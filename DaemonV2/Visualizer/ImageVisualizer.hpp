@@ -8,7 +8,7 @@
 #include "../ImageReconstructor.hpp"
 
 class ImageVisualizer {
-
+    double minimum, maximum;
 public:
     ImageVisualizer(void);
     ~ ImageVisualizer(void);

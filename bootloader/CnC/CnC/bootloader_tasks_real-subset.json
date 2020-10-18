@@ -29,14 +29,14 @@
     {
       "JobType": "WriteFlashMemory",
       "BootloaderID": "0x11",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "FileName": "..\\..\\..\\..\\..\\TableFirmware\\Debug\\TableFirmware.hex",
       "CPU": "ATMega328P",
       "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
     },
     {
       "JobType": "WriteFlashMemory",
       "BootloaderID": "0x34",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Debug\\SmartTableFirmware.hex",
+      "FileName": "..\\..\\..\\..\\..\\TableFirmware\\Debug\\TableFirmware.hex",
       "CPU": "ATMega328P",
       "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
     },
@@ -48,7 +48,7 @@
     {
       "JobType": "WriteEepromMemory",
       "BootloaderID": "0x11",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\11.hex",
+      "FileName": "..\\..\\..\\..\\..\\TableFirmware\\Eeprom\\11.hex",
       "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
     },
@@ -56,7 +56,7 @@
     {
       "JobType": "WriteEepromMemory",
       "BootloaderID": "0x34",
-      "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\34.hex",
+      "FileName": "..\\..\\..\\..\\..\\TableFirmware\\Eeprom\\34.hex",
       "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
     },

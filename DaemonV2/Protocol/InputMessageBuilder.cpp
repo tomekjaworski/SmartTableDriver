@@ -3,7 +3,7 @@
 #include "../Utility/Crc16.hpp"
 #include <cassert>
 #include "../Utility/Helper.hpp"
-#include "../../SmartTableFirmware/protocol.h"
+#include "../../TableFirmware/protocol.h"
 #include <algorithm>
 InputMessageBuilder::InputMessageBuilder(void) {
 	this->position = 0;
