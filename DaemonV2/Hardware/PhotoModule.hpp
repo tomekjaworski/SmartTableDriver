@@ -13,6 +13,8 @@ class PhotoModule {
 
 public:
 	typedef std::shared_ptr<PhotoModule> Ptr;
+	constexpr static int ModuleHeight = 10;
+	constexpr static int ModuleWidth = 10;
 
 private:
     device_identifier_t id;

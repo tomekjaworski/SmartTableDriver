@@ -8,8 +8,7 @@
 #include "Utility/AnsiCodes.h"
 #include <unistd.h>
 #include <boost/algorithm/string.hpp>
-#include "ImageDebuggerClient/ImageDebuggerClient.h"
-#include "Image.hpp"
+#include "ImageReconstructor.hpp"
 
 class App : public ProgramBase {
 public:
@@ -113,16 +112,11 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 //    } while (true);
 //}
 
-
+#include "Visualizer/ImageVisualizer.hpp"
 void sigpipe_handler(int unused)
 {
     // ignoruj
 }
-
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
 
 int App::Main(const std::vector<std::string>& arguments) {
 
@@ -134,23 +128,23 @@ int App::Main(const std::vector<std::string>& arguments) {
     struct sigaction handler;
 
 
-    uint16_t buffer[32*32];
-    buffer [16*8+8] = 40000;
+    //uint16_t buffer[32*32];
+    //buffer [16*8+8] = 40000;
 
-    while(1) {
+//    while(1) {
+//
+//        buffer[16*8 + 10] += 1000;
+//        cv::Mat obr(32, 32, CV_16UC1, buffer);
+//        cv::Mat dest;
+//        cv::resize(obr, dest, cv::Size(), 4, 4, CV_INTER_NN);
+//        cv::imshow("Test", dest);
+//        cv::waitKey(100);
+//
+//
+//    }
 
-        buffer[16*8 + 10] += 1000;
-        cv::Mat obr(32, 32, CV_16UC1, buffer);
-        cv::Mat dest;
-        cv::resize(obr, dest, cv::Size(), 4, 4, CV_INTER_NN);
-        cv::imshow("Test", dest);
-        cv::waitKey(100);
 
-
-    }
-
-
-    return 0;
+//    return 0;
 
     handler.sa_handler = sigpipe_handler;
     int result = sigaction(SIGPIPE, &handler, NULL);
@@ -245,15 +239,15 @@ int App::Main(const std::vector<std::string>& arguments) {
             }
         }
 
-        printf(AYELLOW "   Port %s, device %s: version=[%s], date=[%s], time=[%s]\n" ARESET,
+        device_identifier_t devid = static_cast<device_identifier_t>(std::stoi(info["id"]));
+        printf(AYELLOW "   Port %s, device 0x%02X: version=[%s], date=[%s], time=[%s]\n" ARESET,
                serial_port->GetPortName().c_str(),
-               info["id"].c_str(),
+               devid,
                info["version"].c_str(),
                info["date"].c_str(),
                info["time"].c_str()
         );
 
-        device_identifier_t devid = static_cast<device_identifier_t>(std::stoi(info["id"]));
 
         //try {
         PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByID(devid);
@@ -262,10 +256,16 @@ int App::Main(const std::vector<std::string>& arguments) {
         //} catch
     }
 
+    //
+    //
+    // ###############################################################
+    //
+    //
+
+
     OutputMessage msg_do_single_measurement = OutputMessage(MessageType::SingleMeasurement8Request);
 
-
-    Image img(60, 40);
+    ImageReconstructor img(TableDevice::TableWidth, TableDevice::TableHeight);
     std::map<int, InputMessageBuilder> fd2builder;
     std::map<int, Location> fd2location;
     std::vector<SerialPort::Ptr> serial_ports;
@@ -277,11 +277,15 @@ int App::Main(const std::vector<std::string>& arguments) {
         fd2location[pserial->GetHandle()] = pmodule->GetLocation();
         serial_ports.push_back(pmodule->GetSerialPort());
     }
+
     InputMessage response;
     std::array<uint8_t, 256> recv_buffer;
+    ImageVisualizer visualizer;
 
     while(1) {
+        visualizer.ShowReconstruction(img);
         Communication::SendToMultiple(tdev.GetSerialPortCollection(), msg_do_single_measurement);
+        usleep(100 * 1000);
 
 
         fd_set rfd;
@@ -313,14 +317,11 @@ int App::Main(const std::vector<std::string>& arguments) {
                     const uint8_t *ptr = response.GetPayloadPointer<std::uint8_t>();
                     int payload_length = response.GetPayloadSize();
                     img.ProcessMeasurementPayload(ptr, 8, location);
-
-                    IDBG_ShowImage("obrazek", img.GetHeight(), img.GetWidth(), img.GetData(), "U16");
                 };
             }
 
 
         }
-        usleep(100 * 1000);
     }
 
 
