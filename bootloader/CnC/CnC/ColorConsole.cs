@@ -95,7 +95,9 @@ namespace CnC
 
             if (!string.IsNullOrEmpty(messge))
                 Console.Write(messge);
-            Console.ReadKey();
+
+            Console.ReadKey(true);
+            Console.WriteLine();
         }
 
         internal static void WriteXY(int left, int top, string str)

@@ -14,6 +14,10 @@ class TableDevice {
     std::vector<PhotoModule::Ptr> geometry;
     std::vector<SerialPort::Ptr> ports;
 public:
+    static constexpr int TableWidth = 60;
+    static constexpr int TableHeight = 40;
+
+
     TableDevice(void);
     ~TableDevice();
 public:

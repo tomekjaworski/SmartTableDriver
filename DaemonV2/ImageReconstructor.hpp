@@ -6,14 +6,14 @@
 #include <stdexcept>
 #include "Hardware/Location.hpp"
 
-class Image
+class ImageReconstructor
 {
 private:
 	std::vector<std::uint16_t> data;
 	int width, height;
 
 public:
-	Image(int width, int height)
+	ImageReconstructor(int width, int height)
 		: width(width), height(height) {
 		this->data.reserve(width * height);
 		this->Clear();

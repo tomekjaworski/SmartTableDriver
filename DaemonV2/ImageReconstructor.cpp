@@ -2,7 +2,8 @@
 // Created by Tomek on 10/16/2020.
 //
 
-#include "Image.hpp"
+#include "ImageReconstructor.hpp"
+#include "Hardware/PhotoModule.hpp"
 #include <cassert>
 
 static int photomodule_lookuptable[] = {
@@ -19,27 +20,34 @@ static int photomodule_lookuptable[] = {
 };
 
 
-void Image::ProcessMeasurementPayload(const void* vpayload, int bits, const Location& ploc)
+void ImageReconstructor::ProcessMeasurementPayload(const void* vpayload, int bits, const Location& ploc)
 {
     assert(bits == 16 || bits == 8); // other cases not implemented at the moment
 
+    int xoffset = PhotoModule::ModuleWidth * (ploc.GetColumn() - 1);
+    int yoffset = PhotoModule::ModuleHeight * (ploc.GetRow() - 1);
+
     if (bits == 16) {
         auto *upayload = reinterpret_cast<const std::uint16_t*>(vpayload);
-        for (int x = 0; x < 10; x++)
-            for (int y = 0; y < 10; y++) {
-                int payload_index = x + y * 10;
+        for (int x = 0; x < PhotoModule::ModuleWidth; x++)
+            for (int y = 0; y < PhotoModule::ModuleHeight; y++) {
+                int payload_index = x + y * PhotoModule::ModuleWidth;
+
                 payload_index = photomodule_lookuptable[payload_index];
                 uint16_t value = upayload[payload_index];
-                data[ploc.GetColumn() + x + width * (ploc.GetRow() + y)] = value;
+
+                data[xoffset + x + width * (yoffset + y)] = value;
             }
     } else {
         auto *upayload = reinterpret_cast<const std::uint8_t*>(vpayload);
-        for (int x = 0; x < 10; x++)
-            for (int y = 0; y < 10; y++) {
-                int payload_index = x + y * 10;
+        for (int x = 0; x < PhotoModule::ModuleWidth; x++)
+            for (int y = 0; y < PhotoModule::ModuleHeight; y++) {
+                int payload_index = x + y * PhotoModule::ModuleWidth;
+
                 payload_index = photomodule_lookuptable[payload_index];
                 uint16_t value = upayload[payload_index];
-                data[ploc.GetColumn() - 1 + x + width * (ploc.GetRow() - 1 + y)] = value;
+
+                data[xoffset + x + width * (yoffset + y)] = value;
             }
     }
 

@@ -19,15 +19,15 @@ namespace CnC
         static Random random;
         static void Main(string[] args)
         {
+            ShowIntro();
 
-            Console.WriteLine("SmartTable bootloader C&C software by Tomasz Jaworski\n");
             random = new Random();
 
-            BootloaderTaskProvider btp = new BootloaderTaskProvider();
+            BootloaderJobsLoader btp = new BootloaderJobsLoader();
             Console.WriteLine($"Reading task file...");
             try
             {
-                btp.LoadTasks("bootloader_tasks_real.json");
+                btp.LoadTasks("bootloader_tasks_real-subset.json");
             }
             catch (Exception ex)
             {
@@ -36,14 +36,14 @@ namespace CnC
 
 
             // Find highest bootloader id
-            int last_bootloader_id = btp.Tasks.Select(x => x.BootloaderID).Max();
+            byte[] addresses_to_check = btp.Jobs.Where(x => x.BootloaderID.HasValue).Select(x => x.BootloaderID.Value).Distinct().ToArray();
 
             // Show some summary            
             Console.WriteLine($"Task summary:");
             Console.WriteLine($"   Found {btp.Count} task(s).");
-            Console.WriteLine($"   Highest bootloader ID: 0x{last_bootloader_id:X2}");
-            Console.WriteLine($"   Unique bootloaders (by ID): {btp.Tasks.Select(x => x.BootloaderID).Distinct().Count()}");
-            Console.WriteLine($"   Unique bootloaders: {string.Join(",", btp.Tasks.Select(x => "0x"+x.BootloaderID.ToString("X2")).Distinct())}");
+            Console.WriteLine($"   Highest bootloader ID: 0x{addresses_to_check.Max():X2}");
+            Console.WriteLine($"   Unique bootloaders (by ID): {btp.Jobs.Select(x => x.BootloaderID).Distinct().Count()}");
+            Console.WriteLine($"   Unique bootloaders: {string.Join(",", addresses_to_check.Select(x => "0x" + x.ToString("X2")).Distinct())}");
 
             //
             // Wait for all serial ports to be connected and identified
@@ -51,31 +51,7 @@ namespace CnC
             cnc.SendAdvertisementToEveryDetectedPort();
 
             // Scan all available serial ports for bootloaders
-            //cnc.AcquireBootloaderDevices((byte)(1 + last_bootloader_id));
-            cnc.AcquireBootloaderDevicesInParallel((byte)(1 + last_bootloader_id));
-
-
-            //IntelHEX16Storage loader;
-            //MemoryMap memory_flash = new MemoryMap(32 * 1024 - 2 * 1024);
-            //MemoryMap memory_eeprom = new MemoryMap(0x400);
-            //loader = new IntelHEX16Storage(memory_flash);
-            ////loader.Load(f1);
-
-            //loader = new IntelHEX16Storage(memory_eeprom);
-            ////loader.Load(f2);
-
-
-
-            //MemoryMap fw = new MemoryMap(32*1024-2*1024);
-            //IntelHEX16Storage st = new IntelHEX16Storage(fw);
-            //st.Load(@"d:\SystemDocuments\SmartTableDriver\SmartTableFirmware\Debug\SmartTableFirmware.hex");
-
-            //int pos1 = fw.FindSequence(new byte[] { 0xaa, 0x11, 0x0d, 0x4d });
-            //int pos2 = fw.FindSequence(new byte[] { 0x75, 0x87, 0x60, 0x64 });
-            //Debug.Assert(pos2 == pos1 + 5);
-
-            //fw.Dump("test.txt");
-
+            cnc.AcquireBootloaderDevicesInParallel(addresses_to_check);
 
 
 
@@ -83,63 +59,67 @@ namespace CnC
             cnc.ShowDevices();
 
 
-            for (int task_index = 0; task_index < btp.Count; task_index++)
+            for (int job_index = 0; job_index < btp.Count; job_index++)
             {
-                TaskEntry task_entry = btp.Tasks[task_index];
-                Console.WriteLine($"Running task {task_index}: {task_entry.TaskType} for device {task_entry.CPU} ID={task_entry.BootloaderID:X2}...");
+                JobEntry job_entry = btp.Jobs[job_index];
+                JobTypeDescriptor job_type_descriptor = JobTypeDescriptorCollection.GetDescriptor(job_entry.JobType);
+                ColorConsole.WriteLine(ConsoleColor.Cyan, $"Running task {job_index}: {job_entry.JobType} for device {job_entry.CPU} ID={job_entry.BootloaderID:X2}...");
 
                 // Get the device
-                BootloaderClient device = cnc.Devices.Where(x => x.BootloaderAddress == task_entry.BootloaderID).FirstOrDefault();
-                if (device == null)
+                BootloaderClient device = cnc.Devices.Where(x => x.BootloaderAddress == job_entry.BootloaderID).FirstOrDefault();
+                if (device == null && job_type_descriptor.IsPhysicalDeviceNeeded)
                 {
                     ColorConsole.WriteLine(ConsoleColor.Yellow, "   No proper device found.");
                     continue;
                 }
 
-                if (task_entry.TaskType == TaskType.ReadEepromMemory)
+                if (job_entry.JobType == JobType.ReadEepromMemory)
                 {
-                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                    MemoryMap mm = new MemoryMap(job_entry.ProgrammableMemorySize);
                     cnc.ReadEEPROM(device, mm);
                     IntelHEX16Storage storage = new IntelHEX16Storage(mm);
-                    storage.Save(task_entry.FileName);
+                    storage.Save(job_entry.FileName);
                 }
 
-                if (task_entry.TaskType == TaskType.ReadFlashMemory)
+                if (job_entry.JobType == JobType.ReadFlashMemory)
                 {
-                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                    MemoryMap mm = new MemoryMap(job_entry.ProgrammableMemorySize);
                     cnc.ReadFLASH(device, mm);
                     IntelHEX16Storage storage = new IntelHEX16Storage(mm);
-                    storage.Save(task_entry.FileName);
+                    storage.Save(job_entry.FileName);
                 }
 
-                if (task_entry.TaskType == TaskType.WriteEepromMemory)
+                if (job_entry.JobType == JobType.WriteEepromMemory)
                 {
-                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                    MemoryMap mm = new MemoryMap(job_entry.ProgrammableMemorySize);
                     IntelHEX16Storage storage = new IntelHEX16Storage(mm);
-                    storage.Load(task_entry.FileName);
+                    storage.Load(job_entry.FileName);
                     cnc.WriteEEPROM(device, mm);
                 }
 
 
-                if (task_entry.TaskType == TaskType.WriteFlashMemory)
+                if (job_entry.JobType == JobType.WriteFlashMemory)
                 {
-                    MemoryMap mm = new MemoryMap(task_entry.ProgrammableMemorySize);
+                    MemoryMap mm = new MemoryMap(job_entry.ProgrammableMemorySize);
                     IntelHEX16Storage storage = new IntelHEX16Storage(mm);
-                    storage.Load(task_entry.FileName);
+                    storage.Load(job_entry.FileName);
                     cnc.WriteFLASH(device, mm);
                 }
 
-                if (task_entry.TaskType == TaskType.Reboot)
+                if (job_entry.JobType == JobType.Reboot)
                 {
                     cnc.Reboot(device);
                 }
 
-                if (task_entry.TaskType == TaskType.WaitForKey)
+                if (job_entry.JobType == JobType.WaitForKey)
                 {
-                    ColorConsole.PressAnyKey();
+                    if (!string.IsNullOrEmpty(job_entry.WaitForKeyMessage))
+                        ColorConsole.PressAnyKey(job_entry.WaitForKeyMessage);
+                    else
+                        ColorConsole.PressAnyKey();
                 }
 
-                if (task_entry.TaskType == TaskType.ReadBootloaderVersion)
+                if (job_entry.JobType == JobType.ReadBootloaderVersion)
                 {
                     string ver = "";
                     cnc.ReadBootloaderVersion(device, ref ver);
@@ -189,6 +169,21 @@ namespace CnC
 
         }
 
+        enum X
+        {
+            a = ConsoleColor.Red
+        }
+
+        private static void ShowIntro()
+        {
+            ColorConsole.WriteLine(ConsoleColor.White, @"  __  __  ___ __  __ ___    ___         _   _             _          ");
+            ColorConsole.WriteLine(ConsoleColor.White, @" |  \/  |/ __|  \/  |   \  | _ )___ ___| |_| |___ __ _ __| |___ _ _  ");
+            ColorConsole.WriteLine(ConsoleColor.White, @" | |\/| | (__| |\/| | |) | | _ / _ / _ |  _| / _ / _` / _` / -_| '_| ");
+            ColorConsole.WriteLine(ConsoleColor.White, @" |_|  |_|\___|_|  |_|___/  |___\___\___/\__|_\___\__,_\__,_\___|_|   ");
+            ColorConsole.WriteLine(ConsoleColor.White, @"═════════════════════════════════════════════════════════════════════");
+            ColorConsole.WriteLine(ConsoleColor.White, @" Multi-Channel Multi-Device Bootloader, Tomasz Jaworski 2020");
+            Console.WriteLine();
+        }
     }
 
 }

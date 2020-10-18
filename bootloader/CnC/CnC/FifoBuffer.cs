@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace CnC
@@ -11,7 +12,7 @@ namespace CnC
 		private int position;
 
 
-		public int Count { get { return this.position; } }
+		public int Count => this.position;
 
 		public FifoBuffer(int buffer_size)
 		{
@@ -22,7 +23,9 @@ namespace CnC
 
 		public void Write(byte[] bytes, int offset, int count)
 		{
-            //TODO exception 
+			if (this.position + count > this.buffer.Length)
+				throw new InternalBufferOverflowException("Fifo buffer run oout of memory");
+
 			Array.Copy(bytes, offset, this.buffer, this.position, count);
 			this.position += count;
 		}
@@ -55,7 +58,7 @@ namespace CnC
 			return System.Net.IPAddress.NetworkToHostOrder(BitConverter.ToInt32(this.buffer, offset));
 		}
 
-        internal int ReadByte()
+		public int ReadByte()
         {
             if (Count == 0)
                 return -1;
@@ -65,7 +68,7 @@ namespace CnC
             return b;
         }
 
-        internal void Discard()
+		public void Discard()
         {
             position = 0;
         }

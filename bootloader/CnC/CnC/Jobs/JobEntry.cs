@@ -3,15 +3,15 @@ using Newtonsoft.Json.Converters;
 
 namespace CnC.Jobs
 {
-    public class TaskEntry
+    public class JobEntry
     {
         [JsonProperty("BootloaderID")]
         [JsonConverter(typeof(Newtonsoft.Json.Converters.HexStringJsonConverter))]
-        public int BootloaderID { get; set; }
+        public byte? BootloaderID { get; set; }
 
-        [JsonProperty("TaskType")]
+        [JsonProperty("JobType")]
         [JsonConverter(typeof(StringEnumConverter))]
-        public TaskType TaskType { get; set; }
+        public JobType JobType { get; set; }
 
         [JsonProperty("FileName")]
         public string FileName { get; set; }
@@ -21,8 +21,10 @@ namespace CnC.Jobs
         public CPUType CPU { get; set; }
 
         [JsonProperty("ProgrammableMemorySize")]
-        //[JsonConverter(typeof(Newtonsoft.Json.Converters.HexStringJsonConverter))]
         public uint ProgrammableMemorySize { get; set; }
+     
+        [JsonProperty("Message")]
+        public string WaitForKeyMessage { get; set; }
     }
 
 }

@@ -12,7 +12,7 @@ add_executable(
         ${PROJECT_NAME}
         Utility/AnsiCodes.h
 
-        Image.hpp
+        ImageReconstructor.hpp
 
         main.cpp
         Hardware/Location.hpp Hardware/PhotoModule.hpp
@@ -31,9 +31,8 @@ add_executable(
         Utility/Helper.cpp Utility/Helper.hpp Protocol/TimeoutError.h
 
         Protocol/Communication.cpp Protocol/Communication.hpp
-        ImageDebuggerClient/ImageDebuggerClient.cpp ImageDebuggerClient/ImageDebuggerClient.h
 
-        Image.cpp)
+        ImageReconstructor.cpp Visualizer/ImageVisualizer.cpp Visualizer/ImageVisualizer.hpp)
 
 
 target_link_libraries(${PROJECT_NAME} stdc++fs opencv_core opencv_highgui opencv_imgproc)
