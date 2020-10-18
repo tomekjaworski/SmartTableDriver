@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Atmel Studio Solution File, Format Version 11.00
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "TableFirmware", "TableFirmware.cppproj", "{DCE6C7E3-EE26-4D79-826B-08594B9AD897}"
+Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "TableFirmware\TableFirmware", "TableFirmware\TableFirmware.cppproj", "{DCE6C7E3-EE26-4D79-826B-08594B9AD897}"
 EndProject
-Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "TriggerFirmware", "..\TriggerFirmware\TriggerFirmware.cppproj", "{FBA40047-A77B-4DF0-AA7D-012D4BBE9857}"
+Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "TriggerFirmware", "TriggerFirmware\TriggerFirmware.cppproj", "{FBA40047-A77B-4DF0-AA7D-012D4BBE9857}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
