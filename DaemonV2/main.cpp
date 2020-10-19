@@ -123,7 +123,7 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     // Intro
     printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
-    printf("Built on %s @ %s %lu\n\n", __DATE__, __TIME__, sizeof(void*));
+    printf("Built on %s @ %s %lu\n\n", __DATE__, __TIME__, sizeof(void *));
     setbuf(stdout, NULL);
     struct sigaction handler;
 
@@ -161,6 +161,7 @@ int App::Main(const std::vector<std::string>& arguments) {
     TableDevice tdev;
     tdev.ShowTopology();
 
+    SerialPort::Ptr trigger_generator_serial = nullptr;
 
     //
     // Initialize communication on each searial port and detect device id
@@ -225,7 +226,7 @@ int App::Main(const std::vector<std::string>& arguments) {
         }
 
         std::string device_info(response.GetPayloadPointer<char>(),
-                response.GetPayloadPointer<char>() + response.GetPayloadSize());
+                                response.GetPayloadPointer<char>() + response.GetPayloadSize());
 
 
         std::vector<std::string> entries;
@@ -249,12 +250,42 @@ int App::Main(const std::vector<std::string>& arguments) {
         );
 
 
-        //try {
-        PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByID(devid);
-        if (pmodule != nullptr)
-            tdev.SetSerialPort(pmodule, serial_port);
+        if (devid == 0x1F) // Trigger Generator?
+        {
+            trigger_generator_serial = serial_port;
+        } else {
+            PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByID(devid);
+            if (pmodule != nullptr)
+                tdev.SetSerialPort(pmodule, serial_port);
+        }
         //} catch
     }
+
+
+
+    //
+    //
+    // ###############################################################
+    //
+    //
+    {
+        TriggerGeneratorPayload tgp;
+        tgp.trigger1.high_interval = 500;
+        tgp.trigger1.low_interval = 500;
+        tgp.trigger1.mode = TriggerGeneratorSetMode::SetAndRun;
+
+        tgp.trigger2.mode = TriggerGeneratorSetMode::TurnOff;
+        OutputMessage msg_setup_trigger = OutputMessage(MessageType::SetTriggerGeneratorRequest, &tgp,
+                                                        sizeof(TriggerGeneratorPayload));
+        InputMessage response;
+        try{
+            Communication::Transcive(trigger_generator_serial, msg_setup_trigger, response, 2000);
+        } catch (const TimeoutError &te) {
+            printf("");
+            //
+        }
+    }
+
 
     //
     //

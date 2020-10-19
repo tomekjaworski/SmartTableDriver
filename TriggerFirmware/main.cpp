@@ -7,8 +7,6 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
-#include <avr/wdt.h>
-#include <avr/interrupt.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -17,88 +15,9 @@
 #include "..\TableFirmware\protocol.h"
 #include "..\TableFirmware\comm.h"
 #include "..\TableFirmware\eeprom_config.h"
+#include "cpu.h"
 
-#if defined(BAUD_UX2)
-// UX2 = 1
-#define UBR0_VALUE (F_CPU/(8UL*SERIAL_BAUD))-1
-#else
-// UX2 = 0
-#define UBR0_VALUE (F_CPU/(16UL*SERIAL_BAUD))-1
-#endif
-
-
-void cpu_init(void) {
-	
-	DDRB = 0x00;
-	DDRB |= _BV(PORTB5); //	LED
-	DDRB |= _BV(PORTB0); //	TRIGGER 1 (Arduino D8)
-	DDRB |= _BV(PORTB1); //	TRIGGER 2 (Arduino D9)
-	
-	DDRD = 0x00;
-
-	// configure serial port
-	uint16_t br = UBR0_VALUE;
-	UBRR0H = (uint8_t)(br >> 8);
-	UBRR0L = (uint8_t)br;
-
-	#if defined(BAUD_UX2)
-	UCSR0A = _BV(U2X0);
-	#else
-	UCSR0A = 0x00;
-	#endif
-//
-	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00) | _BV(UPM01);	// 8E1
-	UCSR0B = _BV(RXEN0) | _BV(TXEN0);	// wlacz rx i txs
-	UCSR0B |= (1 << RXCIE0);
-	SET_RECEIVER_INTERRUPT(true);
-
-
-	// Set timer to 250us
-	TCCR0A |= (1 << WGM01); // CTC mode
-	OCR0A = (F_CPU / 64UL) / 4000UL - 1;
-	TIMSK0 |= (1 << OCIE0A);
-	TCCR0B |= (1 << CS01) | (1 << CS00); // clk / 64
-
-	// Turn off watchdog
-	MCUSR = 0x00;
-	WDTCSR = 0x00;
-	wdt_disable();
-
-	// reset photodiodes selectors
-	//RESET1_LOW;
-	//RESET2_LOW;
-
-	// I'm I alive?
-	for(int i = 0; i < 100; i++)
-	{
-		LED0_TOGGLE;
-		//LED1_TOGGLE;
-		//LED_TOGGLE;
-		_delay_ms(20);
-
-	}
-
-	// RS485 to pozosta?o?c po pierwszej wersji; aby nie modyfikoaw? p?ytki (wylutowywac kostki)
-	// wystarczy prze??czy? j? w tryb nadawania.
-	LEGACY_RS485_DIR_OUTPUT();
-	//LED0_OFF; LED1_OFF;
-	_delay_ms(1000);
-
-	////RESET1_HIGH;
-	//RESET2_HIGH;
-
-	// start przerwan
-	sei();	
-	
-}
-
-
-void cpu_reboot(void) {
-	// start watchdog and lock so we can reboot
-	wdt_enable(WDTO_15MS);
-	while(1);
-}
-
+struct TriggerGeneratorConfig trigger_config = { 0 };
 
 
 inline static void memmove(volatile void* dst, volatile void* src, size_t size) {
@@ -113,13 +32,20 @@ int main(void)
 	cpu_init();
 	comm_reset_receiver();
 	configuration_load();
+	sei();
+
+	// trigger
+	trigger_config.trigger1.active = false;
+	trigger_config.trigger1.state = PinState::Low;
+	trigger_config.trigger1.low_interval = 1000;
+	trigger_config.trigger1.high_interval = 25;
 
 
-	while(1) {
-		_delay_ms(100);
-		TRIGGER1_TOGGLE();
-		//TRIGGER2_TOGGLE();
-	}
+	trigger_config.trigger2.active = false;
+	trigger_config.trigger2.state = PinState::Low;
+	trigger_config.trigger2.low_interval = 700;
+	trigger_config.trigger2.high_interval = 35;
+
 
 	while(1) {
 	
@@ -153,7 +79,69 @@ int main(void)
 			comm_send(MessageType::RebootResponse, (const uint8_t*)tx.payload, 0);
 			cpu_reboot();
 		}
-	
+
+
+		if (rx.buffer.header.type == MessageType::SetTriggerStateRequest) {
+			
+			volatile TriggerStatePayload* p = reinterpret_cast<volatile TriggerStatePayload*>(rx.buffer.payload);
+
+			if (p->trigger1 == TriggerStateSetMode::SetHigh)
+				TRIGGER1_SET_HIGH();
+			if (p->trigger1 == TriggerStateSetMode::SetLow)
+				TRIGGER1_SET_LOW();
+		
+			if (p->trigger2 == TriggerStateSetMode::SetHigh)
+				TRIGGER2_SET_HIGH();
+			if (p->trigger2 == TriggerStateSetMode::SetLow)
+				TRIGGER2_SET_LOW();
+		
+			comm_send(MessageType::SetTriggerStateResponse, NULL, 0);
+		}
+		
+		if (rx.buffer.header.type == MessageType::SetTriggerGeneratorRequest) {
+			volatile TriggerGeneratorPayload* p = reinterpret_cast<volatile TriggerGeneratorPayload*>(rx.buffer.payload);
+
+			// turn off trigger 1?
+			if (p->trigger1.mode == TriggerGeneratorSetMode::TurnOff) {
+				TRIGGER1_SET_LOW();
+				trigger_config.trigger1.active = false;
+			}
+			
+			// turn off trigger 2?
+			if (p->trigger2.mode == TriggerGeneratorSetMode::TurnOff) {
+				TRIGGER2_SET_LOW();
+				trigger_config.trigger2.active = false;
+			}
+			
+			//
+			// Setup trigger 1?
+			if (p->trigger1.mode == TriggerGeneratorSetMode::SetAndRun) {
+				cli();
+				TRIGGER1_SET_LOW();
+				trigger_config.trigger1.state = PinState::Low;
+				trigger_config.trigger1.low_interval = p->trigger1.low_interval;
+				trigger_config.trigger1.high_interval = p->trigger1.high_interval;
+				trigger_config.trigger1.counter = p->trigger1.low_interval;
+				trigger_config.trigger1.active = true;
+				sei();
+			}
+
+			//
+			// Setup trigger 2?
+			if (p->trigger2.mode == TriggerGeneratorSetMode::SetAndRun) {
+				cli();
+				TRIGGER2_SET_LOW();
+				trigger_config.trigger2.counter = 0x0000;
+				trigger_config.trigger2.state = PinState::Low;
+				trigger_config.trigger2.low_interval = p->trigger2.low_interval;
+				trigger_config.trigger2.high_interval = p->trigger2.high_interval;
+				trigger_config.trigger2.counter = p->trigger2.low_interval;
+				trigger_config.trigger2.active = true;
+				sei();
+			}
+			
+			comm_send(MessageType::SetTriggerGeneratorResponse, NULL, 0);
+		}
 
 /*
 		if (rx.buffer.header.type == MessageType::SingleMeasurement8Request) {

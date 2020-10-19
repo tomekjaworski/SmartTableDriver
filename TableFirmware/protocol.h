@@ -180,7 +180,10 @@ enum class MessageType : uint8_t
 	// Message types implemented only in triggering firmware
 	//
 	
-	
+	SetTriggerStateRequest = 0x41,
+	SetTriggerStateResponse = 0x42,
+	SetTriggerGeneratorRequest = 0x43,
+	SetTriggerGeneratorResponse = 0x44,
 	
 };
 
@@ -204,12 +207,44 @@ struct TX_PROTO_HEADER {
 } __attribute__((packed));
 
 
+
+enum class TriggerStateSetMode: uint8_t {
+	NoAction = 0x01,
+	SetLow = 0x02,
+	SetHigh = 0x03,
+};
+
+enum class TriggerGeneratorSetMode : uint8_t {
+	NoAction = 0x01,
+	SetAndRun = 0x02,
+	TurnOff = 0x03,
+};
+	
+struct TriggerGeneratorPayload {
+	struct {
+		TriggerGeneratorSetMode mode;
+		int16_t low_interval;
+		int16_t high_interval;
+	} __attribute__((packed)) trigger1, trigger2;
+} __attribute__((packed));
+
+struct TriggerStatePayload {
+	TriggerStateSetMode trigger1;
+	TriggerStateSetMode trigger2;
+} __attribute__((packed));
+
+
+
 // data size asserts
 static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
 static_assert(sizeof(RX_PROTO_HEADER) == 3, "RX_PROTO_HEADER has invalid size");
 static_assert(sizeof(TX_PROTO_HEADER) == 4, "RX_PROTO_HEADER has invalid size");
 static_assert(sizeof(checksum_t) == 2, "checksum_t has invalid size");
 
+static_assert(sizeof(TriggerGeneratorSetMode) == 1, "TriggerGeneratorSetMode has invalid size");
+static_assert(sizeof(TriggerStateSetMode) == 1, "TriggerStateSetMode has invalid size");
+static_assert(sizeof(TriggerGeneratorPayload) == 10, "TriggerGeneratorPayload has invalid size");
+static_assert(sizeof(TriggerStatePayload) == 2, "TriggerStatePayload has invalid size");
 
 
 

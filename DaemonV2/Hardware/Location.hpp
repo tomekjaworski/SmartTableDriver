@@ -10,7 +10,7 @@ class Location {
 public:	
 	int GetRow(void) const { return this->row; }
 	int GetColumn(void) const { return this->col; }
-	
+
 public:
     Location(void) : row(-1), col(-1) {
 	    //

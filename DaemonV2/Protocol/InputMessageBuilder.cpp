@@ -64,7 +64,9 @@ MessageExtractionResult InputMessageBuilder::Extractmessage(InputMessage& messag
 		    mt != MessageType::TriggeredMeasurementEnterResponse &&
 		    mt != MessageType::TriggeredMeasurementLeaveResponse &&
 		    mt != MessageType::PingResponse &&
-		    mt != MessageType::RebootResponse)
+		    mt != MessageType::RebootResponse &&
+		    mt != MessageType::SetTriggerGeneratorResponse &&
+		    mt != MessageType::SetTriggerStateResponse)
 		{
             // remove one byte and loop
             std::shift_left(this->queue.begin(), this->queue.end(), 1);
