@@ -22,8 +22,6 @@
 #define UBR0_VALUE (F_CPU/(16UL*SERIAL_BAUD))-1
 #endif
 
-#define LED0_TOGGLE do { PORTB ^= _BV(PORTB5); } while (0);
-
 
 void cpu_init(void) {
 	
@@ -44,7 +42,7 @@ void cpu_init(void) {
 	#else
 	UCSR0A = 0x00;
 	#endif
-
+//
 	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00) | _BV(UPM01);	// 8E1
 	UCSR0B = _BV(RXEN0) | _BV(TXEN0);	// wlacz rx i txs
 	UCSR0B |= (1 << RXCIE0);
@@ -53,9 +51,9 @@ void cpu_init(void) {
 
 	// Set timer to 250us
 	TCCR0A |= (1 << WGM01); // CTC mode
-	OCR0A = (8000000UL / 8UL) / 4000UL - 1;
+	OCR0A = (F_CPU / 64UL) / 4000UL - 1;
 	TIMSK0 |= (1 << OCIE0A);
-	TCCR0B |= (1 << CS01) | (0 << CS00); // clk / 8
+	TCCR0B |= (1 << CS01) | (1 << CS00); // clk / 64
 
 	// Turn off watchdog
 	MCUSR = 0x00;
@@ -102,11 +100,13 @@ void cpu_reboot(void) {
 
 int main(void)
 {
+	cpu_init();
+	
     /* Replace with your application code */
     while (1) 
     {
-		_delay_ms(100);
-		LED0_TOGGLE;
+//		_delay_ms(1000);
+	//	LED0_TOGGLE;
 		
     }
 }

@@ -8,15 +8,10 @@
 
 #ifndef HARDWARE_H_
 #define HARDWARE_H_
-//
-//
-//#define LED0_OFF do { PORTB |= _BV(PORTB2); } while (0);
-//#define LED0_ON do { PORTB &= ~_BV(PORTB2); } while (0);
-//#define LED0_TOGGLE do { PORTB ^= _BV(PORTB2); } while (0);
-//
-//#define LED1_ON do { PORTB |= _BV(PORTB5); } while (0);
-//#define LED1_OFF do { PORTB &= ~_BV(PORTB5); } while (0);
-//#define LED1_TOGGLE do { PORTB ^= _BV(PORTB5); } while (0);
+
+#define LED0_TOGGLE do { PORTB ^= _BV(PORTB5); } while (0);
+
+
 //
 //#define GET_TRIGGER()	!(PIND & _BV(PIND3))
 
