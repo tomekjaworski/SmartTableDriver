@@ -17,11 +17,13 @@
 #define LED1_ON do { PORTB |= _BV(PORTB5); } while (0);
 #define LED1_OFF do { PORTB &= ~_BV(PORTB5); } while (0);
 #define LED1_TOGGLE do { PORTB ^= _BV(PORTB5); } while (0);
+	
+#define GET_TRIGGER1()	!(PIND & _BV(PIND2))
+#define GET_TRIGGER2()	!(PIND & _BV(PIND3))
 
-#define GET_TRIGGER()	!(PIND & _BV(PIND3))
 
-#define LEGACY_RS485_DIR_OUTPUT()	do { PORTD |= _BV(PORTD2); } while(0); //1
-#define LEGACY_RS485_DIR_INPUT()	do { PORTD &= ~_BV(PORTD2); } while(0);//0
+#define LEGACY_RS485_DIR_OUTPUT()	((void)0)	//	do { PORTD |= _BV(PORTD2); } while(0); //1
+#define LEGACY_RS485_DIR_INPUT()	((void)0)	//	do { PORTD &= ~_BV(PORTD2); } while(0);//0
 
 #define RESET1_HIGH		do { PORTD |= _BV(PORTD5); } while(0); //1
 #define RESET2_HIGH		do { PORTD |= _BV(PORTD4); } while(0); //1

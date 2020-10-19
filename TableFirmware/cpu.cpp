@@ -55,10 +55,10 @@ void cpu_init(void)
 	DDRD |= _BV(PORTD4); // RESET2
 	
 
-	DDRD |= _BV(PORTD2); // DIR
 	DDRD |= _BV(PORTD1); // TX
 	
-	PORTD |= _BV(PORTD3); // pull-up dla wej?cia synchronizuj?cego
+	PORTD |= _BV(PORTD2); // pull up for trigger 1 input
+	PORTD |= _BV(PORTD3); // pull up for trigger 2 input
 
 	// port szergowy
 	uint16_t br = UBR0_VALUE;

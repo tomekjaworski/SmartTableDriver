@@ -61,11 +61,11 @@ int main(void)
 	}
 #endif
 	
-	bool prev_trigger = GET_TRIGGER();
+	bool prev_trigger = GET_TRIGGER1();
 	int8_t trigger_data_size = 0;
 
 	while(1) {
-		bool current_trigger = GET_TRIGGER();
+		bool current_trigger = GET_TRIGGER1();
 		if (current_trigger && !prev_trigger) {
 			LED1_TOGGLE;
 			if (trigger_data_size == 8) {
