@@ -31,8 +31,8 @@ void cpu_init(void) {
 	
 	DDRB = 0x00;
 	DDRB |= _BV(PORTB5); //	LED
-	DDRB |= _BV(PORTB0); //	TRIGGER 1
-	DDRB |= _BV(PORTB1); //	TRIGGER 2
+	DDRB |= _BV(PORTB0); //	TRIGGER 1 (Arduino D8)
+	DDRB |= _BV(PORTB1); //	TRIGGER 2 (Arduino D9)
 	
 	DDRD = 0x00;
 
@@ -114,6 +114,12 @@ int main(void)
 	comm_reset_receiver();
 	configuration_load();
 
+
+	while(1) {
+		_delay_ms(100);
+		TRIGGER1_TOGGLE();
+		//TRIGGER2_TOGGLE();
+	}
 
 	while(1) {
 	

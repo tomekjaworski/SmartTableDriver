@@ -13,7 +13,7 @@
 #define SERIAL_IDLE_LIMIT		10			// [0.5ms]
 
 //#define DEVICE_IDENTIFIER		(device_identifier_t)0x14
-#define FIRMWARE_VERSION		"2.0"
+#define FIRMWARE_VERSION		"2.0-tbl"
 #define FIRMWARE_BUILD_DATE		__DATE__
 #define FIRMWARE_BUILD_TIME		__TIME__
 
