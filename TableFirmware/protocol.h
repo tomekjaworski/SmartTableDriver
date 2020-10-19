@@ -145,8 +145,9 @@ static_assert(sizeof(ADC_BLOCK1_N8_B1) == 1, "ADC_BLOCK1_N8_B1 has invalid_size"
 
 enum class MessageType : uint8_t
 {
-	//__BroadcastFlag = 0x80,
-	//__ResponseFlag = 0x40,
+	// 
+	// Message types implemented in photo module firmware and triggering firmware
+	//
 	Invalid = 0x00,
 	None = 0x01,
 
@@ -160,6 +161,10 @@ enum class MessageType : uint8_t
 	RebootRequest = 0x06,
 	RebootResponse = 0x07,
 	
+	//
+	// Message types implemented only in photo module firmware
+	//
+	
 	SingleMeasurement8Request = 0x10,
 	SingleMeasurement8Response = 0x11,
 	SingleMeasurement10Request = 0x12,
@@ -170,6 +175,11 @@ enum class MessageType : uint8_t
 
 	TriggeredMeasurementLeaveRequest = 0x30,
 	TriggeredMeasurementLeaveResponse = 0x31,
+	
+	//
+	// Message types implemented only in triggering firmware
+	//
+	
 	
 	
 };

@@ -11,6 +11,14 @@
 
 #define LED0_TOGGLE do { PORTB ^= _BV(PORTB5); } while (0);
 
+#define TRIGGER1_TOGGLE()	do { PORTB ^= _BV(PORTB0); } while (0);
+#define TRIGGER2_TOGGLE()	do { PORTB ^= _BV(PORTB1); } while (0);
+
+#define TRIGGER1_HIGH()		do { PORTB |= _BV(PORTB0); } while(0); //1
+#define TRIGGER2_HIGH()		do { PORTB |= _BV(PORTB1); } while(0); //1
+#define TRIGGER1_LOW()		do { PORTB &= ~_BV(PORTB0); } while(0);//0
+#define TRIGGER2_LOW()		do { PORTB &= ~_BV(PORTB1); } while(0);//0
+
 
 //
 //#define GET_TRIGGER()	!(PIND & _BV(PIND3))
