@@ -51,9 +51,13 @@ struct RX
 	} __attribute__((packed)) buffer;
 };
 
-#define RX_COUNT (rx.buffer_position - (volatile uint8_t*)&rx.buffer)
-
 extern volatile TX tx;
 extern volatile RX rx;
+
+void comm_send(MessageType type, const void* payload, uint8_t payload_length);
+bool comm_check_receiver(void);
+void comm_reset_receiver(void);
+
+
 
 #endif /* COMM_H_ */
