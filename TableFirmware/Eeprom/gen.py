@@ -20,4 +20,4 @@ f[0] = 0x1f
 f[1] = 0x1f
 f[2] = 0x1f
 d = 0x1f
-f.write_hex_file(f"{d:02x}.hex")
+f.write_hex_file(f"{d:02X}.hex")
