@@ -7,7 +7,7 @@
 #include <chrono>
 #include "InputMessageBuilder.hpp"
 #include "TimeoutError.h"
-
+#include "../Utility/Helper.hpp"
 void Communication::Transcive(SerialPort::Ptr serial, const OutputMessage& query, InputMessage& response, int timeout) {
 
     if (serial == nullptr)
@@ -18,6 +18,7 @@ void Communication::Transcive(SerialPort::Ptr serial, const OutputMessage& query
 
     serial->DiscardAllData();
     serial->Send(query.GetDataPointer(), query.GetDataCount());
+    //Helper::HexDump(query.GetDataPointer(), query.GetDataCount());
 
     std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
 

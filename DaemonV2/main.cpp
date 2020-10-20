@@ -270,11 +270,14 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     {
         TriggerGeneratorPayload tgp;
-        tgp.trigger1.high_interval = 500;
-        tgp.trigger1.low_interval = 500;
+        tgp.trigger1.high_interval = 900;
+        tgp.trigger1.low_interval = 100;
         tgp.trigger1.mode = TriggerGeneratorSetMode::SetAndRun;
 
-        tgp.trigger2.mode = TriggerGeneratorSetMode::TurnOff;
+        tgp.trigger2.high_interval = 900;
+        tgp.trigger2.low_interval = 100;
+        tgp.trigger2.mode = TriggerGeneratorSetMode::SetAndRun;
+
         OutputMessage msg_setup_trigger = OutputMessage(MessageType::SetTriggerGeneratorRequest, &tgp,
                                                         sizeof(TriggerGeneratorPayload));
         InputMessage response;

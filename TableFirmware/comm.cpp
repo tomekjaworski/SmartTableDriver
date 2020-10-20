@@ -55,7 +55,7 @@ bool comm_check_receiver(void)
 	// ok, we have received at least whole message; check CRC
 	checksum_t calculated_crc = calc_checksum((void*)&rx.buffer, sizeof(RX_PROTO_HEADER) + rx.buffer.header.payload_length);
 	checksum_t received_crc = *(checksum_t*)(rx.buffer.payload + rx.buffer.header.payload_length);
-	if (false && (calculated_crc != received_crc))
+	if (calculated_crc != received_crc)
 	{
 		// checksums does not match
 		RX_RESET;

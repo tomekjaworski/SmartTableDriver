@@ -189,6 +189,7 @@ enum class MessageType : uint8_t
 
 #define PROTO_MAGIC (uint8_t)0xAB
 
+
 struct RX_PROTO_HEADER {
 	uint8_t magic;		
 	MessageType type;				// type of the received message
@@ -201,6 +202,7 @@ struct TX_PROTO_HEADER {
 	uint8_t magic;
 	MessageType type;				// type of the received message
 	uint8_t payload_length;			//
+	
 	uint8_t sequence_counter;
 	
 	TX_PROTO_HEADER() : magic(PROTO_MAGIC), sequence_counter(0x00) {}
