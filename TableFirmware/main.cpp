@@ -99,7 +99,7 @@ int main(void)
 		}
 
 		if (rx.buffer.header.type == MessageType::DeviceIdentifierRequest) {
-			char* ptr = (char*)tx.payload;
+			char* ptr = const_cast<char*>(reinterpret_cast<volatile char*>(tx.payload));
 			sprintf(ptr, "id=%d;version=%s;date=%s;time=%s", device_identifier, FIRMWARE_VERSION, FIRMWARE_BUILD_DATE, FIRMWARE_BUILD_TIME);
 			comm_send(MessageType::DeviceIdentifierResponse, (const uint8_t*)ptr, strlen((const char*)ptr));
 		}
@@ -125,6 +125,8 @@ int main(void)
 		}
 
 		if (rx.buffer.header.type == MessageType::TriggeredMeasurementEnterRequest) {
+			volatile TriggeredMeasurementEnterPayload* p = reinterpret_cast<volatile TriggeredMeasurementEnterPayload*>(rx.buffer.payload);
+			
 			bool ok = true;
 			int8_t new_trigger_data_size = -1;
 
@@ -134,7 +136,7 @@ int main(void)
 			
 			// 2
 			if (ok) {
-				new_trigger_data_size = *(const int8_t*)rx.buffer.payload;
+				new_trigger_data_size = p->data_size;
 				if (new_trigger_data_size < 1 || new_trigger_data_size > 10)
 					ok = false;
 			}

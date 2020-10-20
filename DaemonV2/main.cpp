@@ -6,9 +6,15 @@
 #include <list>
 #include "Hardware/TableDevice.hpp"
 #include "Utility/AnsiCodes.h"
-#include <unistd.h>
 #include <boost/algorithm/string.hpp>
 #include "ImageReconstructor.hpp"
+#include "Protocol/InputMessageBuilder.hpp"
+#include "Protocol/OutputMessage.hpp"
+#include "Protocol/TimeoutError.h"
+#include "Protocol/Communication.hpp"
+#include "Visualizer/ImageVisualizer.hpp"
+
+
 
 class App : public ProgramBase {
 public:
@@ -56,13 +62,7 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 
 
 */
-#include "Hardware/PhotoModule.hpp"
-#include "Protocol/InputMessageBuilder.hpp"
 
-#include "Protocol/OutputMessage.hpp"
-#include "Protocol/TimeoutError.h"
-
-#include "Protocol/Communication.hpp"
 
 
 //
@@ -98,7 +98,7 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 //            ssize_t recv_bytes = serial->Receive(recv_buffer);
 //            mr.AddCollectedData(recv_buffer, 0, recv_bytes);
 //
-//            if (mr.Extractmessage(response))
+//            if (mr.ExtractMessage(response))
 //                break;
 //        }
 //
@@ -112,7 +112,6 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 //    } while (true);
 //}
 
-#include "Visualizer/ImageVisualizer.hpp"
 void sigpipe_handler(int unused)
 {
     // ignoruj
@@ -272,7 +271,8 @@ int App::Main(const std::vector<std::string>& arguments) {
         TriggerGeneratorPayload tgp;
         tgp.trigger1.high_interval = 2000;
         tgp.trigger1.low_interval = 2000;
-        tgp.trigger1.mode = TriggerGeneratorSetMode::SetAndRun;
+        tgp.trigger1.echo_delay = 10;
+        tgp.trigger1.mode = TriggerGeneratorSetMode::TurnOff;
 
         tgp.trigger2.high_interval = 900;
         tgp.trigger2.low_interval = 100;
@@ -282,13 +282,35 @@ int App::Main(const std::vector<std::string>& arguments) {
                                                         sizeof(TriggerGeneratorPayload));
         InputMessage response;
         try{
+            printf("Configuring trigger device... ");
             Communication::Transcive(trigger_generator_serial, msg_setup_trigger, response, 2000);
+            printf("Ok\n");
         } catch (const TimeoutError &te) {
-            printf("");
-            //
+            printf("Timeout\n");
         }
     }
 
+    //
+    //
+    // ###############################################################
+    //
+    //
+
+
+    {
+        TriggeredMeasurementEnterPayload config {.data_size = 8};
+        OutputMessage msg_config = OutputMessage(MessageType::TriggeredMeasurementEnterRequest, &config,
+                                                        sizeof(TriggeredMeasurementEnterPayload));
+
+        std::vector<InputMessage> responses;
+        try{
+            printf("Entering triggered measurement mode: ");
+            responses = Communication::SendToMultipleAndWaitForResponse(tdev.GetSerialPortCollection(), msg_config, 1000);
+        } catch (const TimeoutError& te) {
+            //
+        }
+        printf(" Got responses from %zu/%zu devices\n", responses.size(), tdev.GetSerialPortCollection().size());
+    }
 
     //
     //
@@ -345,7 +367,7 @@ int App::Main(const std::vector<std::string>& arguments) {
                 auto &builder = fd2builder[fd];
                 builder.AddCollectedData(recv_buffer, 0, recv_bytes);
 
-                if (builder.Extractmessage(response) == MessageExtractionResult::Ok) {
+                if (builder.ExtractMessage(response) == MessageExtractionResult::Ok) {
                     const Location &location = fd2location[fd];
 
                     const uint8_t *ptr = response.GetPayloadPointer<std::uint8_t>();

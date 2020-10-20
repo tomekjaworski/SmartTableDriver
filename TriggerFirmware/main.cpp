@@ -35,19 +35,26 @@ int main(void)
 	sei();
 
 	// trigger
-	trigger_config.trigger1.active = false;
+	trigger_config.trigger1.active = true;
 	trigger_config.trigger1.state = PinState::Low;
 	trigger_config.trigger1.low_interval = 1000;
-	trigger_config.trigger1.high_interval = 25;
+	trigger_config.trigger1.high_interval = 500;
+	trigger_config.trigger1.echo.delay = 250;
 
 
 	trigger_config.trigger2.active = false;
 	trigger_config.trigger2.state = PinState::Low;
 	trigger_config.trigger2.low_interval = 700;
 	trigger_config.trigger2.high_interval = 35;
-
-
+	
 	while(1) {
+		
+		if (trigger_config.trigger1.echo.transmission_pending) {
+			trigger_config.trigger1.echo.transmission_pending = false;
+			
+			// is this the proper way?
+			UDR0 = 'T';
+		}
 	
 		if (!rx.got_data) {
 			if (rx.idle_timer > SERIAL_IDLE_LIMIT) {
@@ -76,7 +83,7 @@ int main(void)
 	
 	
 		if (rx.buffer.header.type == MessageType::RebootRequest) {
-			comm_send(MessageType::RebootResponse, (const uint8_t*)tx.payload, 0);
+			comm_send(MessageType::RebootResponse, NULL, 0);
 			cpu_reboot();
 		}
 
@@ -121,8 +128,12 @@ int main(void)
 				trigger_config.trigger1.state = PinState::Low;
 				trigger_config.trigger1.low_interval = p->trigger1.low_interval;
 				trigger_config.trigger1.high_interval = p->trigger1.high_interval;
-				trigger_config.trigger1.counter = p->trigger1.low_interval;
+				trigger_config.trigger1.state_counter = p->trigger1.low_interval;
 				trigger_config.trigger1.active = true;
+				
+				trigger_config.trigger1.echo.active = false;
+				trigger_config.trigger1.echo.delay = p->trigger1.echo_delay;
+
 				sei();
 			}
 
@@ -131,11 +142,10 @@ int main(void)
 			if (p->trigger2.mode == TriggerGeneratorSetMode::SetAndRun) {
 				cli();
 				TRIGGER2_SET_LOW();
-				trigger_config.trigger2.counter = 0x0000;
 				trigger_config.trigger2.state = PinState::Low;
 				trigger_config.trigger2.low_interval = p->trigger2.low_interval;
 				trigger_config.trigger2.high_interval = p->trigger2.high_interval;
-				trigger_config.trigger2.counter = p->trigger2.low_interval;
+				trigger_config.trigger2.state_counter = p->trigger2.low_interval;
 				trigger_config.trigger2.active = true;
 				sei();
 			}
