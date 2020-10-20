@@ -290,6 +290,31 @@ int App::Main(const std::vector<std::string>& arguments) {
         }
     }
 
+<<<<<<< HEAD
+=======
+    //
+    //
+    // ###############################################################
+    //
+    //
+
+
+    {
+        TriggeredMeasurementEnterPayload config {.data_size = 8};
+        OutputMessage msg_config = OutputMessage(MessageType::TriggeredMeasurementEnterRequest, &config,
+                                                        sizeof(TriggeredMeasurementEnterPayload));
+
+        std::vector<InputMessage> responses;
+        try{
+            printf("Entering triggered measurement mode: ");
+            responses = Communication::SendToMultipleAndWaitForResponse(tdev.GetSerialPortCollection(), msg_config, 1000);
+        } catch (const TimeoutError& te) {
+            //
+        }
+        printf(" Got responses from %zu/%zu devices\n", responses.size(), tdev.GetSerialPortCollection().size());
+    }
+
+>>>>>>> 3910e7cd5008266301d7a0f2fbe2fcc26621f6d6
     //
     //
     // ###############################################################
@@ -360,12 +385,17 @@ int App::Main(const std::vector<std::string>& arguments) {
             if (sret == -1)
                 throw std::runtime_error("select");
 
+<<<<<<< HEAD
             for (SerialPort::Ptr pserial : tdev.GetSerialPortCollection()) {
                 int fd = pserial->GetHandle();
                 if (FD_ISSET(fd, &rfd)) {
                     ssize_t recv_bytes = pserial->Receive(recv_buffer);
                     auto &builder = fd2builder[fd];
                     builder.AddCollectedData(recv_buffer, 0, recv_bytes);
+=======
+                if (builder.ExtractMessage(response) == MessageExtractionResult::Ok) {
+                    const Location &location = fd2location[fd];
+>>>>>>> 3910e7cd5008266301d7a0f2fbe2fcc26621f6d6
 
                     if (builder.ExtractMessage(response) == MessageExtractionResult::Ok) {
                         const Location &location = fd2location[fd];
