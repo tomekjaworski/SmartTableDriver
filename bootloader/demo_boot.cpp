@@ -44,13 +44,13 @@ void ___boot_demo(void)
 		LED_OFF;
 		for (uint32_t j = 0; j < 100000; j++) asm volatile("nop");
 #else // Release
-		for (uint32_t j = 0; j < 5*5000; j++) asm volatile("nop");
+		for (uint32_t j = 0; j < 3124ULL * F_CPU / 1000000ULL; j++) asm volatile("nop");
 		LED_OFF;
-		for (uint32_t j = 0; j < 5*50000; j++) asm volatile("nop");
+		for (uint32_t j = 0; j < 31250ULL * F_CPU / 1000000ULL; j++) asm volatile("nop");
 		LED_ON;
-		for (uint32_t j = 0; j < 5*5000; j++) asm volatile("nop");
+		for (uint32_t j = 0; j < 3124ULL * F_CPU / 1000000ULL; j++) asm volatile("nop");
 		LED_OFF;
-		for (uint32_t j = 0; j < 5*100000; j++) asm volatile("nop");
+		for (uint32_t j = 0; j < 62500ULL * F_CPU / 1000000ULL; j++) asm volatile("nop");
 #endif 
 	}
 

@@ -77,6 +77,7 @@ int main(void)
 				comm_send(MessageType::SingleMeasurement10Response, im_data.primary.raw16, 10 * 10 * sizeof(uint16_t));
 			}
 		}
+		prev_trigger = current_trigger;
 		
 		if (!rx.got_data) {
 			if (rx.idle_timer > SERIAL_IDLE_LIMIT) {

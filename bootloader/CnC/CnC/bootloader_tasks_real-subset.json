@@ -10,6 +10,10 @@
       "BootloaderID": "0x34"
     },
 
+    {
+      "JobType": "ReadBootloaderVersion",
+      "BootloaderID": "0x1F"
+    },
 
     // ################################################
     // ################################################
@@ -37,6 +41,14 @@
       "JobType": "WriteFlashMemory",
       "BootloaderID": "0x34",
       "FileName": "..\\..\\..\\..\\..\\TableFirmware\\Debug\\TableFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+
+    {
+      "JobType": "WriteFlashMemory",
+      "BootloaderID": "0x1F",
+      "FileName": "..\\..\\..\\..\\..\\TriggerFirmware\\Debug\\TriggerFirmware.hex",
       "CPU": "ATMega328P",
       "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
     },
@@ -61,6 +73,14 @@
       "ProgrammableMemorySize": 1024
     },
 
+    {
+      "JobType": "WriteEepromMemory",
+      "BootloaderID": "0x1F",
+      "FileName": "..\\..\\..\\..\\..\\TableFirmware\\Eeprom\\1F.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
+
     // -------------------------------------
 
     {
@@ -75,6 +95,10 @@
     {
       "JobType": "Reboot",
       "BootloaderID": "0x34"
+    },
+    {
+      "JobType": "Reboot",
+      "BootloaderID": "0x1F"
     }
 
   ]

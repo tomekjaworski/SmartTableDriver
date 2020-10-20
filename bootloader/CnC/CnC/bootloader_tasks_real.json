@@ -100,6 +100,11 @@
       "TaskType": "ReadBootloaderVersion",
       "BootloaderID": "0x46"
     },
+    // ------------------------------------- 
+    {
+      "JobType": "ReadBootloaderVersion",
+      "BootloaderID": "0x1F"
+    },
 
     // ################################################
     // ################################################
@@ -107,12 +112,13 @@
     // ################################################
     // ################################################
     // ################################################
-
 
 
     {
       "TaskType": "WaitForKey"
     },
+
+
     // ################################################
     // ################################################
     // ################################################
@@ -291,6 +297,15 @@
       "CPU": "ATMega328P",
       "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
     },
+    // -----------------------
+    {
+      "JobType": "WriteFlashMemory",
+      "BootloaderID": "0x1F",
+      "FileName": "..\\..\\..\\..\\..\\TriggerFirmware\\Debug\\TriggerFirmware.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 30720 /* 32x1024 (full capacity) - 2x1024 (bootloader size) */
+    },
+
     // ####################################
     // ####################################
     // ####################################
@@ -465,10 +480,135 @@
       "FileName": "..\\..\\..\\..\\..\\SmartTableFirmware\\Eeprom\\46.hex",
       "CPU": "ATMega328P",
       "ProgrammableMemorySize": 1024
-    }
+    },
     // -------------------------------------
+    {
+      "JobType": "WriteEepromMemory",
+      "BootloaderID": "0x1F",
+      "FileName": "..\\..\\..\\..\\..\\TableFirmware\\Eeprom\\1F.hex",
+      "CPU": "ATMega328P",
+      "ProgrammableMemorySize": 1024
+    },
 
+    // ####################################
+    // ####################################
+    // ####################################
+    // ####################################
 
+    {
+      "JobType": "WaitForKey",
+      "Message": "*** Naciśnij dowolny klawisz aby zrestartować urządzenie..."
+    },
+
+    // ####################################
+    // ####################################
+    // ####################################
+    // ####################################
+
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x11"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x12"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x13"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x14"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x15"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x16"
+    },
+    // -------------------------------------
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x21"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x22"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x23"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x24"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x25"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x26"
+    },
+    // -------------------------------------
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x31"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x32"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x33"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x34"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x35"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x36"
+    },
+    // -------------------------------------
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x41"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x42"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x43"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x44"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x45"
+    },
+    {
+      "TaskType": "Reboot",
+      "BootloaderID": "0x46"
+    },
+    // -------------------------------------
+    {
+      "JobType": "Reboot",
+      "BootloaderID": "0x1F"
+    }
 
   ]
 }

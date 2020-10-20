@@ -353,7 +353,7 @@ namespace CnC
             ver = Encoding.ASCII.GetString(response.Payload, 0, response.Payload.Length - 1);
 
             Console.CursorVisible = true;
-            Console.WriteLine($"Reading bootloader fw version: [{ver}]");
+            Console.WriteLine($"   Reading bootloader fw version: [{ver}]");
 
         }
 
@@ -363,7 +363,7 @@ namespace CnC
             Console.CursorVisible = false;
             signature = null;
 
-            Console.Write("Reading AVR CPU signature (32b): ");
+            Console.Write("   Reading AVR CPU signature (32b): ");
 
             Message msg_readsig = new Message(endpoint.BootloaderAddress, MessageType.ReadSignature);
             Message response = SendAndWaitForResponse(endpoint, msg_readsig, 2000);
@@ -371,14 +371,14 @@ namespace CnC
             signature = response.Payload;
 
             Console.CursorVisible = true;
-            Console.WriteLine("Done ({0:X2} {1:X2} {2:X2}).", signature[0], signature[2], signature[4]);
+            Console.WriteLine("   Done ({0:X2} {1:X2} {2:X2}).", signature[0], signature[2], signature[4]);
         }
 
         public void ReadFLASH(BootloaderClient endpoint, MemoryMap dest)
         {
             Console.CursorVisible = false;
 
-            Console.Write("Reading FLASH memory ({0}kB):    ", dest.Size / 1024);
+            Console.Write("   Reading FLASH memory ({0}kB):    ", dest.Size / 1024);
             ConsoleProgressBar cpb = new ConsoleProgressBar(0, dest.Size);
 
             for (uint addr = 0; addr < dest.Size; addr += 128, cpb.Progress = addr) {
@@ -396,7 +396,7 @@ namespace CnC
         {
             Console.CursorVisible = false;
 
-            Console.Write("Writing FLASH memory ({0}kB):    ", source.Size / 1024);
+            Console.Write("   Writing FLASH memory ({0}kB):    ", source.Size / 1024);
             ConsoleProgressBar cpb = new ConsoleProgressBar(0, source.Size);
 
             for (uint addr = 0; addr < source.Size; addr += 128, cpb.Progress = addr) {
@@ -419,7 +419,7 @@ namespace CnC
         {
             Console.CursorVisible = false;
 
-            Console.Write("Verifying FLASH memory ({0}kB):  ", expected.Size / 1024);
+            Console.Write("   Verifying FLASH memory ({0}kB):  ", expected.Size / 1024);
             ConsoleProgressBar cpb = new ConsoleProgressBar(0, expected.Size);
             MemoryMap mmread = new MemoryMap(expected.Size);
 
@@ -453,7 +453,7 @@ namespace CnC
         {
             Console.CursorVisible = false;
 
-            Console.Write("Reading EEPROM memory ({0}kB):   ", dest.Size / 1024);
+            Console.Write("   Reading EEPROM memory ({0}kB):   ", dest.Size / 1024);
             ConsoleProgressBar cpb = new ConsoleProgressBar(0, dest.Size);
 
             for (uint addr = 0; addr < dest.Size; addr += 128, cpb.Progress = addr) {
@@ -471,7 +471,7 @@ namespace CnC
         {
             Console.CursorVisible = false;
 
-            Console.Write("Verifying EEPROM memory ({0}kB): ", expected.Size / 1024);
+            Console.Write("   Verifying EEPROM memory ({0}kB): ", expected.Size / 1024);
             ConsoleProgressBar cpb = new ConsoleProgressBar(0, expected.Size);
             MemoryMap mmread = new MemoryMap(expected.Size);
 
@@ -505,7 +505,7 @@ namespace CnC
         {
             Console.CursorVisible = false;
 
-            Console.Write("Writing EEPROM memory ({0}kB):   ", source.Size / 1024);
+            Console.Write("   Writing EEPROM memory ({0}kB):   ", source.Size / 1024);
             ConsoleProgressBar cpb = new ConsoleProgressBar(0, source.Size);
 
             for (uint addr = 0; addr < source.Size; addr += 128, cpb.Progress = addr) {

@@ -15,12 +15,12 @@
 
 //
 // bootloader address
-#define BOOTLOADER_HARDWARE_ADDRESS	(uint8_t)0x11
+#define BOOTLOADER_HARDWARE_ADDRESS	(uint8_t)0x1F
 
 //
 // advertisement wait time in 5 ms - time that bootloader spends waiting for C&C software to send the activation byte.
 // If the time given in ADVERTISEMENT_WAIT_TIME passes, bootloader jumps into user space code - addr 0x0000
-#define ADVERTISEMENT_WAIT_TIME	2000
+#define ADVERTISEMENT_WAIT_TIME	15ULL * (25ULL * F_CPU / 1000000ULL)
 // 2000 = 10,000 ms
 
 //

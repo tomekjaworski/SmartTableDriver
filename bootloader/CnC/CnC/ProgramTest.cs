@@ -3,6 +3,7 @@ using IntelHEX;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -91,18 +92,24 @@ namespace CnC
 
                 if (job_entry.JobType == JobType.WriteEepromMemory)
                 {
+                    FileInfo fi = new FileInfo(job_entry.FileName);
                     MemoryMap mm = new MemoryMap(job_entry.ProgrammableMemorySize);
                     IntelHEX16Storage storage = new IntelHEX16Storage(mm);
-                    storage.Load(job_entry.FileName);
+                    storage.Load(fi.FullName);
+                    Console.WriteLine($"   File name: {fi.FullName}");
+                    Console.WriteLine($"   Modified.: {fi.LastWriteTime}");
                     cnc.WriteEEPROM(device, mm);
                 }
 
 
                 if (job_entry.JobType == JobType.WriteFlashMemory)
                 {
+                    FileInfo fi = new FileInfo(job_entry.FileName);
                     MemoryMap mm = new MemoryMap(job_entry.ProgrammableMemorySize);
                     IntelHEX16Storage storage = new IntelHEX16Storage(mm);
-                    storage.Load(job_entry.FileName);
+                    storage.Load(fi.FullName);
+                    Console.WriteLine($"   File name: {fi.FullName}");
+                    Console.WriteLine($"   Modified.: {fi.LastWriteTime}");
                     cnc.WriteFLASH(device, mm);
                 }
 

@@ -44,13 +44,29 @@ enum class PinState : uint8_t {
 	High = 0x01,
 };
 
+/*
+ *         __________                 __________
+ * _______|          |_______________|          |_______________
+ *        |<-- hi -->|<---- low ---->|
+ * 	  
+ * _______________________[TE]_______________________[TE]
+ *        |<---- tet ---->|
+ * 
+ *    hi  - TriggerGeneratorConfig::high_interval - time in milliseconds during which triggering output is set to HIGH
+ *    low - TriggerGeneratorConfig::low_interval - time [ms] during which the triggering output is set to LOW
+ *    tet - TriggerGeneratorConfig::echo_delay - delay [ms] between LOW-to-HIGH transition of the output and the beginning of trigger echo transmission. 
+ */
+
 struct TriggerGeneratorConfig {
 	struct {
 		volatile bool active;
 		PinState state;
 		volatile int16_t counter;
+		
 		int16_t low_interval;
 		int16_t high_interval;
+		int16_t echo_delay;
+		
 	} trigger1, trigger2;
 };
 
