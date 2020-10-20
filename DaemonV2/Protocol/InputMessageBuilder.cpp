@@ -32,7 +32,7 @@ void InputMessageBuilder::InternalAddCollectedData(const void* ptr, uint32_t cou
     this->position += count;
 }
 
-MessageExtractionResult InputMessageBuilder::Extractmessage(InputMessage& message)
+MessageExtractionResult InputMessageBuilder::ExtractMessage(InputMessage& message)
 {
     /*
      * This code tries to parse the stream of incoming bytes as an input message.

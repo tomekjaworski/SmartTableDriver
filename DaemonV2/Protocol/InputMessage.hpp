@@ -12,18 +12,28 @@
 
 class InputMessage {
     std::vector<uint8_t> data;
-
+    MessageType type;
 public:
     InputMessage()
         : data() {
-        //
+        this->type = MessageType::Invalid;
     }
     InputMessage(const void* buffer, int32_t count)
         : data(static_cast<const uint8_t*>(buffer),
                static_cast<const uint8_t*>(buffer) + count)
     {
+        this->type = this->GetMessageType();
+    }
+
+    InputMessage(InputMessage&& msg)
+        : data(std::move(msg.data)), type(msg.type)
+    {
         //
     }
+
+    InputMessage(const InputMessage&) = default;
+    InputMessage& operator=(const InputMessage&) = default;
+
 
     template <typename T>
     const T* GetPayloadPointer(void) const {

@@ -19,32 +19,55 @@ static uint16_t __cnt;
 ISR(TIMER0_COMPA_vect)
 {
 	if (trigger_config.trigger1.active) {
-		if (trigger_config.trigger1.counter-- <= 0) {
+		// run state transition counter
+		if (trigger_config.trigger1.state_counter-- <= 0) {
 			if (trigger_config.trigger1.state == PinState::Low) {
-				trigger_config.trigger1.counter = trigger_config.trigger1.high_interval;
+				
+				// switch internal state
+				trigger_config.trigger1.state_counter = trigger_config.trigger1.high_interval;
 				trigger_config.trigger1.state = PinState::High;
+				
+				// trigger photomodules
 				TRIGGER1_SET_HIGH();
+				
+				// start echo counter
+				trigger_config.trigger1.echo.counter = trigger_config.trigger1.echo.delay;
+				trigger_config.trigger1.echo.active = true;
+				
 			} else {
-				trigger_config.trigger1.counter = trigger_config.trigger1.low_interval;
+				trigger_config.trigger1.state_counter = trigger_config.trigger1.low_interval;
 				trigger_config.trigger1.state = PinState::Low;
 				TRIGGER1_SET_LOW();
 			}
 		}
-	}
-	
+		
+		// Run trigger echo counter
+		if (trigger_config.trigger1.echo.active)
+		{
+			trigger_config.trigger1.echo.counter--;
+			if (trigger_config.trigger1.echo.counter == 0) {
+				trigger_config.trigger1.echo.active = false;
+				//trigger_config.trigger1.echo.transmission_pending = true;
+				UDR0 = 'T';
+			}
+		}
+	} // trigger1.active
+
+#if defined(USE_TRIGGER_2)
 	if (trigger_config.trigger2.active) {
-		if (trigger_config.trigger2.counter-- <= 0) {
+		if (trigger_config.trigger2.state_counter-- <= 0) {
 			if (trigger_config.trigger2.state == PinState::Low) {
-				trigger_config.trigger2.counter = trigger_config.trigger2.high_interval;
+				trigger_config.trigger2.state_counter = trigger_config.trigger2.high_interval;
 				trigger_config.trigger2.state = PinState::High;
 				TRIGGER2_SET_HIGH();
-				} else {
-				trigger_config.trigger2.counter = trigger_config.trigger2.low_interval;
+			} else {
+				trigger_config.trigger2.state_counter = trigger_config.trigger2.low_interval;
 				trigger_config.trigger2.state = PinState::Low;
 				TRIGGER2_SET_LOW();
 			}
 		}
 	}	
+#endif
 	
 	if (__cnt++ > 100) {
 		__cnt = 0;

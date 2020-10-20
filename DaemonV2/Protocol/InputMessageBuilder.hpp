@@ -36,7 +36,7 @@ public:
 	    this->InternalAddCollectedData(ptr, count);
 	}
 
-    MessageExtractionResult Extractmessage(InputMessage& message);
+    MessageExtractionResult ExtractMessage(InputMessage& message);
 	void PurgeAllData(void);
 
 private:

@@ -6,9 +6,15 @@
 #include <list>
 #include "Hardware/TableDevice.hpp"
 #include "Utility/AnsiCodes.h"
-#include <unistd.h>
 #include <boost/algorithm/string.hpp>
 #include "ImageReconstructor.hpp"
+#include "Protocol/InputMessageBuilder.hpp"
+#include "Protocol/OutputMessage.hpp"
+#include "Protocol/TimeoutError.h"
+#include "Protocol/Communication.hpp"
+#include "Visualizer/ImageVisualizer.hpp"
+
+
 
 class App : public ProgramBase {
 public:
@@ -56,13 +62,7 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 
 
 */
-#include "Hardware/PhotoModule.hpp"
-#include "Protocol/InputMessageBuilder.hpp"
 
-#include "Protocol/OutputMessage.hpp"
-#include "Protocol/TimeoutError.h"
-
-#include "Protocol/Communication.hpp"
 
 
 //
@@ -98,7 +98,7 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 //            ssize_t recv_bytes = serial->Receive(recv_buffer);
 //            mr.AddCollectedData(recv_buffer, 0, recv_bytes);
 //
-//            if (mr.Extractmessage(response))
+//            if (mr.ExtractMessage(response))
 //                break;
 //        }
 //
@@ -112,7 +112,6 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 //    } while (true);
 //}
 
-#include "Visualizer/ImageVisualizer.hpp"
 void sigpipe_handler(int unused)
 {
     // ignoruj
@@ -272,7 +271,8 @@ int App::Main(const std::vector<std::string>& arguments) {
         TriggerGeneratorPayload tgp;
         tgp.trigger1.high_interval = 2000;
         tgp.trigger1.low_interval = 2000;
-        tgp.trigger1.mode = TriggerGeneratorSetMode::SetAndRun;
+        tgp.trigger1.echo_delay = 10;
+        tgp.trigger1.mode = TriggerGeneratorSetMode::TurnOff;
 
         tgp.trigger2.high_interval = 900;
         tgp.trigger2.low_interval = 100;
@@ -282,13 +282,13 @@ int App::Main(const std::vector<std::string>& arguments) {
                                                         sizeof(TriggerGeneratorPayload));
         InputMessage response;
         try{
+            printf("Configuring trigger device... ");
             Communication::Transcive(trigger_generator_serial, msg_setup_trigger, response, 2000);
+            printf("Ok\n");
         } catch (const TimeoutError &te) {
-            printf("");
-            //
+            printf("Timeout\n");
         }
     }
-
 
     //
     //
@@ -297,64 +297,87 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
 
 
-    OutputMessage msg_do_single_measurement = OutputMessage(MessageType::SingleMeasurement8Request);
+    {
+        TriggeredMeasurementEnterPayload config {.data_size = 8};
+        OutputMessage msg_config = OutputMessage(MessageType::TriggeredMeasurementEnterRequest, &config,
+                                                        sizeof(TriggeredMeasurementEnterPayload));
 
-    ImageReconstructor img(TableDevice::TableWidth, TableDevice::TableHeight);
-    std::map<int, InputMessageBuilder> fd2builder;
-    std::map<int, Location> fd2location;
-    std::vector<SerialPort::Ptr> serial_ports;
-    for (PhotoModule::Ptr pmodule : tdev.GetPhotomodulesCollection()) {
-        SerialPort::Ptr pserial = pmodule->GetSerialPort();
-        if (pserial == nullptr)
-            continue;
-        fd2builder[pserial->GetHandle()] = InputMessageBuilder();
-        fd2location[pserial->GetHandle()] = pmodule->GetLocation();
-        serial_ports.push_back(pmodule->GetSerialPort());
+        std::vector<InputMessage> responses;
+        try{
+            printf("Entering triggered measurement mode: ");
+            responses = Communication::SendToMultipleAndWaitForResponse(tdev.GetSerialPortCollection(), msg_config, 1000);
+        } catch (const TimeoutError& te) {
+            //
+        }
+        printf(" Got responses from %zu/%zu devices\n", responses.size(), tdev.GetSerialPortCollection().size());
     }
 
-    InputMessage response;
-    std::array<uint8_t, 256> recv_buffer;
-    ImageVisualizer visualizer;
+    //
+    //
+    // ###############################################################
+    //
+    //
 
-    while(1) {
-        visualizer.ShowReconstruction(img);
-        Communication::SendToMultiple(tdev.GetSerialPortCollection(), msg_do_single_measurement);
-        usleep(100 * 1000);
+    {
+        OutputMessage msg_do_single_measurement = OutputMessage(MessageType::SingleMeasurement8Request);
 
-
-        fd_set rfd;
-        FD_ZERO(&rfd);
-
-        int max_handle = INT32_MIN;
-        for (SerialPort::Ptr pserial : serial_ports) {
-            FD_SET(pserial->GetHandle(), &rfd);
-            max_handle = std::max(max_handle, pserial->GetHandle());
+        ImageReconstructor img(TableDevice::TableWidth, TableDevice::TableHeight);
+        std::map<int, InputMessageBuilder> fd2builder;
+        std::map<int, Location> fd2location;
+        std::vector<SerialPort::Ptr> serial_ports;
+        for (PhotoModule::Ptr pmodule : tdev.GetPhotomodulesCollection()) {
+            SerialPort::Ptr pserial = pmodule->GetSerialPort();
+            if (pserial == nullptr)
+                continue;
+            fd2builder[pserial->GetHandle()] = InputMessageBuilder();
+            fd2location[pserial->GetHandle()] = pmodule->GetLocation();
+            serial_ports.push_back(pmodule->GetSerialPort());
         }
 
-        //loops++;
-        timeval tv = {.tv_sec = 0, .tv_usec = 500 * 1000};
-        int sret = ::select(max_handle + 1, &rfd, nullptr, nullptr, &tv);
+        InputMessage response;
+        std::array<uint8_t, 256> recv_buffer;
+        ImageVisualizer visualizer;
 
-        if (sret == -1)
-            throw std::runtime_error("select");
+        while (1) {
+            visualizer.ShowReconstruction(img);
+            Communication::SendToMultiple(tdev.GetSerialPortCollection(), msg_do_single_measurement);
+            usleep(100 * 1000);
 
-        for (SerialPort::Ptr pserial : tdev.GetSerialPortCollection()) {
-            int fd = pserial->GetHandle();
-            if (FD_ISSET(fd, &rfd)) {
-                ssize_t recv_bytes = pserial->Receive(recv_buffer);
-                auto &builder = fd2builder[fd];
-                builder.AddCollectedData(recv_buffer, 0, recv_bytes);
 
-                if (builder.Extractmessage(response) == MessageExtractionResult::Ok) {
-                    const Location &location = fd2location[fd];
+            fd_set rfd;
+            FD_ZERO(&rfd);
 
-                    const uint8_t *ptr = response.GetPayloadPointer<std::uint8_t>();
-                    int payload_length = response.GetPayloadSize();
-                    img.ProcessMeasurementPayload(ptr, 8, location);
-                };
+            int max_handle = INT32_MIN;
+            for (SerialPort::Ptr pserial : serial_ports) {
+                FD_SET(pserial->GetHandle(), &rfd);
+                max_handle = std::max(max_handle, pserial->GetHandle());
             }
 
+            //loops++;
+            timeval tv = {.tv_sec = 0, .tv_usec = 500 * 1000};
+            int sret = ::select(max_handle + 1, &rfd, nullptr, nullptr, &tv);
 
+            if (sret == -1)
+                throw std::runtime_error("select");
+
+            for (SerialPort::Ptr pserial : tdev.GetSerialPortCollection()) {
+                int fd = pserial->GetHandle();
+                if (FD_ISSET(fd, &rfd)) {
+                    ssize_t recv_bytes = pserial->Receive(recv_buffer);
+                    auto &builder = fd2builder[fd];
+                    builder.AddCollectedData(recv_buffer, 0, recv_bytes);
+
+                    if (builder.ExtractMessage(response) == MessageExtractionResult::Ok) {
+                        const Location &location = fd2location[fd];
+
+                        const uint8_t *ptr = response.GetPayloadPointer<std::uint8_t>();
+                        int payload_length = response.GetPayloadSize();
+                        img.ProcessMeasurementPayload(ptr, 8, location);
+                    };
+                }
+
+
+            }
         }
     }
 
