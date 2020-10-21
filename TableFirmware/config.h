@@ -9,6 +9,8 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include "protocol.h"
+
 #define SERIAL_BAUD				19200ULL	// 8E1 (!!!)
 #define SERIAL_IDLE_LIMIT		10			// [0.5ms]
 
@@ -18,7 +20,6 @@
 #define FIRMWARE_BUILD_TIME		__TIME__
 
 
-typedef unsigned char device_identifier_t;
 extern device_identifier_t device_identifier;
 
 #endif /* CONFIG_H_ */

@@ -45,8 +45,13 @@ int main(void)
 {
 	cpu_init();
 	configuration_load();
+	comm_initialize();
 	comm_reset_receiver();
 	im_initialize8();
+
+	// enable interrupts	
+	sei();
+
 
 #if DEBUG	
 	send_string("%%TEST%%");

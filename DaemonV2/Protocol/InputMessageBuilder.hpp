@@ -20,7 +20,7 @@ class InputMessageBuilder
 {
     std::array<uint8_t, 64 * 1024> queue;
 	uint32_t position;
-	
+
 public:
 	InputMessageBuilder(void);
 	~InputMessageBuilder();

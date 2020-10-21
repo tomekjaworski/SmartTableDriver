@@ -274,8 +274,6 @@ int App::Main(const std::vector<std::string>& arguments) {
         tgp.trigger1.echo_delay = 10;
         tgp.trigger1.mode = TriggerGeneratorSetMode::TurnOff;
 
-        tgp.trigger2.high_interval = 900;
-        tgp.trigger2.low_interval = 100;
         tgp.trigger2.mode = TriggerGeneratorSetMode::TurnOff;
 
         OutputMessage msg_setup_trigger = OutputMessage(MessageType::SetTriggerGeneratorRequest, &tgp,
@@ -288,6 +286,14 @@ int App::Main(const std::vector<std::string>& arguments) {
         } catch (const TimeoutError &te) {
             printf("Timeout\n");
         }
+
+        // Wait for all transmissions to end
+        usleep(500 * 1000);
+
+        // Flush all buffers on all serial ports
+        trigger_generator_serial->DiscardAllData();
+        for(auto pserial : tdev.GetSerialPortCollection())
+            pserial->DiscardAllData();
     }
     //
     //
@@ -297,18 +303,34 @@ int App::Main(const std::vector<std::string>& arguments) {
 
 
     {
-        TriggeredMeasurementEnterPayload config {.data_size = 8};
-        OutputMessage msg_config = OutputMessage(MessageType::TriggeredMeasurementEnterRequest, &config,
-                                                        sizeof(TriggeredMeasurementEnterPayload));
-
         std::vector<InputMessage> responses;
-        try{
+        bool timeout_occured;
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+
+            TriggeredMeasurementEnterPayload config{.data_size = 8};
+            OutputMessage msg_config = OutputMessage(MessageType::TriggeredMeasurementEnterRequest, &config,
+                                                     sizeof(TriggeredMeasurementEnterPayload));
+
             printf("Entering triggered measurement mode: ");
-            responses = Communication::SendToMultipleAndWaitForResponse(tdev.GetSerialPortCollection(), msg_config, 1000);
-        } catch (const TimeoutError& te) {
-            //
+            responses = Communication::SendToMultipleAndWaitForResponse(tdev.GetSerialPortCollection(), msg_config,
+                                                                        1000,
+                                                                        timeout_occured);
+
+            printf(" Got responses from %zu/%zu devices (%s)\n", responses.size(),
+                   tdev.GetSerialPortCollection().size(),
+                   timeout_occured ? "TIMEOUT" : "ok");
+            if (!timeout_occured)
+                break;
         }
-        printf(" Got responses from %zu/%zu devices\n", responses.size(), tdev.GetSerialPortCollection().size());
+
+
+        if (!timeout_occured) {
+          //  tdev.
+        } else {
+            printf("ERROR: One or more photomodules is not responding; pleas check the hardware.");
+            getchar();
+        }
     }
 
 

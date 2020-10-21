@@ -6,22 +6,28 @@
 
 
 MessageType InputMessage::GetMessageType(void) const {
-    const TX_PROTO_HEADER* pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->data.data());
+    auto pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->payload.data());
     return pheader->type;
 }
 
 int InputMessage::GetPayloadSize(void) const {
-    const TX_PROTO_HEADER* pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->data.data());
+    auto pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->payload.data());
     return pheader->payload_length;
 }
 
 int InputMessage::GetSequenceNumber(void) const {
-    const TX_PROTO_HEADER* pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->data.data());
+    auto pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->payload.data());
     return pheader->sequence_counter;
 }
 
+device_identifier_t InputMessage::GetDeviceID (void) const {
+    auto pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->payload.data());
+    return pheader->device_id;
+}
+
+
 const void* InputMessage::internal_GetPayloadPointer(void) const {
-    const TX_PROTO_HEADER* pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->data.data());
+    auto pheader = reinterpret_cast<const TX_PROTO_HEADER*>(this->payload.data());
     return reinterpret_cast<const void*>(pheader + 1);
 }
 

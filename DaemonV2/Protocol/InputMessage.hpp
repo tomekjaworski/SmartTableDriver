@@ -11,22 +11,23 @@
 
 
 class InputMessage {
-    std::vector<uint8_t> data;
+    std::vector<uint8_t> payload;
     MessageType type;
+
 public:
     InputMessage()
-        : data() {
+        : payload() {
         this->type = MessageType::Invalid;
     }
-    InputMessage(const void* buffer, int32_t count)
-        : data(static_cast<const uint8_t*>(buffer),
-               static_cast<const uint8_t*>(buffer) + count)
+    InputMessage(const void* payloadBuffer, int32_t payloadSize)
+        : payload(static_cast<const uint8_t*>(payloadBuffer),
+               static_cast<const uint8_t*>(payloadBuffer) + payloadSize)
     {
         this->type = this->GetMessageType();
     }
 
     InputMessage(InputMessage&& msg)
-        : data(std::move(msg.data)), type(msg.type)
+        : payload(std::move(msg.payload)), type(msg.type)
     {
         //
     }
@@ -44,6 +45,7 @@ public:
     MessageType GetMessageType(void) const;
     int GetPayloadSize(void) const;
     int GetSequenceNumber(void) const;
+    device_identifier_t GetDeviceID (void) const;
 
 private:
     const void* internal_GetPayloadPointer(void) const;

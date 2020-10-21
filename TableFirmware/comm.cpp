@@ -7,6 +7,7 @@
 
 
  #include "comm.h"
+ #include "config.h"
 
  volatile TX tx = {};
  volatile RX rx = {};
@@ -16,6 +17,13 @@
 
 void comm_reset_receiver(void) {
 	RX_RESET;
+}
+
+void comm_initialize(void) {
+	
+	
+	tx.header.magic = PROTO_MAGIC;
+	tx.header.device_id = device_identifier;
 }
 
 bool comm_check_receiver(void)
@@ -73,7 +81,6 @@ void comm_send(MessageType type, const void* payload, uint8_t payload_length)
 	tx.header.type = type;
 	tx.header.payload_length = payload_length;
 	tx.ppayload = (uint8_t*)payload;
-	tx.header.magic = PROTO_MAGIC;
 	tx.header.sequence_counter++;
 
 	// setup the transmitter

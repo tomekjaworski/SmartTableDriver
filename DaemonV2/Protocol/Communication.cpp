@@ -65,7 +65,7 @@ void Communication::SendToMultiple(const std::vector<SerialPort::Ptr>& serialPor
 
 #include <map>
 #include <unordered_set>
-std::vector<InputMessage> Communication::SendToMultipleAndWaitForResponse(const std::vector<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query, int timeout) {
+std::vector<InputMessage> Communication::SendToMultipleAndWaitForResponse(const std::vector<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query, int timeout, bool& timeoutOccured) {
 
     std::map<int, InputMessageBuilder> fd2builder;
     std::map<int, InputMessage> fd2message;
@@ -128,6 +128,7 @@ std::vector<InputMessage> Communication::SendToMultipleAndWaitForResponse(const 
                 {
                     std::vector<InputMessage> result;
                     std::transform(fd2message.begin(), fd2message.end(), std::back_inserter(result), [](const auto&p){ return p.second;});
+                    timeoutOccured = false;
                     return result;
                 }
             }
@@ -137,10 +138,16 @@ std::vector<InputMessage> Communication::SendToMultipleAndWaitForResponse(const 
         //_check_timeout:;
         std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count() > timeout) {
-            throw TimeoutError("SendToMultipleAndWaitForResponse");
+            break;
+            //throw TimeoutError("SendToMultipleAndWaitForResponse");
         }
 
     } while (true);
 
+    // return all messages that were received; the result set will NOT be complete
+    std::vector<InputMessage> result;
+    std::transform(fd2message.begin(), fd2message.end(), std::back_inserter(result), [](const auto&p){ return p.second;});
+    timeoutOccured = false;
+    return result;
 }
 

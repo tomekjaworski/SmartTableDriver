@@ -10,7 +10,6 @@
 #define PROTOCOL_H_
 
 #include "checksum.h"
-#include "protocol.h"
 
 
 #define RX_PAYLOAD_CAPACITY	32
@@ -187,9 +186,19 @@ enum class MessageType : uint8_t
 	
 };
 
+//
+//
+//
+//
+
+
+typedef unsigned char device_identifier_t;
+
+
 #define PROTO_MAGIC (uint8_t)0xAB
 
-
+//
+// Incoming (module <- PC) header structure
 struct RX_PROTO_HEADER {
 	uint8_t magic;		
 	MessageType type;				// type of the received message
@@ -198,11 +207,14 @@ struct RX_PROTO_HEADER {
 	RX_PROTO_HEADER() : magic(PROTO_MAGIC) {}
 } __attribute__((packed));
 
+//
+// Outgoing (module->PC) header structure
 struct TX_PROTO_HEADER {
 	uint8_t magic;
 	MessageType type;				// type of the received message
 	uint8_t payload_length;			//
 	
+	device_identifier_t device_id;
 	uint8_t sequence_counter;
 	
 	TX_PROTO_HEADER() : magic(PROTO_MAGIC), sequence_counter(0x00) {}
@@ -246,7 +258,7 @@ struct TriggeredMeasurementEnterPayload {
 // data size asserts
 static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
 static_assert(sizeof(RX_PROTO_HEADER) == 3, "RX_PROTO_HEADER has invalid size");
-static_assert(sizeof(TX_PROTO_HEADER) == 4, "RX_PROTO_HEADER has invalid size");
+static_assert(sizeof(TX_PROTO_HEADER) == 5, "RX_PROTO_HEADER has invalid size");
 static_assert(sizeof(checksum_t) == 2, "checksum_t has invalid size");
 
 static_assert(sizeof(TriggerGeneratorSetMode) == 1, "TriggerGeneratorSetMode has invalid size");

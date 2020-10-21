@@ -30,9 +30,13 @@ inline static void memmove(volatile void* dst, volatile void* src, size_t size) 
 int main(void)
 {
 	cpu_init();
-	comm_reset_receiver();
 	configuration_load();
+
+	comm_reset_receiver();
+	comm_initialize();
+	
 	sei();
+
 
 	// trigger
 	trigger_config.trigger1.active = true;

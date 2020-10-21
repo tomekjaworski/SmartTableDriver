@@ -113,9 +113,6 @@ void cpu_init(void)
 
 	RESET1_HIGH;
 	RESET2_HIGH;
-
-	// start przerwan
-	sei();
 }
 
 void cpu_reboot(void) {

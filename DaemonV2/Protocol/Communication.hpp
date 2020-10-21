@@ -16,7 +16,7 @@ class Communication {
 public:
     static void Transcive(SerialPort::Ptr serial, const OutputMessage& query, InputMessage& response, int timeout);
     static void SendToMultiple(const std::vector<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query);
-    static std::vector<InputMessage> SendToMultipleAndWaitForResponse(const std::vector<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query, int timeout);
+    static std::vector<InputMessage> SendToMultipleAndWaitForResponse(const std::vector<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query, int timeout, bool& timeoutOccured);
 };
 
 

@@ -6,8 +6,7 @@
 #include "Location.hpp"
 #include "../SerialPort/SerialPort.hpp"
 
-
-typedef unsigned char device_identifier_t; // Firmware: protocol_h
+#include "../../TableFirmware/protocol.h"
 
 class PhotoModule {
 

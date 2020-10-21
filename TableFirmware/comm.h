@@ -54,6 +54,7 @@ struct RX
 extern volatile TX tx;
 extern volatile RX rx;
 
+void comm_initialize(void);
 void comm_send(MessageType type, const void* payload, uint8_t payload_length);
 bool comm_check_receiver(void);
 void comm_reset_receiver(void);
