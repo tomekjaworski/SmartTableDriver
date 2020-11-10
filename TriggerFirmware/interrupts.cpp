@@ -18,7 +18,7 @@ static uint16_t __cnt;
 
 ISR(TIMER0_COMPA_vect)
 {
-	if (trigger_config.trigger1.active) {
+	if (trigger_config.trigger1.is_active) {
 		// run state transition counter
 		if (trigger_config.trigger1.state_counter-- <= 0) {
 			if (trigger_config.trigger1.state == PinState::Low) {
@@ -32,21 +32,26 @@ ISR(TIMER0_COMPA_vect)
 				
 				// start echo counter
 				trigger_config.trigger1.echo.counter = trigger_config.trigger1.echo.delay;
-				trigger_config.trigger1.echo.active = true;
+				trigger_config.trigger1.echo.is_active = true;
 				
 			} else {
 				trigger_config.trigger1.state_counter = trigger_config.trigger1.low_interval;
 				trigger_config.trigger1.state = PinState::Low;
 				TRIGGER1_SET_LOW();
+				
+				if (trigger_config.trigger1.is_single_shot) {
+					trigger_config.trigger1.is_active = false;
+					trigger_config.trigger1.is_single_shot = false;
+				}
 			}
 		}
 		
 		// Run trigger echo counter
-		if (trigger_config.trigger1.echo.active)
+		if (trigger_config.trigger1.echo.is_active)
 		{
 			trigger_config.trigger1.echo.counter--;
 			if (trigger_config.trigger1.echo.counter == 0) {
-				trigger_config.trigger1.echo.active = false;
+				trigger_config.trigger1.echo.is_active = false;
 				//trigger_config.trigger1.echo.transmission_pending = true;
 				UDR0 = 'T';
 			}
@@ -54,7 +59,7 @@ ISR(TIMER0_COMPA_vect)
 	} // trigger1.active
 
 #if defined(USE_TRIGGER_2)
-	if (trigger_config.trigger2.active) {
+	if (trigger_config.trigger2.is_active) {
 		if (trigger_config.trigger2.state_counter-- <= 0) {
 			if (trigger_config.trigger2.state == PinState::Low) {
 				trigger_config.trigger2.state_counter = trigger_config.trigger2.high_interval;

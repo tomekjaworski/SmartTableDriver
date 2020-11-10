@@ -237,6 +237,7 @@ enum class TriggerGeneratorSetMode : uint8_t {
 struct TriggerGeneratorPayload {
 	struct {
 		TriggerGeneratorSetMode mode;
+		bool is_single_shot;
 		int16_t low_interval;
 		int16_t high_interval;
 		int16_t echo_delay;
@@ -263,7 +264,7 @@ static_assert(sizeof(checksum_t) == 2, "checksum_t has invalid size");
 
 static_assert(sizeof(TriggerGeneratorSetMode) == 1, "TriggerGeneratorSetMode has invalid size");
 static_assert(sizeof(TriggerStateSetMode) == 1, "TriggerStateSetMode has invalid size");
-static_assert(sizeof(TriggerGeneratorPayload) == 14, "TriggerGeneratorPayload has invalid size");
+static_assert(sizeof(TriggerGeneratorPayload) == 16, "TriggerGeneratorPayload has invalid size");
 static_assert(sizeof(TriggerStatePayload) == 2, "TriggerStatePayload has invalid size");
 
 static_assert(sizeof(TriggeredMeasurementEnterPayload) == 1, "TriggeredMeasurementEnterPayload has invalid size");

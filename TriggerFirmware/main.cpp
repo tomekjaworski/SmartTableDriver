@@ -39,26 +39,27 @@ int main(void)
 
 
 	// trigger
-	trigger_config.trigger1.active = true;
+	trigger_config.trigger1.is_active = true;
+	trigger_config.trigger1.is_single_shot = false;
 	trigger_config.trigger1.state = PinState::Low;
 	trigger_config.trigger1.low_interval = 1000;
 	trigger_config.trigger1.high_interval = 500;
 	trigger_config.trigger1.echo.delay = 250;
 
 
-	trigger_config.trigger2.active = false;
+	trigger_config.trigger2.is_active = false;
 	trigger_config.trigger2.state = PinState::Low;
 	trigger_config.trigger2.low_interval = 700;
 	trigger_config.trigger2.high_interval = 35;
 	
 	while(1) {
 		
-		if (trigger_config.trigger1.echo.transmission_pending) {
-			trigger_config.trigger1.echo.transmission_pending = false;
-			
-			// is this the proper way?
-			UDR0 = 'T';
-		}
+		//if (trigger_config.trigger1.echo.transmission_pending) {
+			//trigger_config.trigger1.echo.transmission_pending = false;
+			//
+			//// is this the proper way?
+			////UDR0 = 'T';
+		//}
 	
 		if (!rx.got_data) {
 			if (rx.idle_timer > SERIAL_IDLE_LIMIT) {
@@ -115,13 +116,13 @@ int main(void)
 			// turn off trigger 1?
 			if (p->trigger1.mode == TriggerGeneratorSetMode::TurnOff) {
 				TRIGGER1_SET_LOW();
-				trigger_config.trigger1.active = false;
+				trigger_config.trigger1.is_active = false;
 			}
 			
 			// turn off trigger 2?
 			if (p->trigger2.mode == TriggerGeneratorSetMode::TurnOff) {
 				TRIGGER2_SET_LOW();
-				trigger_config.trigger2.active = false;
+				trigger_config.trigger2.is_active = false;
 			}
 			
 			//
@@ -133,9 +134,11 @@ int main(void)
 				trigger_config.trigger1.low_interval = p->trigger1.low_interval;
 				trigger_config.trigger1.high_interval = p->trigger1.high_interval;
 				trigger_config.trigger1.state_counter = p->trigger1.low_interval;
-				trigger_config.trigger1.active = true;
 				
-				trigger_config.trigger1.echo.active = false;
+				trigger_config.trigger1.is_active = true;
+				trigger_config.trigger1.is_single_shot = p->trigger1.is_single_shot;
+				
+				trigger_config.trigger1.echo.is_active = false;
 				trigger_config.trigger1.echo.delay = p->trigger1.echo_delay;
 
 				sei();
@@ -150,7 +153,7 @@ int main(void)
 				trigger_config.trigger2.low_interval = p->trigger2.low_interval;
 				trigger_config.trigger2.high_interval = p->trigger2.high_interval;
 				trigger_config.trigger2.state_counter = p->trigger2.low_interval;
-				trigger_config.trigger2.active = true;
+				trigger_config.trigger2.is_active = true;
 				sei();
 			}
 			

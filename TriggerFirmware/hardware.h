@@ -59,7 +59,8 @@ enum class PinState : uint8_t {
 
 struct TriggerGeneratorConfig {
 	struct {
-		volatile bool active;
+		volatile bool is_active;
+		volatile bool is_single_shot;
 		volatile PinState state;
 		volatile int16_t state_counter;
 		
@@ -67,8 +68,7 @@ struct TriggerGeneratorConfig {
 		volatile int16_t high_interval;
 
 		struct {		
-			volatile bool active;
-			volatile bool transmission_pending;
+			volatile bool is_active;
 			volatile int16_t delay;
 			volatile int16_t counter;
 		} echo;

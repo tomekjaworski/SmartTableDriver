@@ -269,10 +269,11 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     {
         TriggerGeneratorPayload tgp;
-        tgp.trigger1.high_interval = 2000;
-        tgp.trigger1.low_interval = 2000;
+        tgp.trigger1.high_interval = 10000;
+        tgp.trigger1.low_interval = 20000;
         tgp.trigger1.echo_delay = 10;
-        tgp.trigger1.mode = TriggerGeneratorSetMode::TurnOff;
+        tgp.trigger1.mode = TriggerGeneratorSetMode::SetAndRun;
+        tgp.trigger1.is_single_shot = true;
 
         tgp.trigger2.mode = TriggerGeneratorSetMode::TurnOff;
 
