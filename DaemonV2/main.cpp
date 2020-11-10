@@ -126,28 +126,10 @@ int App::Main(const std::vector<std::string>& arguments) {
     setbuf(stdout, NULL);
     struct sigaction handler;
 
-
-    //uint16_t buffer[32*32];
-    //buffer [16*8+8] = 40000;
-
-//    while(1) {
-//
-//        buffer[16*8 + 10] += 1000;
-//        cv::Mat obr(32, 32, CV_16UC1, buffer);
-//        cv::Mat dest;
-//        cv::resize(obr, dest, cv::Size(), 4, 4, CV_INTER_NN);
-//        cv::imshow("Test", dest);
-//        cv::waitKey(100);
-//
-//
-//    }
-
-
-//    return 0;
-
     handler.sa_handler = sigpipe_handler;
     int result = sigaction(SIGPIPE, &handler, NULL);
     assert(result == 0);
+
     //
     // Show available serial ports
     this->ShowAvailableSerialPorts();
@@ -249,7 +231,7 @@ int App::Main(const std::vector<std::string>& arguments) {
                info["time"].c_str()
         );
 
-
+        // Trigger generator, while in the same adressing space, will be treated differently.
         if (devid == 0x1F) // Trigger Generator?
         {
             trigger_generator_serial = serial_port;
@@ -259,6 +241,43 @@ int App::Main(const std::vector<std::string>& arguments) {
                 tdev.SetSerialPort(pmodule, serial_port);
         }
         //} catch
+    }
+
+    //
+    //
+    // ###############################################################
+    //
+    //
+
+    {
+        std::vector<InputMessage> responses;
+        bool timeout_occured;
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+
+            TriggeredMeasurementEnterPayload config{.data_size = 8};
+            OutputMessage msg_config = OutputMessage(MessageType::TriggeredMeasurementEnterRequest, &config,
+                                                     sizeof(TriggeredMeasurementEnterPayload));
+
+            printf("Entering triggered measurement mode: ");
+            responses = Communication::SendToMultipleAndWaitForResponse(tdev.GetSerialPortCollection(), msg_config,
+                                                                        1000,
+                                                                        timeout_occured);
+
+            printf(" Got responses from %zu/%zu devices (%s)\n", responses.size(),
+                   tdev.GetSerialPortCollection().size(),
+                   timeout_occured ? "TIMEOUT" : "ok");
+            if (!timeout_occured)
+                break;
+        }
+
+
+        if (!timeout_occured) {
+          //  tdev.
+        } else {
+            printf("ERROR: One or more photomodules is not responding; pleas check the hardware.");
+            getchar();
+        }
     }
 
 
@@ -302,38 +321,6 @@ int App::Main(const std::vector<std::string>& arguments) {
     // ###############################################################
     //
     //
-
-
-    {
-        std::vector<InputMessage> responses;
-        bool timeout_occured;
-
-        for (int attempt = 0; attempt < 5; attempt++) {
-
-            TriggeredMeasurementEnterPayload config{.data_size = 8};
-            OutputMessage msg_config = OutputMessage(MessageType::TriggeredMeasurementEnterRequest, &config,
-                                                     sizeof(TriggeredMeasurementEnterPayload));
-
-            printf("Entering triggered measurement mode: ");
-            responses = Communication::SendToMultipleAndWaitForResponse(tdev.GetSerialPortCollection(), msg_config,
-                                                                        1000,
-                                                                        timeout_occured);
-
-            printf(" Got responses from %zu/%zu devices (%s)\n", responses.size(),
-                   tdev.GetSerialPortCollection().size(),
-                   timeout_occured ? "TIMEOUT" : "ok");
-            if (!timeout_occured)
-                break;
-        }
-
-
-        if (!timeout_occured) {
-          //  tdev.
-        } else {
-            printf("ERROR: One or more photomodules is not responding; pleas check the hardware.");
-            getchar();
-        }
-    }
 
 
     //
