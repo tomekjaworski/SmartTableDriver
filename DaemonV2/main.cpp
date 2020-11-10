@@ -362,7 +362,7 @@ int App::Main(const std::vector<std::string>& arguments) {
         std::array<uint8_t, 256> recv_buffer;
         ImageVisualizer visualizer;
 
-        while (1) {
+        while (true) {
             visualizer.ShowReconstruction(img);
             Communication::SendToMultiple(tdev.GetSerialPortCollection(), msg_do_single_measurement);
             usleep(100 * 1000);
@@ -397,8 +397,8 @@ int App::Main(const std::vector<std::string>& arguments) {
                         const Location &location = fd2location[fd];
 
                         const uint8_t *ptr = response.GetPayloadPointer<std::uint8_t>();
-                        int payload_length = response.GetPayloadSize();
-                        img.ProcessMeasurementPayload(ptr, 8, location);
+                        //int payload_length = response.GetPayloadSize();
+                        img.ProcessMeasurementPayload(ptr, 8, location, 15);
                     }
                 }
 

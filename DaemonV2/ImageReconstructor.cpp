@@ -20,7 +20,7 @@ static int photomodule_lookuptable[] = {
 };
 
 
-void ImageReconstructor::ProcessMeasurementPayload(const void* vpayload, int bits, const Location& ploc)
+void ImageReconstructor::ProcessMeasurementPayload(const void* vpayload, int bits, const Location& ploc, int lightOffset)
 {
     assert(bits == 16 || bits == 8); // other cases not implemented at the moment
 
@@ -36,7 +36,7 @@ void ImageReconstructor::ProcessMeasurementPayload(const void* vpayload, int bit
                 payload_index = photomodule_lookuptable[payload_index];
                 uint16_t value = upayload[payload_index];
 
-                data[xoffset + x + width * (yoffset + y)] = value;
+                data[xoffset + x + width * (yoffset + y)] = value + lightOffset;
             }
     } else {
         auto *upayload = reinterpret_cast<const std::uint8_t*>(vpayload);
@@ -47,7 +47,7 @@ void ImageReconstructor::ProcessMeasurementPayload(const void* vpayload, int bit
                 payload_index = photomodule_lookuptable[payload_index];
                 uint16_t value = upayload[payload_index];
 
-                data[xoffset + x + width * (yoffset + y)] = value;
+                data[xoffset + x + width * (yoffset + y)] = value + lightOffset;
             }
     }
 

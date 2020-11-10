@@ -33,7 +33,7 @@ public:
 	}
 
 	const uint16_t* GetData(void) const noexcept { return this->data.data(); }
-	void ProcessMeasurementPayload(const void* vpayload, int bits, const Location& location);
+	void ProcessMeasurementPayload(const void* vpayload, int bits, const Location& location, int lightOffset);
 
 };
 
