@@ -24,7 +24,7 @@ void Communication::Transcive(SerialPort::Ptr serial, const OutputMessage& query
 
     // now wait for response
     int loops = 0;
-    ssize_t ss;
+    //ssize_t ss;
     do {
         fd_set rfd;
         FD_ZERO(&rfd);
@@ -89,7 +89,7 @@ std::vector<InputMessage> Communication::SendToMultipleAndWaitForResponse(const 
 
     // now wait for response
     int loops = 0;
-    ssize_t ss;
+    //ssize_t ss;
     do {
         fd_set rfd;
         FD_ZERO(&rfd);

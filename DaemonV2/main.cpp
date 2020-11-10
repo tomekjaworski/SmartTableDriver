@@ -31,7 +31,7 @@ public:
 };
 
 void App::ShowAvailableSerialPorts(void) {
-    std::string s = "";
+    std::string s;
     auto port_name_list = SerialPort::GetSerialDevices();
     for (const auto& pname : port_name_list) // może boost?
         if (!s.empty())
@@ -147,6 +147,7 @@ int App::Main(const std::vector<std::string>& arguments) {
 
     handler.sa_handler = sigpipe_handler;
     int result = sigaction(SIGPIPE, &handler, NULL);
+    assert(result == 0);
     //
     // Show available serial ports
     this->ShowAvailableSerialPorts();

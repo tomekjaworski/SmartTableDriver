@@ -13,7 +13,7 @@ public:
 		
 		for (size_t i = 0; i < count; i++) {
 			uint8_t byte = *ptr++;
-			chk ^= (uint16_t)byte;
+			chk ^= static_cast<uint16_t>(byte);
 
 			for (int bit = 8; bit > 0; bit--) {
 				if ((chk & 0x0001) > 0)
