@@ -173,8 +173,8 @@ SerialPort& SerialPort::operator=(SerialPort&& sp)
 
 void SerialPort::DiscardAllData(void)
 {
-    int ret = tcflush(this->fd, TCIFLUSH | TCOFLUSH);
-    if (ret == -1)
+    int ret = tcflush(this->fd, TCIOFLUSH);
+    if (ret != 0)
         throw std::system_error(errno, std::system_category(), "tcflush");
 }
 

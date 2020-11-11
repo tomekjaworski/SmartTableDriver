@@ -19,6 +19,11 @@ static int photomodule_lookuptable[] = {
         52,	53, 54,	82, 81,	80, 79,	83, 84,	85
 };
 
+void ImageReconstructor::SetTestPattern(void) {
+    for (int col = 0; col < this->width; col++)
+        for (int row = 0; row < this->height; row++)
+            this->data[col + row * this->width] = (col + row) & 1;
+}
 
 void ImageReconstructor::ProcessMeasurementPayload(const void* vpayload, int bits, const Location& ploc, int lightOffset)
 {

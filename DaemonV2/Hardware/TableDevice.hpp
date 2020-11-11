@@ -5,14 +5,14 @@
 #ifndef UNTITLED_TABLEDEVICE_HPP
 #define UNTITLED_TABLEDEVICE_HPP
 
-#include <vector>
+#include <list>
 
 #include "Location.hpp"
 #include "PhotoModule.hpp"
 
 class TableDevice {
-    std::vector<PhotoModule::Ptr> geometry;
-    std::vector<SerialPort::Ptr> ports;
+    std::list<PhotoModule::Ptr> geometry;
+    std::list<SerialPort::Ptr> ports;
 public:
     static constexpr int TableWidth = 60;
     static constexpr int TableHeight = 40;
@@ -27,8 +27,10 @@ public:
     PhotoModule::Ptr GetPhotoModuleByID(device_identifier_t id);
     void SetSerialPort(PhotoModule::Ptr pmodule, SerialPort::Ptr pserial);
 
-    std::vector<SerialPort::Ptr>& GetSerialPortCollection(void);
-    std::vector<PhotoModule::Ptr>& GetPhotomodulesCollection(void);
+    std::list<SerialPort::Ptr>& GetSerialPortCollection(void);
+    std::list<PhotoModule::Ptr>& GetPhotoModulesCollection(void);
+
+    PhotoModule::Ptr GetPhotoModuleByLocation(int moduleColumn, int moduleRow);
 };
 
 

@@ -49,7 +49,7 @@ MessageExtractionResult InputMessageBuilder::ExtractMessage(InputMessage& messag
 		// Header verification: address
 		const TX_PROTO_HEADER* phdr = reinterpret_cast<const TX_PROTO_HEADER*>(this->queue.data());
 		
-		if (phdr->magic != PROTO_MAGIC) {   // Is there any magic? :)
+		if (phdr->magic != PROTOCOL_HEADER_VALUE) {   // Is there any magic? :)
 			// remove one byte and loop
 			std::shift_left(this->queue.begin(), this->queue.end(), 1);
 			this->position--;

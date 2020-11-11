@@ -12,6 +12,7 @@
 ImageVisualizer::ImageVisualizer(void) {
     this->minimum = 0;
     this->maximum = 1;
+    this->window_created = false;
 }
 
 ImageVisualizer::~ImageVisualizer(void) {
@@ -19,6 +20,12 @@ ImageVisualizer::~ImageVisualizer(void) {
 }
 
 void ImageVisualizer::ShowReconstruction(const ImageReconstructor& reconstructor) {
+
+    if (!this->window_created) {
+        cv::namedWindow("ImageVisualizer", cv::WINDOW_AUTOSIZE);
+        this->window_created = true;
+    }
+
 
     cv::Mat temp(reconstructor.GetHeight(), reconstructor.GetWidth(), CV_16UC1,
                          const_cast<uint16_t*>(reconstructor.GetData()));
@@ -34,7 +41,7 @@ void ImageVisualizer::ShowReconstruction(const ImageReconstructor& reconstructor
 
     cv::Mat zoomed;
     cv::resize(source_image, zoomed, cv::Size(), 4, 4, CV_INTER_NN);
-    cv::imshow("Test", zoomed);
-    cv::waitKey(100);
+    cv::imshow("ImageVisualizer", zoomed);
+    cv::waitKey(1);
 }
 

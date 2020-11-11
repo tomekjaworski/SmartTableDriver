@@ -35,10 +35,11 @@ int main(void)
 	comm_reset_receiver();
 	comm_initialize();
 	
-	sei();
-
-
 	// trigger
+#if 1
+	trigger_config.trigger1.is_active = false;
+	trigger_config.trigger2.is_active = false;
+#else
 	trigger_config.trigger1.is_active = true;
 	trigger_config.trigger1.is_single_shot = false;
 	trigger_config.trigger1.state = PinState::Low;
@@ -46,12 +47,15 @@ int main(void)
 	trigger_config.trigger1.high_interval = 500;
 	trigger_config.trigger1.echo.delay = 250;
 
-
 	trigger_config.trigger2.is_active = false;
 	trigger_config.trigger2.state = PinState::Low;
 	trigger_config.trigger2.low_interval = 700;
 	trigger_config.trigger2.high_interval = 35;
-	
+#endif
+
+
+	sei();
+
 	while(1) {
 		
 		//if (trigger_config.trigger1.echo.transmission_pending) {

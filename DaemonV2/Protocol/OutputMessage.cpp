@@ -14,7 +14,7 @@ OutputMessage::OutputMessage(MessageType type, const void* payload , size_t payl
 //		size_t message_size = sizeof(RX_PROTO_HEADER) + payload_length + sizeof(uint16_t);
 
     RX_PROTO_HEADER header;
-    header.magic = PROTO_MAGIC;
+    header.magic = PROTOCOL_HEADER_VALUE;
     header.payload_length = static_cast<uint8_t>(payload_length);
     header.type = type;
 

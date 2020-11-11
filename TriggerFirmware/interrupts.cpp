@@ -53,7 +53,7 @@ ISR(TIMER0_COMPA_vect)
 			if (trigger_config.trigger1.echo.counter == 0) {
 				trigger_config.trigger1.echo.is_active = false;
 				//trigger_config.trigger1.echo.transmission_pending = true;
-				UDR0 = 'T';
+				UDR0 = END_OF_TRIGGER_MARKER;
 			}
 		}
 	} // trigger1.active

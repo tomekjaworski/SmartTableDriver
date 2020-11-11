@@ -22,7 +22,7 @@ void comm_reset_receiver(void) {
 void comm_initialize(void) {
 	
 	
-	tx.header.magic = PROTO_MAGIC;
+	tx.header.magic = PROTOCOL_HEADER_VALUE;
 	tx.header.device_id = device_identifier;
 }
 
@@ -37,7 +37,7 @@ bool comm_check_receiver(void)
 		if (RX_COUNT == 0)
 		return false; // No data - no worry...
 
-		if (rx.buffer.header.magic != PROTO_MAGIC)
+		if (rx.buffer.header.magic != PROTOCOL_HEADER_VALUE)
 		{
 			// Remove one byte at the start of the rx buffer
 			RX_RESET;

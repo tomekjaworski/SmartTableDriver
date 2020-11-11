@@ -55,7 +55,7 @@ void Communication::Transcive(SerialPort::Ptr serial, const OutputMessage& query
     } while (true);
 }
 
-void Communication::SendToMultiple(const std::vector<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query) {
+void Communication::SendToMultiple(const std::list<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query) {
 
     for (SerialPort::Ptr pserial : serialPortCollection) {
         pserial->DiscardAllData();
@@ -65,7 +65,7 @@ void Communication::SendToMultiple(const std::vector<SerialPort::Ptr>& serialPor
 
 #include <map>
 #include <unordered_set>
-std::vector<InputMessage> Communication::SendToMultipleAndWaitForResponse(const std::vector<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query, int timeout, bool& timeoutOccured) {
+std::list<InputMessage> Communication::SendToMultipleAndWaitForResponse(const std::list<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query, int timeout, bool& timeoutOccured) {
 
     std::map<int, InputMessageBuilder> fd2builder;
     std::map<int, InputMessage> fd2message;
@@ -126,7 +126,7 @@ std::vector<InputMessage> Communication::SendToMultipleAndWaitForResponse(const 
                 // all devices have sent correct response?
                 if (fd2message.size() == fd2serial.size())
                 {
-                    std::vector<InputMessage> result;
+                    std::list<InputMessage> result;
                     std::transform(fd2message.begin(), fd2message.end(), std::back_inserter(result), [](const auto&p){ return p.second;});
                     timeoutOccured = false;
                     return result;
@@ -145,7 +145,7 @@ std::vector<InputMessage> Communication::SendToMultipleAndWaitForResponse(const 
     } while (true);
 
     // return all messages that were received; the result set will NOT be complete
-    std::vector<InputMessage> result;
+    std::list<InputMessage> result;
     std::transform(fd2message.begin(), fd2message.end(), std::back_inserter(result), [](const auto&p){ return p.second;});
     timeoutOccured = false;
     return result;

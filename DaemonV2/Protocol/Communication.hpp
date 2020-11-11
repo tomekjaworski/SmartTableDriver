@@ -5,7 +5,7 @@
 #ifndef UNTITLED_COMMUNICATION_HPP
 #define UNTITLED_COMMUNICATION_HPP
 
-#include <vector>
+#include <list>
 #include "../SerialPort/SerialPort.hpp"
 #include "OutputMessage.hpp"
 #include "InputMessage.hpp"
@@ -15,8 +15,8 @@ class Communication {
 
 public:
     static void Transcive(SerialPort::Ptr serial, const OutputMessage& query, InputMessage& response, int timeout);
-    static void SendToMultiple(const std::vector<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query);
-    static std::vector<InputMessage> SendToMultipleAndWaitForResponse(const std::vector<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query, int timeout, bool& timeoutOccured);
+    static void SendToMultiple(const std::list<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query);
+    static std::list<InputMessage> SendToMultipleAndWaitForResponse(const std::list<SerialPort::Ptr>& serialPortCollection, const OutputMessage& query, int timeout, bool& timeoutOccured);
 };
 
 

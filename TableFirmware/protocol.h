@@ -195,7 +195,9 @@ enum class MessageType : uint8_t
 typedef unsigned char device_identifier_t;
 
 
-#define PROTO_MAGIC (uint8_t)0xAB
+#define PROTOCOL_HEADER_VALUE   ((uint8_t)0xAB)
+#define END_OF_TRIGGER_MARKER   ((char)'T')
+
 
 //
 // Incoming (module <- PC) header structure
@@ -204,7 +206,7 @@ struct RX_PROTO_HEADER {
 	MessageType type;				// type of the received message
 	uint8_t payload_length;			//
 	
-	RX_PROTO_HEADER() : magic(PROTO_MAGIC) {}
+	RX_PROTO_HEADER() : magic(PROTOCOL_HEADER_VALUE) {}
 } __attribute__((packed));
 
 //
@@ -217,7 +219,7 @@ struct TX_PROTO_HEADER {
 	device_identifier_t device_id;
 	uint8_t sequence_counter;
 	
-	TX_PROTO_HEADER() : magic(PROTO_MAGIC), sequence_counter(0x00) {}
+	TX_PROTO_HEADER() : magic(PROTOCOL_HEADER_VALUE), sequence_counter(0x00) {}
 } __attribute__((packed));
 
 

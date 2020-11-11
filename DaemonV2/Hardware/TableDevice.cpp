@@ -86,11 +86,19 @@ void TableDevice::SetSerialPort(PhotoModule::Ptr pmodule, SerialPort::Ptr pseria
     this->ports.push_back(pserial);
 }
 
-std::vector<SerialPort::Ptr>& TableDevice::GetSerialPortCollection(void) {
+std::list<SerialPort::Ptr>& TableDevice::GetSerialPortCollection(void) {
     return this->ports;
 }
 
-std::vector<PhotoModule::Ptr>& TableDevice::GetPhotomodulesCollection(void) {
+std::list<PhotoModule::Ptr>& TableDevice::GetPhotoModulesCollection(void) {
     return this->geometry;
 
+}
+
+PhotoModule::Ptr TableDevice::GetPhotoModuleByLocation(int moduleColumn, int moduleRow) {
+    for (PhotoModule::Ptr pdevice : this->geometry)
+        if (pdevice->GetLocation().GetRow() == moduleRow &&
+            pdevice->GetLocation().GetColumn() == moduleColumn)
+            return pdevice;
+    return nullptr;
 }

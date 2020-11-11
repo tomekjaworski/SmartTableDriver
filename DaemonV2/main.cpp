@@ -1,5 +1,6 @@
 #include <system_error>
 #include <cassert>
+#include <iostream>
 
 #include "ProgramBase.hpp"
 #include "SerialPort/SerialPort.hpp"
@@ -139,6 +140,23 @@ int App::Main(const std::vector<std::string>& arguments) {
     std::list<SerialPort::Ptr> ports = this->OpenAllSerialPorts();
 
     //
+    // Reset all modules
+    {
+        printf("Rebooting all photomodules and trigger generator...\n");
+        OutputMessage message_reboot = OutputMessage(MessageType::RebootRequest);
+        for (int i = 0; i < 10; i++) {
+            Communication::SendToMultiple(ports, message_reboot);
+            usleep(100 * 1000);
+        }
+
+        // Wait some time for devices to fully reboot
+        printf("Ok; waiting for devices to fully bootup...\n");
+        usleep(20'000 * 1000);
+    }
+
+
+
+    //
     // Initialize table description
     TableDevice tdev;
     tdev.ShowTopology();
@@ -250,7 +268,7 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
 
     {
-        std::vector<InputMessage> responses;
+        std::list<InputMessage> responses;
         bool timeout_occured;
 
         for (int attempt = 0; attempt < 5; attempt++) {
@@ -289,11 +307,11 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     {
         TriggerGeneratorPayload tgp;
-        tgp.trigger1.high_interval = 10000;
-        tgp.trigger1.low_interval = 20000;
-        tgp.trigger1.echo_delay = 10;
+        tgp.trigger1.high_interval = 5;
+        tgp.trigger1.low_interval = 1000;
+        tgp.trigger1.echo_delay = 100;
         tgp.trigger1.mode = TriggerGeneratorSetMode::SetAndRun;
-        tgp.trigger1.is_single_shot = true;
+        //tgp.trigger1.is_single_shot = true;
 
         tgp.trigger2.mode = TriggerGeneratorSetMode::TurnOff;
 
@@ -332,11 +350,10 @@ int App::Main(const std::vector<std::string>& arguments) {
     {
         OutputMessage msg_do_single_measurement = OutputMessage(MessageType::SingleMeasurement8Request);
 
-        ImageReconstructor img(TableDevice::TableWidth, TableDevice::TableHeight);
         std::map<int, InputMessageBuilder> fd2builder;
         std::map<int, Location> fd2location;
         std::vector<SerialPort::Ptr> serial_ports;
-        for (PhotoModule::Ptr pmodule : tdev.GetPhotomodulesCollection()) {
+        for (PhotoModule::Ptr pmodule : tdev.GetPhotoModulesCollection()) {
             SerialPort::Ptr pserial = pmodule->GetSerialPort();
             if (pserial == nullptr)
                 continue;
@@ -345,16 +362,17 @@ int App::Main(const std::vector<std::string>& arguments) {
             serial_ports.push_back(pmodule->GetSerialPort());
         }
 
+        //int stdout_save;
+        //stdout_save = dup(STDOUT_FILENO); /* save */
+
         InputMessage response;
         std::array<uint8_t, 256> recv_buffer;
         ImageVisualizer visualizer;
+        ImageReconstructor img(TableDevice::TableWidth, TableDevice::TableHeight);
+        img.SetTestPattern();
+        visualizer.ShowReconstruction(img);
 
         while (true) {
-            visualizer.ShowReconstruction(img);
-            Communication::SendToMultiple(tdev.GetSerialPortCollection(), msg_do_single_measurement);
-            usleep(100 * 1000);
-
-
             fd_set rfd;
             FD_ZERO(&rfd);
 
@@ -364,6 +382,11 @@ int App::Main(const std::vector<std::string>& arguments) {
                 max_handle = std::max(max_handle, pserial->GetHandle());
             }
 
+            // end of trigger source
+            FD_SET(trigger_generator_serial->GetHandle(), &rfd);
+            max_handle = std::max(max_handle, trigger_generator_serial->GetHandle());
+
+
             //loops++;
             timeval tv = {.tv_sec = 0, .tv_usec = 500 * 1000};
             int sret = ::select(max_handle + 1, &rfd, nullptr, nullptr, &tv);
@@ -371,7 +394,12 @@ int App::Main(const std::vector<std::string>& arguments) {
             if (sret == -1)
                 throw std::runtime_error("select");
 
+            if (sret == 0) {
+                usleep(10 * 1000);
+                continue;
+            }
 
+            bool got_some_data = false;
             for (SerialPort::Ptr pserial : tdev.GetSerialPortCollection()) {
                 int fd = pserial->GetHandle();
                 if (FD_ISSET(fd, &rfd)) {
@@ -386,11 +414,40 @@ int App::Main(const std::vector<std::string>& arguments) {
                         const uint8_t *ptr = response.GetPayloadPointer<std::uint8_t>();
                         //int payload_length = response.GetPayloadSize();
                         img.ProcessMeasurementPayload(ptr, 8, location, 15);
+                        got_some_data = true;
+
+                        PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByID(response.GetDeviceID());
+                        assert(pmodule != nullptr);
+
+                        struct status_descriptor_t& descriptor = pmodule->GetStatusDescriptor();
+                        descriptor.last_sequence_number = response.GetSequenceNumber();
+                        descriptor.received_images++;
                     }
                 }
-
-
             }
+
+            if (got_some_data)
+                continue;
+
+            // Check trigger information
+            if (FD_ISSET(trigger_generator_serial->GetHandle(), &rfd)) {
+                ssize_t recv_bytes = trigger_generator_serial->Receive(recv_buffer);
+                if (recv_buffer[recv_bytes - 1] == END_OF_TRIGGER_MARKER)
+                    visualizer.ShowReconstruction(img);
+            }
+
+            printf("\x1b[%dA", TableDevice::TableHeight / PhotoModule::ModuleHeight);
+            for (int row = 0; row < TableDevice::TableHeight / PhotoModule::ModuleHeight; row++) {
+                for (int col = 0; col < TableDevice::TableWidth / PhotoModule::ModuleWidth; col++) {
+                    PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByLocation(1 + col, 1 + row);
+                    assert(pmodule != nullptr);
+
+                    struct status_descriptor_t &td = pmodule->GetStatusDescriptor();
+                    printf(" [%5d;%5d]", td.last_sequence_number, td.received_images);
+                }
+                printf("\n");
+            }
+
         }
     }
 

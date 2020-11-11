@@ -26,7 +26,7 @@ public:
         this->type = this->GetMessageType();
     }
 
-    InputMessage(InputMessage&& msg)
+    InputMessage(InputMessage&& msg) noexcept
         : payload(std::move(msg.payload)), type(msg.type)
     {
         //

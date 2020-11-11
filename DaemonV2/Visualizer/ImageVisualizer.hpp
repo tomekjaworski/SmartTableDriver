@@ -9,6 +9,8 @@
 
 class ImageVisualizer {
     double minimum, maximum;
+    bool window_created;
+
 public:
     ImageVisualizer(void);
     ~ ImageVisualizer(void);
