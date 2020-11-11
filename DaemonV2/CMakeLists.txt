@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.17)
 project(untitled)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_COLOR_MAKEFILE OFF)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 #add_library(stdc++fs STATIC IMPORTED)
 
@@ -26,7 +27,7 @@ add_executable(
         Utility/Crc16.hpp
         Protocol/OutputMessage.cpp Protocol/OutputMessage.hpp
 
-        Protocol/InputMessage.cpp Protocol/InputMessage.hpp
+        Protocol/InputMessage.cpp Protocol/InputMessage.hpp ../../TableFirmware/protocol.h
         Protocol/InputMessageBuilder.cpp Protocol/InputMessageBuilder.hpp
         Utility/Helper.cpp Utility/Helper.hpp Protocol/TimeoutError.h
 
