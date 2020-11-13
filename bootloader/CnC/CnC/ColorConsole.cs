@@ -100,7 +100,7 @@ namespace CnC
             Console.WriteLine();
         }
 
-        internal static void WriteXY(int left, int top, string str)
+        public static void WriteXY(int left, int top, string str)
         {
             lock(ColorConsole.sync)
             {
@@ -117,7 +117,7 @@ namespace CnC
             }
         }
 
-        internal static void WriteXY(int left, int top, ConsoleColor textColor, string str)
+        public static void WriteXY(int left, int top, ConsoleColor textColor, string str)
         {
             lock (ColorConsole.sync)
             {
@@ -134,7 +134,7 @@ namespace CnC
             }
         }
 
-        internal static void WriteXY(int left, int top, char ch)
+        public static void WriteXY(int left, int top, char ch)
         {
             lock (ColorConsole.sync)
             {
@@ -144,6 +144,11 @@ namespace CnC
                 Console.Write(ch);
                 Console.SetCursorPosition(old_left, old_top);
             }
+        }
+
+        public static void WriteLine()
+        {
+            Console.WriteLine();
         }
     }
 }

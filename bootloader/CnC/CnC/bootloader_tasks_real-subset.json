@@ -1,5 +1,17 @@
 ﻿{
   "Jobs": [
+
+    {
+      "JobType": "WaitForKey",
+      "Message": "*** Naciśnij dowolny klawisz aby wczytać wersję bootloaderów..."
+    },
+
+    //
+    //
+    // -------------------------------------
+    //
+    //
+
     {
       "JobType": "ReadBootloaderVersion",
       "BootloaderID": "0x11"
@@ -13,6 +25,17 @@
     {
       "JobType": "ReadBootloaderVersion",
       "BootloaderID": "0x1F"
+    },
+
+    //
+    //
+    // -------------------------------------
+    //
+    //
+
+    {
+      "JobType": "WaitForKey",
+      "Message": "*** Naciśnij dowolny klawisz aby rozpocząc programowanie urządzeń..."
     },
 
     // ################################################
@@ -81,7 +104,11 @@
       "ProgrammableMemorySize": 1024
     },
 
+    //
+    //
     // -------------------------------------
+    //
+    //
 
     {
       "JobType": "WaitForKey",

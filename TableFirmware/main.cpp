@@ -72,12 +72,13 @@ int main(void)
 	while(1) {
 		bool current_trigger = GET_TRIGGER1();
 		if (current_trigger && !prev_trigger) {
-			LED1_TOGGLE;
 			if (trigger_data_size == 8) {
+				LED1_TOGGLE;
 				im_measure8();
 				comm_send(MessageType::SingleMeasurement8Response, im_data.primary.raw8, 10 * 10 * sizeof(uint8_t));
 			}
 			if (trigger_data_size == 10) {
+				LED1_TOGGLE;
 				im_measure10();
 				comm_send(MessageType::SingleMeasurement10Response, im_data.primary.raw16, 10 * 10 * sizeof(uint16_t));
 			}

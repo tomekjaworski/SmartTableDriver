@@ -15,7 +15,7 @@ add_executable(
 
         ImageReconstructor.hpp
 
-        main.cpp
+        main.cpp App.hpp
         Hardware/Location.hpp Hardware/PhotoModule.hpp
 
         ProgramBase.cpp ProgramBase.hpp
@@ -36,4 +36,4 @@ add_executable(
         ImageReconstructor.cpp Visualizer/ImageVisualizer.cpp Visualizer/ImageVisualizer.hpp)
 
 
-target_link_libraries(${PROJECT_NAME} stdc++fs opencv_core opencv_highgui opencv_imgproc)
+target_link_libraries(${PROJECT_NAME} stdc++fs opencv_core opencv_highgui opencv_imgproc curses)

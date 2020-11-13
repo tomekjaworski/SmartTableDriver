@@ -10,12 +10,17 @@
 class ImageVisualizer {
     double minimum, maximum;
     bool window_created;
+    int zoom;
 
 public:
     ImageVisualizer(void);
     ~ ImageVisualizer(void);
 
     void ShowReconstruction(const ImageReconstructor& reconstructor);
+
+    void DoZoomIn(void);
+    void DoZoomOut(void);
+    void DoResetNormalization(void);
 };
 
 

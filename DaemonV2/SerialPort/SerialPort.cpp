@@ -119,11 +119,8 @@ SerialPort::SerialPort(const std::string& deviceName, int baudRate)
 
     printf("  VTIME=%d; VMIN=%d\n", ser.c_cc[VTIME], ser.c_cc[VMIN]);
 
-    printf("  c_cflag=%d\n", ser.c_cflag);
-    printf("  c_iflag=%d\n", ser.c_iflag);
-    printf("  c_oflag=%d\n", ser.c_oflag);
-    printf("  c_lflag=%d\n", ser.c_lflag);
-    printf("  c_line=%d\n", ser.c_line);
+    printf("  c_cflag=%08x, c_iflag=%08x, c_oflag=%08x\n", ser.c_cflag, ser.c_iflag, ser.c_oflag);
+    printf("  c_lflag=%08x, c_line=%08x\n", ser.c_lflag, ser.c_line);
 
     //TODO: jak ustawić długość kolejki FIFO dla wejscia i wyjscia. Albo jak pobrac jej długość?
 
@@ -174,13 +171,15 @@ SerialPort& SerialPort::operator=(SerialPort&& sp)
 void SerialPort::DiscardAllData(void)
 {
     int ret = tcflush(this->fd, TCIOFLUSH);
-    if (ret != 0)
+    if (ret != 0) {
+        int e = errno;
         throw std::system_error(errno, std::system_category(), "tcflush");
+    }
 }
 
 void SerialPort::Close(void)
 {
-    printf("SerialPort::Close\n");
+    //printf("SerialPort::Close\n");
     close(this->fd);
     this->fd = -1;
 }

@@ -1,35 +1,19 @@
-#include <system_error>
 #include <cassert>
-#include <iostream>
 
-#include "ProgramBase.hpp"
-#include "SerialPort/SerialPort.hpp"
-#include <list>
 #include "Hardware/TableDevice.hpp"
 #include "Utility/AnsiCodes.h"
 #include <boost/algorithm/string.hpp>
 #include "ImageReconstructor.hpp"
 #include "Protocol/InputMessageBuilder.hpp"
-#include "Protocol/OutputMessage.hpp"
 #include "Protocol/TimeoutError.h"
 #include "Protocol/Communication.hpp"
 #include "Visualizer/ImageVisualizer.hpp"
+#include "App.hpp"
 
+namespace nc {
+#include <curses.h>
+}
 
-
-class App : public ProgramBase {
-public:
-    App(int argc, const char** argv, const char** env)
-        : ProgramBase(argc, argv, env) {
-
-    }
-
-    int Main(const std::vector<std::string>& arguments) override;
-
-public:
-    void ShowAvailableSerialPorts(void);
-    std::list<SerialPort::Ptr> OpenAllSerialPorts(void);
-};
 
 void App::ShowAvailableSerialPorts(void) {
     std::string s;
@@ -47,7 +31,7 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
     std::list<SerialPort::Ptr> ports;
     for (const auto& pname : SerialPort::GetSerialDevices()) {
         try {
-            printf("Opening port %s... ", pname.c_str());
+            printf("Opening port %s...\n", pname.c_str());
             SerialPort::Ptr sp(new SerialPort(pname, 19200));
             ports.push_back(sp);
 
@@ -267,6 +251,21 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     //
 
+
+    InputMessage response;
+    std::array<uint8_t, 256> recv_buffer;
+    ImageVisualizer visualizer;
+    ImageReconstructor img(TableDevice::TableWidth, TableDevice::TableHeight);
+    img.SetTestPattern();
+    visualizer.ShowReconstruction(img);
+
+
+    //
+    //
+    // ###############################################################
+    //
+    //
+
     {
         std::list<InputMessage> responses;
         bool timeout_occured;
@@ -299,6 +298,17 @@ int App::Main(const std::vector<std::string>& arguments) {
     }
 
 
+    //
+    //
+    // ###############################################################
+    //
+    //
+
+    {
+        printf("Press any key...\n");
+        while (getchar() != '\n');
+    }
+
 
     //
     //
@@ -308,8 +318,8 @@ int App::Main(const std::vector<std::string>& arguments) {
     {
         TriggerGeneratorPayload tgp;
         tgp.trigger1.high_interval = 5;
-        tgp.trigger1.low_interval = 1000;
-        tgp.trigger1.echo_delay = 100;
+        tgp.trigger1.low_interval = 100;
+        tgp.trigger1.echo_delay = 70;
         tgp.trigger1.mode = TriggerGeneratorSetMode::SetAndRun;
         //tgp.trigger1.is_single_shot = true;
 
@@ -340,15 +350,8 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     //
 
-
-    //
-    //
-    // ###############################################################
-    //
-    //
-
     {
-        OutputMessage msg_do_single_measurement = OutputMessage(MessageType::SingleMeasurement8Request);
+        //OutputMessage msg_do_single_measurement = OutputMessage(MessageType::SingleMeasurement8Request);
 
         std::map<int, InputMessageBuilder> fd2builder;
         std::map<int, Location> fd2location;
@@ -365,14 +368,29 @@ int App::Main(const std::vector<std::string>& arguments) {
         //int stdout_save;
         //stdout_save = dup(STDOUT_FILENO); /* save */
 
-        InputMessage response;
-        std::array<uint8_t, 256> recv_buffer;
-        ImageVisualizer visualizer;
-        ImageReconstructor img(TableDevice::TableWidth, TableDevice::TableHeight);
-        img.SetTestPattern();
-        visualizer.ShowReconstruction(img);
+        nc::initscr();
+        nc::nodelay(nc::stdscr, TRUE);
+        nc::noecho();
+        nc::resize_term(25, 100);
+        nc::clear();
+        nc::refresh();
 
+        std::chrono::time_point<std::chrono::steady_clock> last_update = std::chrono::steady_clock::now();
         while (true) {
+
+            int ch;
+            if ((ch = nc::wgetch(nc::stdscr)) != ERR) {
+                ch = toupper(ch);
+                if (ch == 'Q')
+                    break;
+                if (ch == '+')
+                    visualizer.DoZoomIn();
+                if (ch == '-')
+                    visualizer.DoZoomOut();
+                if (ch == 'R')
+                    visualizer.DoResetNormalization();
+            }
+
             fd_set rfd;
             FD_ZERO(&rfd);
 
@@ -429,6 +447,10 @@ int App::Main(const std::vector<std::string>& arguments) {
             if (got_some_data)
                 continue;
 
+            //std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+            //if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_update).count() > timeout)
+
+
             // Check trigger information
             if (FD_ISSET(trigger_generator_serial->GetHandle(), &rfd)) {
                 ssize_t recv_bytes = trigger_generator_serial->Receive(recv_buffer);
@@ -436,26 +458,126 @@ int App::Main(const std::vector<std::string>& arguments) {
                     visualizer.ShowReconstruction(img);
             }
 
-            printf("\x1b[%dA", TableDevice::TableHeight / PhotoModule::ModuleHeight);
+
+            //printf("\x1b[%dA", TableDevice::TableHeight / PhotoModule::ModuleHeight);
             for (int row = 0; row < TableDevice::TableHeight / PhotoModule::ModuleHeight; row++) {
+                nc::move(row, 0);
                 for (int col = 0; col < TableDevice::TableWidth / PhotoModule::ModuleWidth; col++) {
                     PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByLocation(1 + col, 1 + row);
                     assert(pmodule != nullptr);
 
                     struct status_descriptor_t &td = pmodule->GetStatusDescriptor();
-                    printf(" [%5d;%5d]", td.last_sequence_number, td.received_images);
+                    nc::printw("[%5d;%5d]  ", td.last_sequence_number, td.received_images);
                 }
-                printf("\n");
+
             }
 
+            nc::refresh();
+        }
+
+        //
+        nc::endwin();
+    }
+
+
+    //
+    //
+    // ###############################################################
+    //
+    //
+    {
+        TriggerGeneratorPayload tgp;
+        tgp.trigger1.mode = TriggerGeneratorSetMode::TurnOff;
+        tgp.trigger2.mode = TriggerGeneratorSetMode::TurnOff;
+
+        OutputMessage msg_setup_trigger = OutputMessage(MessageType::SetTriggerGeneratorRequest, &tgp,
+                                                        sizeof(TriggerGeneratorPayload));
+        InputMessage response;
+        try{
+            printf("Shutting down trigger generator... ");
+            Communication::Transcive(trigger_generator_serial, msg_setup_trigger, response, 2000);
+            printf("Ok\n");
+        } catch (const TimeoutError &te) {
+            printf("Timeout\n");
+        }
+
+        // Wait for all transmissions to end
+        usleep(1000 * 1000);
+
+        // Flush all buffers on all serial ports
+        trigger_generator_serial->DiscardAllData();
+        for(auto pserial : tdev.GetSerialPortCollection())
+            pserial->DiscardAllData();
+    }
+
+
+    //
+    //
+    // ###############################################################
+    //
+    //
+
+    {
+        std::list<InputMessage> responses;
+        bool timeout_occured;
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+
+            OutputMessage msg_config = OutputMessage(MessageType::TriggeredMeasurementLeaveRequest);
+
+            printf("leaving triggered measurement mode: ");
+            responses = Communication::SendToMultipleAndWaitForResponse(tdev.GetSerialPortCollection(), msg_config,
+                                                                        1000,
+                                                                        timeout_occured);
+
+            printf(" Got responses from %zu/%zu devices (%s)\n", responses.size(),
+                   tdev.GetSerialPortCollection().size(),
+                   timeout_occured ? "TIMEOUT" : "ok");
+            if (!timeout_occured)
+                break;
+        }
+
+
+        if (!timeout_occured) {
+            //  tdev.
+        } else {
+            printf("ERROR: One or more photomodules is not responding; pleas check the hardware.");
+            getchar();
         }
     }
 
 
+    //
+    //
+    // ###############################################################
+    //
+    //
+
+    {
+        printf("Closing %zu serial ports... ", ports.size());
+        for(SerialPort::Ptr pserial : ports)
+            pserial->Close();
+
+        printf(AGREEN "Ok.\n");
+    }
+
     return 0;
 }
 
+
 int main(int argc, const char** argv, const char** env) {
+//
+//
+//    while(true) {
+//        int c = nc::wgetch(nc::stdscr);
+//        if (c == ERR)
+//            continue;
+//
+//        nc::printw("%d ", c);
+//        nc::refresh();
+//    }
+//
+
     App app(argc, argv, env);
     app.Run();
     return app.GetErrorCode();

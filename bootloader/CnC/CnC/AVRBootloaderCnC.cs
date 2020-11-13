@@ -338,8 +338,9 @@ namespace CnC
             // and show them again, but together for better view in case of holes in addresses
 
             discovered_devices.Sort((x, y) => x.BootloaderAddress - y.BootloaderAddress);
-            Console.Write(" Concatenated list: ");
+            Console.Write(" Summary list: ");
             ColorConsole.WriteLine(ConsoleColor.Yellow, string.Join(" ", discovered_devices.Select(x => x.BootloaderAddress.ToString("X2"))));
+            ColorConsole.WriteLine();
         }
 
         public void ReadBootloaderVersion(BootloaderClient dev, ref string ver)

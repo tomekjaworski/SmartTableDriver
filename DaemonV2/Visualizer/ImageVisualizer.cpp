@@ -13,11 +13,26 @@ ImageVisualizer::ImageVisualizer(void) {
     this->minimum = 0;
     this->maximum = 1;
     this->window_created = false;
+    this->zoom = 8;
 }
 
 ImageVisualizer::~ImageVisualizer(void) {
 
 }
+
+void ImageVisualizer::DoZoomIn(void) {
+    this->zoom = (this->zoom == 15) ? 15 : this->zoom + 1;
+}
+
+void ImageVisualizer::DoZoomOut(void) {
+    this->zoom = (this->zoom == 1) ? 1 : this->zoom - 1;
+}
+
+void ImageVisualizer::DoResetNormalization(void) {
+    this->minimum = 0;
+    this->maximum = 1;
+}
+
 
 void ImageVisualizer::ShowReconstruction(const ImageReconstructor& reconstructor) {
 
@@ -40,7 +55,7 @@ void ImageVisualizer::ShowReconstruction(const ImageReconstructor& reconstructor
     source_image = 65535.0 * (source_image - this->minimum) / (this->maximum - this->minimum);
 
     cv::Mat zoomed;
-    cv::resize(source_image, zoomed, cv::Size(), 4, 4, CV_INTER_NN);
+    cv::resize(source_image, zoomed, cv::Size(), this->zoom, this->zoom, CV_INTER_NN);
     cv::imshow("ImageVisualizer", zoomed);
     cv::waitKey(1);
 }
