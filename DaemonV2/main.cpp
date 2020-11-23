@@ -100,6 +100,7 @@ std::list<SerialPort::Ptr> App::OpenAllSerialPorts(void) {
 void sigpipe_handler(int unused)
 {
     // ignoruj
+    printf("Coś nie pykło.\n");
 }
 
 int App::Main(const std::vector<std::string>& arguments) {

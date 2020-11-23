@@ -173,13 +173,13 @@ void SerialPort::DiscardAllData(void)
     int ret = tcflush(this->fd, TCIOFLUSH);
     if (ret != 0) {
         int e = errno;
-        throw std::system_error(errno, std::system_category(), "tcflush");
+       // throw std::system_error(errno, std::system_category(), "tcflush");
     }
 }
 
 void SerialPort::Close(void)
 {
-    //printf("SerialPort::Close\n");
+    printf("*** Zamykanie %d\n", this->fd);
     close(this->fd);
     this->fd = -1;
 }
@@ -201,7 +201,8 @@ ssize_t SerialPort::impl_Send(const void* data, size_t length)
 {
     ssize_t sent = ::write(this->fd, data, length);
     if (sent == -1)
-        throw std::system_error(errno, std::system_category(), "write");
+        perror("SerialPort::impl_Send");
+        //throw std::system_error(errno, std::system_category(), "write");
     bytes_sent += sent;
     return sent;
 }

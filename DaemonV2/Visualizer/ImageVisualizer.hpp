@@ -6,11 +6,19 @@
 #define UNTITLED_IMAGEVISUALIZER_HPP
 
 #include "../ImageReconstructor.hpp"
+#include <memory>
+
+// OpenCV forward
+namespace cv {
+    class VideoWriter;
+}
 
 class ImageVisualizer {
     double minimum, maximum;
     bool window_created;
     int zoom;
+    std::shared_ptr<cv::VideoWriter> video_writer;
+    int frame_counter;
 
 public:
     ImageVisualizer(void);

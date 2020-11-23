@@ -35,5 +35,5 @@ add_executable(
 
         ImageReconstructor.cpp Visualizer/ImageVisualizer.cpp Visualizer/ImageVisualizer.hpp)
 
-
-target_link_libraries(${PROJECT_NAME} stdc++fs opencv_core opencv_highgui opencv_imgproc curses)
+find_package(OpenCV REQUIRED)
+target_link_libraries(${PROJECT_NAME} stdc++fs ${OpenCV_LIBS} curses)
