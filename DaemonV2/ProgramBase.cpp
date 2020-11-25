@@ -36,7 +36,7 @@ std::string ProgramBase::GetWorkingDirectory(void) {
 }
 
 std::string ProgramBase::GetEnvironmentValue(const std::string& key, const std::string& defaultValue) {
-    if (this->environment.contains(key))
+    if (this->environment.count(key) > 0)
         return this->environment[key];
     return defaultValue;
 }

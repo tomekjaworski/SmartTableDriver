@@ -50,14 +50,14 @@ void ImageVisualizer::ShowReconstruction(const ImageReconstructor &reconstructor
     cv::Mat temp(reconstructor.GetHeight(), reconstructor.GetWidth(), CV_16UC1,
                  const_cast<uint16_t *>(reconstructor.GetData()));
 
-//    cv::Mat source_image = temp.clone();
+    cv::Mat source_image = temp.clone();
 
     double min, max;
     cv::minMaxLoc(temp, &min, &max);
     this->minimum = std::min(min, this->minimum);
     this->maximum = std::max(max, this->maximum);
 
-    cv::Mat source_image = /*65535.0 **/ (temp - this->minimum) / (this->maximum - this->minimum);
+    source_image = 65535.0 * (temp - this->minimum) / (this->maximum - this->minimum);
 
     cv::Mat zoomed;
     cv::resize(source_image, zoomed, cv::Size(), this->zoom, this->zoom, CV_INTER_NN);

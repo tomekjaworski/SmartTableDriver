@@ -14,6 +14,7 @@ typedef uint16_t checksum_t;
 checksum_t calc_checksum(const void *buf, uint8_t size);
 checksum_t calc_checksum(const void *buf1, uint8_t size1, const void* buf2, uint8_t size2);
 
+static_assert(sizeof(checksum_t) == 2, "checksum_t has invalid size");
 
 
 

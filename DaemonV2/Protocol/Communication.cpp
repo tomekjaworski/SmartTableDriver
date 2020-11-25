@@ -2,12 +2,15 @@
 // Created by Tomek on 10/16/2020.
 //
 
-#include "Communication.hpp"
-
 #include <chrono>
+#include <algorithm>
+
+#include "Communication.hpp"
 #include "InputMessageBuilder.hpp"
 #include "TimeoutError.h"
 #include "../Utility/Helper.hpp"
+
+
 void Communication::Transcive(SerialPort::Ptr serial, const OutputMessage& query, InputMessage& response, int timeout) {
 
     if (serial == nullptr)

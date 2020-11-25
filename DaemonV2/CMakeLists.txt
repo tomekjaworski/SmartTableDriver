@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.13)
 project(untitled)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -27,7 +27,7 @@ add_executable(
         Utility/Crc16.hpp
         Protocol/OutputMessage.cpp Protocol/OutputMessage.hpp
 
-        Protocol/InputMessage.cpp Protocol/InputMessage.hpp ../../TableFirmware/protocol.h
+        Protocol/InputMessage.cpp Protocol/InputMessage.hpp TableFirmware/protocol.h
         Protocol/InputMessageBuilder.cpp Protocol/InputMessageBuilder.hpp
         Utility/Helper.cpp Utility/Helper.hpp Protocol/TimeoutError.h
 
@@ -36,4 +36,6 @@ add_executable(
         ImageReconstructor.cpp Visualizer/ImageVisualizer.cpp Visualizer/ImageVisualizer.hpp)
 
 find_package(OpenCV REQUIRED)
-target_link_libraries(${PROJECT_NAME} stdc++fs ${OpenCV_LIBS} curses)
+find_package(Boost REQUIRED)
+
+target_link_libraries(${PROJECT_NAME} stdc++fs ${OpenCV_LIBS} ${boost_LIBS} curses)

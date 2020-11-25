@@ -13,6 +13,7 @@
 
 class SerialPort {
     std::string port_name;
+    int baud_rate;
     int fd;
     uint64_t bytes_sent, bytes_received;
 
@@ -42,9 +43,13 @@ public:
 
     int GetHandle(void) const { return this->fd; }
 
+    void Restart(void);
+
 private:
     ssize_t impl_Send(const void* buffer, size_t bufferLength);
     ssize_t impl_Receive(void* buffer, size_t bufferCapacity);
+    void impl_Close(void);
+    void impl_Open(const std::string& portName, int baudRate, bool showDebug);
 
 public:
     static std::vector<std::string> GetSerialDevices(void);

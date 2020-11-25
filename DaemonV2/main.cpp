@@ -10,6 +10,8 @@
 #include "Visualizer/ImageVisualizer.hpp"
 #include "App.hpp"
 
+#include <sys/signal.h>
+
 namespace nc {
 #include <curses.h>
 }
@@ -108,7 +110,7 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     // Intro
     printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
-    printf("Built on %s @ %s %lu\n\n", __DATE__, __TIME__, sizeof(void *));
+    printf("Built on %s @ %s %llu\n\n", __DATE__, __TIME__, sizeof(void *));
     setbuf(stdout, NULL);
     struct sigaction handler;
 
@@ -166,13 +168,22 @@ int App::Main(const std::vector<std::string>& arguments) {
                 last_was_ok = false;
                 printf(".");
                 Communication::Transcive(serial_port, message_ping, response, 250);
+
             } catch (const TimeoutError &te) {
                 printf("t");
+
+                usleep(250 * 1000);
+                serial_port->Restart();
+                usleep(250 * 1000);
                 continue;
             }
 
             if (response.GetMessageType() != MessageType::PingResponse || response.GetPayloadSize() != 0) {
                 printf("e");
+
+                usleep(250 * 1000);
+                serial_port->Restart();
+                usleep(250 * 1000);
                 continue;
             }
 

@@ -9,7 +9,6 @@
 #ifndef PROTOCOL_H_
 #define PROTOCOL_H_
 
-#include "checksum.h"
 
 
 #define RX_PAYLOAD_CAPACITY	32
@@ -262,7 +261,6 @@ struct TriggeredMeasurementEnterPayload {
 static_assert(sizeof(enum MessageType) == 1, "MessageType has invalid size");
 static_assert(sizeof(RX_PROTO_HEADER) == 3, "RX_PROTO_HEADER has invalid size");
 static_assert(sizeof(TX_PROTO_HEADER) == 5, "RX_PROTO_HEADER has invalid size");
-static_assert(sizeof(checksum_t) == 2, "checksum_t has invalid size");
 
 static_assert(sizeof(TriggerGeneratorSetMode) == 1, "TriggerGeneratorSetMode has invalid size");
 static_assert(sizeof(TriggerStateSetMode) == 1, "TriggerStateSetMode has invalid size");

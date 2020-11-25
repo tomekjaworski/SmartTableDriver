@@ -6,7 +6,7 @@
 #include "Location.hpp"
 #include "../SerialPort/SerialPort.hpp"
 
-#include "../../TableFirmware/protocol.h"
+#include "../TableFirmware/protocol.h"
 
 struct status_descriptor_t {
     int received_images;

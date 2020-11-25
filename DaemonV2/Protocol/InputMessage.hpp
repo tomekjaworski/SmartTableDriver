@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <vector>
-#include "../../TableFirmware/protocol.h"
+#include "../TableFirmware/protocol.h"
 
 
 class InputMessage {

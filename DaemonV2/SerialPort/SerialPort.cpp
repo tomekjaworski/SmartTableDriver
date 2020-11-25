@@ -42,99 +42,8 @@ SerialPort::SerialPort(const std::string& deviceName, int baudRate)
         throw std::invalid_argument("deviceName");
 
     this->port_name = deviceName;
-
-    this->fd = open(deviceName.c_str(), O_RDWR | O_NOCTTY);
-    if (this->fd == -1)
-        throw std::runtime_error("Error opening serial port device "s + deviceName);
-
-#if 0
-    if (this->fd == -1)
-    {
-        if (fake_serial_port)
-            this->fd = open("/dev/null", O_RDWR | O_NOCTTY | O_NDELAY);
-    } else
-        fake_serial_port = false;
-#endif
-
-#ifndef __CYGWIN__
-        struct termios2 tio;
-		int ret = ioctl(fd, TCGETS2, &tio);
-		if (ret != 0)
-            throw std::system_error(errno, std::error_category(), "ioctl (1)");
-
-        tio.c_cflag &= ~(CBAUD | CBAUDEX);
-		tio.c_cflag |= BOTHER;
-		tio.c_ispeed = tio.c_ospeed = baudRate;
-
-		ret = ioctl(fd, TCSETS2, &tio);
-		if (ret != 0)
-            throw std::system_error(errno, std::error_category(), "ioctl (1)");
-#endif
-
-
-    struct termios ser;
-    int ret = tcgetattr(this->fd, &ser);
-    if (ret != 0)
-        throw std::system_error(errno, std::system_category(), "tcgetattr");
-
-#ifdef __CYGWIN__
-    speed_t speed = B0;
-
-    if (baudRate == 9600)
-        speed = B9600;
-    else if (baudRate == 19200)
-        speed = B19200;
-    else if (baudRate == 57600)
-        speed = B57600;
-    else
-        assert(false && "This baud rate was ignored during implementation");
-
-    ret = cfsetospeed(&ser, speed);
-    if (ret != 0)
-        throw std::system_error(errno, std::system_category(), "cfsetospeed");
-
-    ret = cfsetispeed(&ser, speed); // set transmission speed same as outgoing
-    if (ret != 0)
-        throw std::system_error(errno, std::system_category(), "cfsetispeed");
-#endif
-
-    ser.c_cflag |= PARENB;	// enable parity checking/generation
-    ser.c_cflag &= ~PARODD;	// !odd = even
-    ser.c_cflag &= ~CSTOPB; // one stop bit
-
-    ser.c_cflag |= CREAD;	// enable receiver
-
-    ser.c_cflag &= ~CSIZE;	// clear bit number mask
-    ser.c_cflag |= CS8;		// set 8 bits per byte
-
-    ser.c_cflag &= ~CRTSCTS;
-    ser.c_cflag |= CREAD | CLOCAL;
-
-    ser.c_iflag &= ~(IXON | IXOFF | IXANY);
-    ser.c_iflag &= ~(INLCR | ICRNL);
-    ser.c_iflag |= IGNPAR;
-
-    ser.c_lflag &= ~(ICANON | IEXTEN | ECHO | ECHOE | ISIG);
-    ser.c_oflag &= ~OPOST;
-
-    printf("  VTIME=%d; VMIN=%d\n", ser.c_cc[VTIME], ser.c_cc[VMIN]);
-
-    printf("  c_cflag=%08x, c_iflag=%08x, c_oflag=%08x\n", ser.c_cflag, ser.c_iflag, ser.c_oflag);
-    printf("  c_lflag=%08x, c_line=%08x\n", ser.c_lflag, ser.c_line);
-
-    //TODO: jak ustawić długość kolejki FIFO dla wejscia i wyjscia. Albo jak pobrac jej długość?
-
-
-    // ustaw parametry
-    ret = tcsetattr(this->fd, TCSANOW, &ser);
-    if (ret == -1)
-        throw std::system_error(errno, std::system_category(), "tcsetattr");
-
-    // discart both buffers
-    this->DiscardAllData();
-
-    //printf("%s: this->fd = %d\n", this->port_name.c_str(), this->fd);
-    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    this->baud_rate = baudRate;
+    this->impl_Open(deviceName, baudRate, true);
 }
 
 SerialPort::~SerialPort(void)
@@ -167,6 +76,105 @@ SerialPort& SerialPort::operator=(SerialPort&& sp)
 }
 
 
+void SerialPort::impl_Open(const std::string& portName, int baudRate, bool showDebug) {
+
+    this->fd = open(portName.c_str(), O_RDWR | O_NOCTTY);
+    if (this->fd == -1)
+        throw std::runtime_error("Error opening serial port device "s + portName);
+
+#if 0
+    if (this->fd == -1)
+    {
+        if (fake_serial_port)
+            this->fd = open("/dev/null", O_RDWR | O_NOCTTY | O_NDELAY);
+    } else
+        fake_serial_port = false;
+#endif
+
+#ifndef __CYGWIN__
+    struct termios2 tio;
+    int ret = ioctl(fd, TCGETS2, &tio);
+    if (ret != 0)
+        throw std::system_error(errno, std::system_category(), "ioctl (1)");
+
+    tio.c_cflag &= ~(CBAUD | CBAUDEX);
+    tio.c_cflag |= BOTHER;
+    tio.c_ispeed = tio.c_ospeed = baudRate;
+
+    ret = ioctl(fd, TCSETS2, &tio);
+    if (ret != 0)
+        throw std::system_error(errno, std::system_category(), "ioctl (1)");
+#endif
+
+
+    struct termios ser;
+    int ret2 = tcgetattr(this->fd, &ser);
+    if (ret2 != 0)
+        throw std::system_error(errno, std::system_category(), "tcgetattr");
+
+#ifdef __CYGWIN__
+    speed_t speed = B0;
+
+    if (baudRate == 9600)
+        speed = B9600;
+    else if (baudRate == 19200)
+        speed = B19200;
+    else if (baudRate == 57600)
+        speed = B57600;
+    else
+        assert(false && "This baud rate was ignored during implementation");
+
+    int ret = cfsetospeed(&ser, speed);
+    if (ret != 0)
+        throw std::system_error(errno, std::system_category(), "cfsetospeed");
+
+    ret = cfsetispeed(&ser, speed); // set transmission speed same as outgoing
+    if (ret != 0)
+        throw std::system_error(errno, std::system_category(), "cfsetispeed");
+#endif
+
+    ser.c_cflag |= PARENB;	// enable parity checking/generation
+    ser.c_cflag &= ~PARODD;	// !odd = even
+    ser.c_cflag &= ~CSTOPB; // one stop bit
+
+    ser.c_cflag |= CREAD;	// enable receiver
+
+    ser.c_cflag &= ~CSIZE;	// clear bit number mask
+    ser.c_cflag |= CS8;		// set 8 bits per byte
+
+    ser.c_cflag &= ~CRTSCTS;
+    ser.c_cflag |= CREAD | CLOCAL;
+
+    ser.c_iflag &= ~(IXON | IXOFF | IXANY);
+    ser.c_iflag &= ~(INLCR | ICRNL);
+    ser.c_iflag |= IGNPAR;
+
+    ser.c_lflag &= ~(ICANON | IEXTEN | ECHO | ECHOE | ISIG);
+    ser.c_oflag &= ~OPOST;
+
+    if (showDebug) {
+        printf("  VTIME=%d; VMIN=%d\n", ser.c_cc[VTIME], ser.c_cc[VMIN]);
+        printf("  c_cflag=%08x, c_iflag=%08x, c_oflag=%08x\n", ser.c_cflag, ser.c_iflag, ser.c_oflag);
+        printf("  c_lflag=%08x, c_line=%08x\n", ser.c_lflag, ser.c_line);
+    }
+
+    //TODO: jak ustawić długość kolejki FIFO dla wejscia i wyjscia. Albo jak pobrac jej długość?
+
+
+    // ustaw parametry
+    ret = tcsetattr(this->fd, TCSANOW, &ser);
+    if (ret == -1)
+        throw std::system_error(errno, std::system_category(), "tcsetattr");
+
+    // discard both buffers
+
+    this->DiscardAllData();
+
+    //printf("%s: this->fd = %d\n", this->port_name.c_str(), this->fd);
+    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+}
+
+
 
 void SerialPort::DiscardAllData(void)
 {
@@ -180,6 +188,10 @@ void SerialPort::DiscardAllData(void)
 void SerialPort::Close(void)
 {
     printf("*** Zamykanie %d\n", this->fd);
+    this->impl_Close();
+}
+
+void SerialPort::impl_Close(void) {
     close(this->fd);
     this->fd = -1;
 }
@@ -218,6 +230,13 @@ ssize_t SerialPort::impl_Receive(void* data, size_t capacity)
 }
 
 
+void SerialPort::Restart(void) {
+    this->DiscardAllData();
+    this->impl_Close();
+    this->impl_Open(this->port_name, this->baud_rate, false);
+    //
+
+}
 
 
 /////////////////////////////////////////////////////////
@@ -258,3 +277,4 @@ std::vector<std::string> SerialPort::GetSerialDevices(void)
 
     return names;
 }
+

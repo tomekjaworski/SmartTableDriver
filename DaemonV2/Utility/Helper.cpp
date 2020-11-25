@@ -3,8 +3,8 @@
 //
 
 #include "Helper.hpp"
-
 #include <cstdio>
+#include <cstdint>
 
 void Helper::HexDump(const void* ptr, int count)
 {

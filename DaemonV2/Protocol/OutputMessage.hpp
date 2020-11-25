@@ -8,7 +8,7 @@
 
 #include "../Utility/Crc16.hpp"
 #include <cstdint>
-#include "../../TableFirmware/protocol.h"
+#include "../TableFirmware/protocol.h"
 
 /// @brief Klasa reprezentująca komunikat przesyłany przez serwer (komputer) do modułu światłoczułego.
 class OutputMessage

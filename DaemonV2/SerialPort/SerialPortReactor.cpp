@@ -3,7 +3,7 @@
 //
 
 #include "SerialPortReactor.hpp"
-
+#include <algorithm>
 
 SerialPortReactor::SerialPortReactor(void) {
 

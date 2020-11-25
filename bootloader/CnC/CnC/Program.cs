@@ -77,6 +77,7 @@ namespace CnC
                 if (job_entry.JobType == JobType.ReadEepromMemory)
                 {
                     MemoryMap mm = new MemoryMap(job_entry.ProgrammableMemorySize);
+
                     cnc.ReadEEPROM(device, mm);
                     IntelHEX16Storage storage = new IntelHEX16Storage(mm);
                     storage.Save(job_entry.FileName);

@@ -1,10 +1,14 @@
 #include <unistd.h>
+#include <cassert>
+#include <algorithm>
+
 #include "InputMessageBuilder.hpp"
 #include "../Utility/Crc16.hpp"
-#include <cassert>
 #include "../Utility/Helper.hpp"
-#include "../../TableFirmware/protocol.h"
-#include <algorithm>
+#include "../TableFirmware/protocol.h"
+
+typedef unsigned short checksum_t;
+
 InputMessageBuilder::InputMessageBuilder(void) {
 	this->position = 0;
 }
@@ -51,7 +55,8 @@ MessageExtractionResult InputMessageBuilder::ExtractMessage(InputMessage& messag
 		
 		if (phdr->magic != PROTOCOL_HEADER_VALUE) {   // Is there any magic? :)
 			// remove one byte and loop
-			std::shift_left(this->queue.begin(), this->queue.end(), 1);
+			//std::shift_left(this->queue.begin(), this->queue.end(), 1);
+            std::rotate(this->queue.begin(), this->queue.begin() + 1, this->queue.end());
 			this->position--;
 			continue;
 		}
@@ -69,7 +74,8 @@ MessageExtractionResult InputMessageBuilder::ExtractMessage(InputMessage& messag
 		    mt != MessageType::SetTriggerStateResponse)
 		{
             // remove one byte and loop
-            std::shift_left(this->queue.begin(), this->queue.end(), 1);
+            //std::shift_left(this->queue.begin(), this->queue.end(), 1);
+            std::rotate(this->queue.begin(), this->queue.begin() + 1, this->queue.end());
             this->position--;
             continue;
 		}
@@ -86,7 +92,8 @@ MessageExtractionResult InputMessageBuilder::ExtractMessage(InputMessage& messag
 		if (calculated != received)
 		{
 			// remove one byte and loop
-            std::shift_left(this->queue.begin(), this->queue.end(), 1);
+            //std::shift_left(this->queue.begin(), this->queue.end(), 1);
+            std::rotate(this->queue.begin(), this->queue.begin() + 1, this->queue.end());
             this->position--;
             continue;
 		}
@@ -94,7 +101,8 @@ MessageExtractionResult InputMessageBuilder::ExtractMessage(InputMessage& messag
 		// The Checksum is OK!
 		message = InputMessage(this->queue.data(), sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t));
 		int offset = sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t);
-        std::shift_left(this->queue.begin(), this->queue.end(), offset);
+        //std::shift_left(this->queue.begin(), this->queue.end(), offset);
+        std::rotate(this->queue.begin(), this->queue.begin() + offset, this->queue.end());
         this->position -= offset;
 
         return MessageExtractionResult::Ok;
