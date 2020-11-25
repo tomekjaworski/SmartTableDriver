@@ -7,7 +7,7 @@
 
 #include <avr/pgmspace.h>
 
-#include "../TableFirmware/protocol.h"
+#include "../DaemonV2/TableFirmware/protocol.h"
 #include "config.h"
 
 device_identifier_t device_identifier = (device_identifier_t)0xFF;

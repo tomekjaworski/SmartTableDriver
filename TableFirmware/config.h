@@ -9,7 +9,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#include "protocol.h"
+#include "../DaemonV2/TableFirmware/protocol.h"
 
 #define SERIAL_BAUD				19200ULL	// 8E1 (!!!)
 #define SERIAL_IDLE_LIMIT		10			// [0.5ms]

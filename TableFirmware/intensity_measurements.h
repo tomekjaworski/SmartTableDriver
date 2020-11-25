@@ -9,7 +9,7 @@
 #ifndef INTENSITY_MEASUREMENTS_H_
 #define INTENSITY_MEASUREMENTS_H_
 
-#include "protocol.h"
+#include "../DaemonV2/TableFirmware/protocol.h"
 
 union measurement_buffer_t {
 	uint8_t raw8[7 * 15];

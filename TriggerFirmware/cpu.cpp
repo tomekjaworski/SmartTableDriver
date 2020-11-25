@@ -14,7 +14,7 @@
 
 #include "config.h"
 #include "hardware.h"
-#include "..\TableFirmware\protocol.h"
+#include "../DaemonV2/TableFirmware/protocol.h"
 #include "..\TableFirmware\comm.h"
 #include "..\TableFirmware\eeprom_config.h"
 

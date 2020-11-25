@@ -11,7 +11,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "protocol.h"
+#include "../DaemonV2/TableFirmware/protocol.h"
 #include "checksum.h"
 
 enum class TransmitterState : uint8_t {
