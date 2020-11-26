@@ -1,14 +1,17 @@
 #include <cassert>
-
+#include <unistd.h>
 #include "Hardware/TableDevice.hpp"
 #include "Utility/AnsiCodes.h"
-#include <boost/algorithm/string.hpp>
 #include "ImageReconstructor.hpp"
 #include "Protocol/InputMessageBuilder.hpp"
 #include "Protocol/TimeoutError.h"
 #include "Protocol/Communication.hpp"
 #include "Visualizer/ImageVisualizer.hpp"
 #include "App.hpp"
+
+#include <boost/algorithm/string.hpp>
+//#include <boost/algorithm/string/classification.hpp>
+
 
 #include <sys/signal.h>
 
@@ -110,7 +113,7 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     // Intro
     printf("Smart Table Reconstruction Daemon, by Tomasz Jaworski, 2017\n");
-    printf("Built on %s @ %s %llu\n\n", __DATE__, __TIME__, sizeof(void *));
+    printf("Built on %s @ %s %u\n\n", __DATE__, __TIME__, sizeof(void *));
     setbuf(stdout, NULL);
     struct sigaction handler;
 
@@ -387,7 +390,7 @@ int App::Main(const std::vector<std::string>& arguments) {
         nc::clear();
         nc::refresh();
 
-        std::chrono::time_point<std::chrono::steady_clock> last_update = std::chrono::steady_clock::now();
+        //std::chrono::time_point<std::chrono::steady_clock> last_update = std::chrono::steady_clock::now();
         while (true) {
 
             int ch;
