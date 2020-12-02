@@ -1,5 +1,6 @@
 #include <cassert>
 #include <unistd.h>
+#include <queue>
 #include "Hardware/TableDevice.hpp"
 #include "Utility/AnsiCodes.h"
 #include "ImageReconstructor.hpp"
@@ -331,7 +332,7 @@ int App::Main(const std::vector<std::string>& arguments) {
     //
     //
     {
-        TriggerGeneratorPayload tgp;
+        TriggerGeneratorPayload tgp = { };
         tgp.trigger1.high_interval = 5;
         tgp.trigger1.low_interval = 100;
         tgp.trigger1.echo_delay = 70;
@@ -346,7 +347,10 @@ int App::Main(const std::vector<std::string>& arguments) {
         try{
             printf("Configuring trigger device... ");
             Communication::Transcive(trigger_generator_serial, msg_setup_trigger, response, 2000);
-            printf("Ok\n");
+            if (response.GetMessageType() == MessageType::SetTriggerGeneratorResponse)
+                printf("Ok\n");
+            else
+                printf("Expected %d got %d\n", (int)MessageType::SetTriggerGeneratorResponse, (int)response.GetMessageType());
         } catch (const TimeoutError &te) {
             printf("Timeout\n");
         }
@@ -383,14 +387,16 @@ int App::Main(const std::vector<std::string>& arguments) {
         //int stdout_save;
         //stdout_save = dup(STDOUT_FILENO); /* save */
 
-        nc::initscr();
-        nc::nodelay(nc::stdscr, TRUE);
-        nc::noecho();
-        nc::resize_term(25, 100);
-        nc::clear();
-        nc::refresh();
+//        nc::initscr();
+//        nc::nodelay(nc::stdscr, TRUE);
+//        nc::noecho();
+//        nc::resize_term(25, 100);
+//        nc::clear();
+//        nc::refresh();
 
         //std::chrono::time_point<std::chrono::steady_clock> last_update = std::chrono::steady_clock::now();
+        printf("?");
+        std::queue<SerialPort::Ptr> closed_streams;
         while (true) {
 
             int ch;
@@ -404,6 +410,19 @@ int App::Main(const std::vector<std::string>& arguments) {
                     visualizer.DoZoomOut();
                 if (ch == 'R')
                     visualizer.DoResetNormalization();
+            }
+
+            while(!closed_streams.empty())
+            {
+                SerialPort::Ptr pserial = closed_streams.front();
+                closed_streams.pop();
+
+                assert(pserial != trigger_generator_serial); // FUBAR
+
+                auto iter = std::find(std::begin(serial_ports), std::end(serial_ports), pserial);
+                if (iter != std::end(serial_ports))
+                    serial_ports.erase(iter);
+                tdev.OnSerialPortClosed(pserial);
             }
 
             fd_set rfd;
@@ -436,26 +455,39 @@ int App::Main(const std::vector<std::string>& arguments) {
             for (SerialPort::Ptr pserial : tdev.GetSerialPortCollection()) {
                 int fd = pserial->GetHandle();
                 if (FD_ISSET(fd, &rfd)) {
-                    ssize_t recv_bytes = pserial->Receive(recv_buffer);
-                    auto &builder = fd2builder[fd];
-                    builder.AddCollectedData(recv_buffer, 0, recv_bytes);
 
-
-                    if (builder.ExtractMessage(response) == MessageExtractionResult::Ok) {
-                        const Location &location = fd2location[fd];
-
-                        const uint8_t *ptr = response.GetPayloadPointer<std::uint8_t>();
-                        //int payload_length = response.GetPayloadSize();
-                        img.ProcessMeasurementPayload(ptr, 8, location, 15);
-                        got_some_data = true;
-
-                        PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByID(response.GetDeviceID());
-                        assert(pmodule != nullptr);
-
-                        struct status_descriptor_t& descriptor = pmodule->GetStatusDescriptor();
-                        descriptor.last_sequence_number = response.GetSequenceNumber();
-                        descriptor.received_images++;
+                    //
+                    // receive the data
+                    ssize_t recvd_bytes = pserial->Receive(recv_buffer);
+                    if (recvd_bytes == 0) { // stream was closed
+                        closed_streams.push(pserial);
+                        continue;
                     }
+
+
+                    auto &builder = fd2builder[fd];
+                    builder.AddCollectedData(recv_buffer, 0, recvd_bytes);
+
+                    bool correct_message_received = false;
+                    while (builder.ExtractMessage(response) == MessageExtractionResult::Ok)
+                        correct_message_received = true;
+
+                    if (!correct_message_received)
+                        continue;;
+
+                    const Location &location = fd2location[fd];
+
+                    const uint8_t *ppayload = response.GetPayloadPointer<std::uint8_t>();
+                    img.ProcessMeasurementPayload(ppayload, 8, location, 15);
+                    got_some_data = true;
+
+                    device_identifier_t device_id = response.GetDeviceID();
+                    PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByID(device_id);
+                    assert(pmodule != nullptr);
+
+                    struct status_descriptor_t& descriptor = pmodule->GetStatusDescriptor();
+                    descriptor.last_sequence_number = response.GetSequenceNumber();
+                    descriptor.received_images++;
                 }
             }
 

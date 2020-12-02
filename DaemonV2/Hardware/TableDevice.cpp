@@ -3,6 +3,8 @@
 //
 
 #include "TableDevice.hpp"
+#include <algorithm>
+
 
 TableDevice::TableDevice(void) {
     /*
@@ -101,4 +103,17 @@ PhotoModule::Ptr TableDevice::GetPhotoModuleByLocation(int moduleColumn, int mod
             pdevice->GetLocation().GetColumn() == moduleColumn)
             return pdevice;
     return nullptr;
+}
+
+void TableDevice::OnSerialPortClosed(SerialPort::Ptr pserial) {
+    auto iter = std::find_if(std::begin(geometry), std::end(geometry), [&](PhotoModule::Ptr item){
+        return item->GetSerialPort() == pserial;
+    });
+    if (iter == std::end(geometry))
+        return; // ??
+
+    (*iter)->SetSerialPort(nullptr);
+    auto iter2 = std::find(std::begin(this->ports), std::end(this->ports), pserial);
+    if (iter2 != std::end(this->ports))
+        this->ports.erase(iter2);
 }

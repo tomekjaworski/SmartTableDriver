@@ -6,6 +6,16 @@ set(CMAKE_COLOR_MAKEFILE OFF)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 #add_library(stdc++fs STATIC IMPORTED)
 
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    message(">>> DEBUG mode")
+    add_compile_options( -g)
+    add_link_options()
+elseif(CMAKE_BUILD_TYPE MATCHES Release)
+    message(">>> RELEASE mode")
+    add_compile_options(-O3 -Ofast)
+    add_link_options(-flto)
+endif ()
+
 add_compile_options("-Wall" "-Wextra" "-pedantic" "-Wno-unused-parameter" "-fno-diagnostics-color")
 
 

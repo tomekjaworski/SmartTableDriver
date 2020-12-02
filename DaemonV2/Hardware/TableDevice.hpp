@@ -26,6 +26,7 @@ public:
 
     PhotoModule::Ptr GetPhotoModuleByID(device_identifier_t id);
     void SetSerialPort(PhotoModule::Ptr pmodule, SerialPort::Ptr pserial);
+    void OnSerialPortClosed(SerialPort::Ptr pserial);
 
     std::list<SerialPort::Ptr>& GetSerialPortCollection(void);
     std::list<PhotoModule::Ptr>& GetPhotoModulesCollection(void);
