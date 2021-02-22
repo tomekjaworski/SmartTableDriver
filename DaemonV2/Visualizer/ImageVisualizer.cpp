@@ -46,7 +46,7 @@ void ImageVisualizer::ShowReconstruction(const ImageReconstructor &reconstructor
         cv::namedWindow("ImageVisualizer", cv::WINDOW_AUTOSIZE);
         this->window_created = true;
     }
-
+#if 1
     cv::Mat temp(reconstructor.GetHeight(), reconstructor.GetWidth(), CV_16UC1,
                  const_cast<uint16_t *>(reconstructor.GetData()));
 
@@ -58,21 +58,23 @@ void ImageVisualizer::ShowReconstruction(const ImageReconstructor &reconstructor
     this->maximum = std::max(max, this->maximum);
 
     source_image = 65535.0 * (temp - this->minimum) / (this->maximum - this->minimum);
+    //source_image = temp;
 
     cv::Mat zoomed;
     cv::resize(source_image, zoomed, cv::Size(), this->zoom, this->zoom, CV_INTER_NN);
     cv::imshow("ImageVisualizer", zoomed);
-    cv::waitKey(1);
+    cv::waitKey(10);
 
 //    std::vector<int> compression_params;
 //    compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
 //    compression_params.push_back(95);
-
-    char fname[PATH_MAX];
-    snprintf(fname, PATH_MAX, "data/frame_%05d.png", this->frame_counter++);
-    cv::imwrite(fname, zoomed);
-    //
 //
+
+//    char fname[PATH_MAX];
+  //  snprintf(fname, PATH_MAX, "data/frame_%05d.png", this->frame_counter++);
+  //  cv::imwrite(fname, zoomed);
+    //
+
 //    if (this->video_writer == nullptr) {
 //        cv::resize(source_image, zoomed, cv::Size(), 16, 16, CV_INTER_NN);
 //        cv::Size S(zoomed.size[0], zoomed.size[1]);
@@ -87,6 +89,7 @@ void ImageVisualizer::ShowReconstruction(const ImageReconstructor &reconstructor
 //
 //        this->video_writer->write(zoomed);
 //    }
+#endif
 
 
 }

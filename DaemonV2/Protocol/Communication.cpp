@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <algorithm>
+#include <system_error>
 
 #include "Communication.hpp"
 #include "InputMessageBuilder.hpp"
@@ -37,8 +38,11 @@ void Communication::Transcive(SerialPort::Ptr serial, const OutputMessage& query
         timeval tv = {.tv_sec = 0, .tv_usec = 50 * 1000};
         int sret = ::select(serial->GetHandle() + 1, &rfd, nullptr, nullptr, &tv);
 
-        if (sret == -1)
-            throw std::runtime_error("select");
+        if (sret == -1) {
+            if (errno == EINTR)
+                continue;
+            throw std::system_error(errno, std::system_category(), "select");
+        }
 
         if (sret > 0) {
             ssize_t recv_bytes = serial->Receive(recv_buffer);
@@ -107,8 +111,11 @@ std::list<InputMessage> Communication::SendToMultipleAndWaitForResponse(const st
         timeval tv = {.tv_sec = 0, .tv_usec = 50 * 1000};
         int sret = ::select(max_handle + 1, &rfd, nullptr, nullptr, &tv);
 
-        if (sret == -1)
-            throw std::runtime_error("select");
+        if (sret == -1) {
+            if (errno == EINTR)
+                continue;
+            throw std::system_error(errno, std::system_category(), "select");
+        }
 
         if (sret > 0) {
 

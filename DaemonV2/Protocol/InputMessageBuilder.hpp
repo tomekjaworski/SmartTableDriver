@@ -7,6 +7,7 @@
 #include "InputMessage.hpp"
 
 #include <array>
+#include "BinaryQueue.hpp"
 
 class SerialPort;
 
@@ -18,12 +19,13 @@ enum class MessageExtractionResult {
 
 class InputMessageBuilder
 {
-    std::array<uint8_t, 64 * 1024> queue;
-	uint32_t position;
+    //std::array<uint8_t, 64 * 1024> queue;
+    BinaryQueue queue;
 
 public:
 	InputMessageBuilder(void);
-	~InputMessageBuilder();
+	InputMessageBuilder(const InputMessageBuilder& copy);
+    ~InputMessageBuilder();
 	
 
 	template <typename T, size_t N> void AddCollectedData(std::array<T, N>& array, uint32_t offset, uint32_t count) {

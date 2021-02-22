@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <cassert>
 #include <algorithm>
+#include <cstring>
 
 #include "InputMessageBuilder.hpp"
 #include "../Utility/Crc16.hpp"
@@ -9,31 +10,18 @@
 
 typedef unsigned short checksum_t;
 
-InputMessageBuilder::InputMessageBuilder(void) {
-	this->position = 0;
+InputMessageBuilder::InputMessageBuilder(void)
+    : queue(1024) {
 }
 
-InputMessageBuilder::~InputMessageBuilder()
-{
-//	if (this->data != nullptr)
-//	{
-//		delete[] this->data;
-//		this->data = nullptr;
-//	}
+InputMessageBuilder::~InputMessageBuilder() {
 }
 
-void InputMessageBuilder::PurgeAllData(void)
-{
-	this->position = 0;
+void InputMessageBuilder::PurgeAllData(void) {
 }
-#include <cstring>
-void InputMessageBuilder::InternalAddCollectedData(const void* ptr, uint32_t count)
-{
-    if (this->position + count >= this->queue.size())
-        throw std::runtime_error("Out of memory in MessageReceive buffer");
 
-    std::memcpy(this->queue.data() + this->position, ptr, count);
-    this->position += count;
+void InputMessageBuilder::InternalAddCollectedData(const void* ptr, uint32_t count) {
+    this->queue.EnqueueBytes(ptr, 0, count);
 }
 
 MessageExtractionResult InputMessageBuilder::ExtractMessage(InputMessage& message)
@@ -47,17 +35,16 @@ MessageExtractionResult InputMessageBuilder::ExtractMessage(InputMessage& messag
 
 	while (true) {
 		// is there enough data for the shortest message?
-		if (this->position < sizeof(TX_PROTO_HEADER) + sizeof(uint16_t))
+		if (!this->queue.HasAtLeast(sizeof(TX_PROTO_HEADER) + sizeof(checksum_t)))
 			return MessageExtractionResult::NeedMoreData; // nope - need more data
 		
 		// Header verification: address
-		const TX_PROTO_HEADER* phdr = reinterpret_cast<const TX_PROTO_HEADER*>(this->queue.data());
+		const TX_PROTO_HEADER* phdr = this->queue.GetDataPointer<TX_PROTO_HEADER>();
 		
 		if (phdr->magic != PROTOCOL_HEADER_VALUE) {   // Is there any magic? :)
 			// remove one byte and loop
 			//std::shift_left(this->queue.begin(), this->queue.end(), 1);
-            std::rotate(this->queue.begin(), this->queue.begin() + 1, this->queue.end());
-			this->position--;
+			this->queue.DequeueBytes(1);
 			continue;
 		}
 		
@@ -75,36 +62,33 @@ MessageExtractionResult InputMessageBuilder::ExtractMessage(InputMessage& messag
 		{
             // remove one byte and loop
             //std::shift_left(this->queue.begin(), this->queue.end(), 1);
-            std::rotate(this->queue.begin(), this->queue.begin() + 1, this->queue.end());
-            this->position--;
+            this->queue.DequeueBytes(1);
             continue;
 		}
 		
 		// is there enough data in the queue?
-		if (this->position < sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t))
+		if (!this->queue.HasAtLeast(sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t)))
 			return MessageExtractionResult::NeedMoreData; // nope - need more data
 		
 		// ok, there is; now verify the checksum
-		checksum_t calculated = Crc16::Calc(this->queue.data(), sizeof(TX_PROTO_HEADER) + phdr->payload_length);
-        checksum_t  received = this->queue[sizeof(TX_PROTO_HEADER) + phdr->payload_length + 0];
-		received |= (uint16_t)(this->queue[sizeof(TX_PROTO_HEADER) + phdr->payload_length + 1] << 8);
-		
+		checksum_t calculated = Crc16::Calc(this->queue.GetDataPointer(), sizeof(TX_PROTO_HEADER) + phdr->payload_length);
+        checksum_t received = this->queue.PeekValue<checksum_t>(sizeof(TX_PROTO_HEADER) + phdr->payload_length);
+
 		if (calculated != received)
 		{
 			// remove one byte and loop
             //std::shift_left(this->queue.begin(), this->queue.end(), 1);
-            std::rotate(this->queue.begin(), this->queue.begin() + 1, this->queue.end());
-            this->position--;
+            this->queue.DequeueBytes(1);
             continue;
 		}
 		
 		// The Checksum is OK!
-		message = InputMessage(this->queue.data(), sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t));
-		int offset = sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(uint16_t);
-        //std::shift_left(this->queue.begin(), this->queue.end(), offset);
-        std::rotate(this->queue.begin(), this->queue.begin() + offset, this->queue.end());
-        this->position -= offset;
+		message = InputMessage(
+		        this->queue.GetDataPointer<void>(),
+		        sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t));
+		uint32_t offset = sizeof(TX_PROTO_HEADER) + phdr->payload_length + sizeof(checksum_t);
 
+        this->queue.DequeueBytes(offset);
         return MessageExtractionResult::Ok;
 	}
 

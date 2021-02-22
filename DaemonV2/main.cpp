@@ -107,7 +107,9 @@ void sigpipe_handler(int unused)
 {
     // ignoruj
     printf("Coś nie pykło.\n");
+    (void)unused;
 }
+
 
 int App::Main(const std::vector<std::string>& arguments) {
 
@@ -119,8 +121,10 @@ int App::Main(const std::vector<std::string>& arguments) {
     struct sigaction handler;
 
     handler.sa_handler = sigpipe_handler;
+    sigemptyset(&handler.sa_mask);
     int result = sigaction(SIGPIPE, &handler, NULL);
     assert(result == 0);
+
 
     //
     // Show available serial ports
@@ -201,13 +205,15 @@ int App::Main(const std::vector<std::string>& arguments) {
             // The port is dead; there is probably no interesting equipment
             printf(AYELLOW "Serial port %s has NO compatible devices attached.\n" ARESET,
                    serial_port->GetPortName().c_str());
+            serial_port->DiscardAllData();
             continue;
         }
 
-        if (successes < 3 || !last_was_ok) {
+        if (successes < 3 /*|| !last_was_ok*/) {
             // There were some successful communications, however not enough and what is more - last one has failed.
             printf(ARED "Serial port %s communication problems; intervention required.\n" ARESET,
                    serial_port->GetPortName().c_str());
+            serial_port->DiscardAllData();
             continue;
         }
 
@@ -218,7 +224,7 @@ int App::Main(const std::vector<std::string>& arguments) {
         OutputMessage message_device_query = OutputMessage(MessageType::DeviceIdentifierRequest);
 
         try {
-            last_was_ok = false;
+            //last_was_ok = false;
             Communication::Transcive(serial_port, message_device_query, response, 250);
         } catch (const TimeoutError &te) {
             printf(ARED "Timeout in %s during DeviceIdentifierRequest\n" ARESET, serial_port->GetPortName().c_str());
@@ -387,22 +393,24 @@ int App::Main(const std::vector<std::string>& arguments) {
         //int stdout_save;
         //stdout_save = dup(STDOUT_FILENO); /* save */
 
-//        nc::initscr();
-//        nc::nodelay(nc::stdscr, TRUE);
-//        nc::noecho();
-//        nc::resize_term(25, 100);
-//        nc::clear();
-//        nc::refresh();
+#if RELEASE
+        nc::initscr();
+        nc::nodelay(nc::stdscr, TRUE);
+        nc::noecho();
+        nc::resize_term(25, 100);
+        nc::clear();
+        nc::refresh();
+#endif
 
-        //std::chrono::time_point<std::chrono::steady_clock> last_update = std::chrono::steady_clock::now();
-        printf("?");
+        std::chrono::time_point<std::chrono::steady_clock> last_update = std::chrono::steady_clock::now();
         std::queue<SerialPort::Ptr> closed_streams;
+        int frame_counter = 0;
         while (true) {
 
             int ch;
             if ((ch = nc::wgetch(nc::stdscr)) != ERR) {
                 ch = toupper(ch);
-                if (ch == 'Q')
+                if (ch == 'Q' || this->IsBreakPressed())
                     break;
                 if (ch == '+')
                     visualizer.DoZoomIn();
@@ -411,6 +419,8 @@ int App::Main(const std::vector<std::string>& arguments) {
                 if (ch == 'R')
                     visualizer.DoResetNormalization();
             }
+            if (frame_counter >= 1000)
+                break;
 
             while(!closed_streams.empty())
             {
@@ -443,8 +453,11 @@ int App::Main(const std::vector<std::string>& arguments) {
             timeval tv = {.tv_sec = 0, .tv_usec = 500 * 1000};
             int sret = ::select(max_handle + 1, &rfd, nullptr, nullptr, &tv);
 
-            if (sret == -1)
-                throw std::runtime_error("select");
+            if (sret == -1) {
+                if (errno == EINTR)
+                    continue;
+                throw std::system_error(errno, std::system_category(), "select");
+            }
 
             if (sret == 0) {
                 usleep(10 * 1000);
@@ -474,6 +487,9 @@ int App::Main(const std::vector<std::string>& arguments) {
 
                     if (!correct_message_received)
                         continue;;
+                    if (response.GetMessageType() != MessageType::SingleMeasurement8Response &&
+                        response.GetMessageType() != MessageType::SingleMeasurement10Response)
+                        continue;
 
                     const Location &location = fd2location[fd];
 
@@ -501,25 +517,31 @@ int App::Main(const std::vector<std::string>& arguments) {
             // Check trigger information
             if (FD_ISSET(trigger_generator_serial->GetHandle(), &rfd)) {
                 ssize_t recv_bytes = trigger_generator_serial->Receive(recv_buffer);
-                if (recv_buffer[recv_bytes - 1] == END_OF_TRIGGER_MARKER)
+                if (recv_buffer[recv_bytes - 1] == END_OF_TRIGGER_MARKER) {
                     visualizer.ShowReconstruction(img);
+                    frame_counter++;
+                }
             }
 
 
-            //printf("\x1b[%dA", TableDevice::TableHeight / PhotoModule::ModuleHeight);
-            for (int row = 0; row < TableDevice::TableHeight / PhotoModule::ModuleHeight; row++) {
-                nc::move(row, 0);
-                for (int col = 0; col < TableDevice::TableWidth / PhotoModule::ModuleWidth; col++) {
-                    PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByLocation(1 + col, 1 + row);
-                    assert(pmodule != nullptr);
+            auto now = std::chrono::steady_clock::now();
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_update).count() > 1000) {
+                last_update = now;
+                for (int row = 0; row < TableDevice::TableHeight / PhotoModule::ModuleHeight; row++) {
+                    nc::move(row, 0);
+                    for (int col = 0; col < TableDevice::TableWidth / PhotoModule::ModuleWidth; col++) {
+                        PhotoModule::Ptr pmodule = tdev.GetPhotoModuleByLocation(1 + col, 1 + row);
+                        assert(pmodule != nullptr);
 
-                    struct status_descriptor_t &td = pmodule->GetStatusDescriptor();
-                    nc::printw("[%5d;%5d]  ", td.last_sequence_number, td.received_images);
+                        struct status_descriptor_t &td = pmodule->GetStatusDescriptor();
+                        nc::printw("[%5d;%5d]  ", td.last_sequence_number, td.received_images);
+                    }
                 }
 
+                nc::move(5, 0);
+                nc::printw("");
+                nc::refresh();
             }
-
-            nc::refresh();
         }
 
         //
@@ -613,18 +635,6 @@ int App::Main(const std::vector<std::string>& arguments) {
 
 
 int main(int argc, const char** argv, const char** env) {
-//
-//
-//    while(true) {
-//        int c = nc::wgetch(nc::stdscr);
-//        if (c == ERR)
-//            continue;
-//
-//        nc::printw("%d ", c);
-//        nc::refresh();
-//    }
-//
-
     App app(argc, argv, env);
     app.Run();
     return app.GetErrorCode();
